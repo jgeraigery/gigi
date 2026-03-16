@@ -7,7 +7,6 @@
     <ClCompile Include="..\Schemas\JSONSchema.h">
       <Filter>schemas\utils</Filter>
     </ClCompile>
-    <ClCompile Include="gigiinterpreter.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="Parse.cpp">
       <Filter>structParser</Filter>
@@ -463,6 +462,9 @@
     </ClInclude>
     <ClInclude Include="..\Nodes\action_workgraph.h" />
     <ClInclude Include="Backends\UE_5_3\nodes\node_action_workGraph.h" />
+    <ClInclude Include="..\Schemas\RenderGraphNodeHelpers.h">
+      <Filter>schemas</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="schemas">

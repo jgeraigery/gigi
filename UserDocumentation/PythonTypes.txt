@@ -57,6 +57,27 @@
   GigiSlangFloatingPointModeFromString()
   GigiSlangFloatingPointModeToString()
 
+  TextureFormatFromString()
+  TextureFormatToString()
+
+  PreviewMsgCS_Log_LevelFromString()
+  PreviewMsgCS_Log_LevelToString()
+
+  GGUserFile_TLASBuildFlagsFromString()
+  GGUserFile_TLASBuildFlagsToString()
+
+  GGUserFile_LoadBufferAsFromString()
+  GGUserFile_LoadBufferAsToString()
+
+  GGUserFile_SceneDataStreamFromString()
+  GGUserFile_SceneDataStreamToString()
+
+  GGUserFile_BLASCullModeFromString()
+  GGUserFile_BLASCullModeToString()
+
+  GGUserFile_CameraJitterTypeFromString()
+  GGUserFile_CameraJitterTypeToString()
+
   ResourceVisibilityFromString()
   ResourceVisibilityToString()
 
@@ -84,32 +105,11 @@
   MemoryUnitOfMeasurementFromString()
   MemoryUnitOfMeasurementToString()
 
-  TextureFormatFromString()
-  TextureFormatToString()
-
   ExternalNode_AMD_FidelityFXSDK_Upscaling_GenerateReactiveMask_ReactiveMaskModeFromString()
   ExternalNode_AMD_FidelityFXSDK_Upscaling_GenerateReactiveMask_ReactiveMaskModeToString()
 
   ExternalNode_AMD_FidelityFXSDK_Upscaling_VersionFromString()
   ExternalNode_AMD_FidelityFXSDK_Upscaling_VersionToString()
-
-  PreviewMsgCS_Log_LevelFromString()
-  PreviewMsgCS_Log_LevelToString()
-
-  GGUserFile_TLASBuildFlagsFromString()
-  GGUserFile_TLASBuildFlagsToString()
-
-  GGUserFile_LoadBufferAsFromString()
-  GGUserFile_LoadBufferAsToString()
-
-  GGUserFile_SceneDataStreamFromString()
-  GGUserFile_SceneDataStreamToString()
-
-  GGUserFile_BLASCullModeFromString()
-  GGUserFile_BLASCullModeToString()
-
-  GGUserFile_CameraJitterTypeFromString()
-  GGUserFile_CameraJitterTypeToString()
 
   BackendTemplateFileTypeFromString()
   BackendTemplateFileTypeToString()
@@ -376,6 +376,102 @@
     Host.GigiSlangFloatingPointMode_LAST = 2
     Host.GigiSlangFloatingPointMode_COUNT = 3
 
+  TextureFormat:
+    Host.TextureFormat_FIRST = 0
+    Host.TextureFormat_Any = 0
+    Host.TextureFormat_R8_Unorm = 1
+    Host.TextureFormat_RG8_Unorm = 2
+    Host.TextureFormat_RGBA8_Unorm = 3
+    Host.TextureFormat_RGBA8_Unorm_sRGB = 4
+    Host.TextureFormat_BGRA8_Unorm = 5
+    Host.TextureFormat_R8_Snorm = 6
+    Host.TextureFormat_RG8_Snorm = 7
+    Host.TextureFormat_RGBA8_Snorm = 8
+    Host.TextureFormat_R8_Uint = 9
+    Host.TextureFormat_RG8_Uint = 10
+    Host.TextureFormat_RGBA8_Uint = 11
+    Host.TextureFormat_R8_Sint = 12
+    Host.TextureFormat_RG8_Sint = 13
+    Host.TextureFormat_RGBA8_Sint = 14
+    Host.TextureFormat_R16_Float = 15
+    Host.TextureFormat_RG16_Float = 16
+    Host.TextureFormat_RGBA16_Float = 17
+    Host.TextureFormat_RGBA16_Unorm = 18
+    Host.TextureFormat_RGBA16_Snorm = 19
+    Host.TextureFormat_RG16_Uint = 20
+    Host.TextureFormat_R32_Float = 21
+    Host.TextureFormat_RG32_Float = 22
+    Host.TextureFormat_RGBA32_Float = 23
+    Host.TextureFormat_R32_Uint = 24
+    Host.TextureFormat_RG32_Uint = 25
+    Host.TextureFormat_RGBA32_Uint = 26
+    Host.TextureFormat_R11G11B10_Float = 27
+    Host.TextureFormat_D32_Float = 28
+    Host.TextureFormat_D16_Unorm = 29
+    Host.TextureFormat_D32_Float_S8 = 30
+    Host.TextureFormat_D24_Unorm_S8 = 31
+    Host.TextureFormat_BC1_Unorm = 32
+    Host.TextureFormat_BC4_Unorm = 33
+    Host.TextureFormat_BC4_Snorm = 34
+    Host.TextureFormat_BC5_Unorm = 35
+    Host.TextureFormat_BC5_Snorm = 36
+    Host.TextureFormat_BC7_Unorm = 37
+    Host.TextureFormat_BC7_Unorm_sRGB = 38
+    Host.TextureFormat_BC6_UF16 = 39
+    Host.TextureFormat_BC6_SF16 = 40
+    Host.TextureFormat_LAST = 40
+    Host.TextureFormat_COUNT = 41
+
+  PreviewMsgCS_Log_Level:
+    Host.PreviewMsgCS_Log_Level_FIRST = 0
+    Host.PreviewMsgCS_Log_Level_Info = 0
+    Host.PreviewMsgCS_Log_Level_Warn = 1
+    Host.PreviewMsgCS_Log_Level_Error = 2
+    Host.PreviewMsgCS_Log_Level_LAST = 2
+    Host.PreviewMsgCS_Log_Level_COUNT = 3
+
+  GGUserFile_TLASBuildFlags:
+    Host.GGUserFile_TLASBuildFlags_FIRST = 0
+    Host.GGUserFile_TLASBuildFlags_None = 0
+    Host.GGUserFile_TLASBuildFlags_AllowUpdate = 1
+    Host.GGUserFile_TLASBuildFlags_AllowCompaction = 2
+    Host.GGUserFile_TLASBuildFlags_PreferFastTrace = 3
+    Host.GGUserFile_TLASBuildFlags_PreferFastBuild = 4
+    Host.GGUserFile_TLASBuildFlags_MinimizeMemory = 5
+    Host.GGUserFile_TLASBuildFlags_LAST = 5
+    Host.GGUserFile_TLASBuildFlags_COUNT = 6
+
+  GGUserFile_LoadBufferAs:
+    Host.GGUserFile_LoadBufferAs_FIRST = 0
+    Host.GGUserFile_LoadBufferAs_Auto = 0
+    Host.GGUserFile_LoadBufferAs_Binary = 1
+    Host.GGUserFile_LoadBufferAs_LAST = 1
+    Host.GGUserFile_LoadBufferAs_COUNT = 2
+
+  GGUserFile_SceneDataStream:
+    Host.GGUserFile_SceneDataStream_FIRST = 0
+    Host.GGUserFile_SceneDataStream_GeometryFlat = 0
+    Host.GGUserFile_SceneDataStream_Lights = 1
+    Host.GGUserFile_SceneDataStream_Materials = 2
+    Host.GGUserFile_SceneDataStream_LAST = 2
+    Host.GGUserFile_SceneDataStream_COUNT = 3
+
+  GGUserFile_BLASCullMode:
+    Host.GGUserFile_BLASCullMode_FIRST = 0
+    Host.GGUserFile_BLASCullMode_CullNone = 0
+    Host.GGUserFile_BLASCullMode_FrontIsClockwise = 1
+    Host.GGUserFile_BLASCullMode_FrontIsCounterClockwise = 2
+    Host.GGUserFile_BLASCullMode_LAST = 2
+    Host.GGUserFile_BLASCullMode_COUNT = 3
+
+  GGUserFile_CameraJitterType:
+    Host.GGUserFile_CameraJitterType_FIRST = 0
+    Host.GGUserFile_CameraJitterType_None = 0
+    Host.GGUserFile_CameraJitterType_UniformWhite = 1
+    Host.GGUserFile_CameraJitterType_Halton23 = 2
+    Host.GGUserFile_CameraJitterType_LAST = 2
+    Host.GGUserFile_CameraJitterType_COUNT = 3
+
   ResourceVisibility:
     Host.ResourceVisibility_FIRST = 0
     Host.ResourceVisibility_Imported = 0
@@ -471,52 +567,6 @@
     Host.MemoryUnitOfMeasurement_LAST = 1
     Host.MemoryUnitOfMeasurement_COUNT = 2
 
-  TextureFormat:
-    Host.TextureFormat_FIRST = 0
-    Host.TextureFormat_Any = 0
-    Host.TextureFormat_R8_Unorm = 1
-    Host.TextureFormat_RG8_Unorm = 2
-    Host.TextureFormat_RGBA8_Unorm = 3
-    Host.TextureFormat_RGBA8_Unorm_sRGB = 4
-    Host.TextureFormat_BGRA8_Unorm = 5
-    Host.TextureFormat_R8_Snorm = 6
-    Host.TextureFormat_RG8_Snorm = 7
-    Host.TextureFormat_RGBA8_Snorm = 8
-    Host.TextureFormat_R8_Uint = 9
-    Host.TextureFormat_RG8_Uint = 10
-    Host.TextureFormat_RGBA8_Uint = 11
-    Host.TextureFormat_R8_Sint = 12
-    Host.TextureFormat_RG8_Sint = 13
-    Host.TextureFormat_RGBA8_Sint = 14
-    Host.TextureFormat_R16_Float = 15
-    Host.TextureFormat_RG16_Float = 16
-    Host.TextureFormat_RGBA16_Float = 17
-    Host.TextureFormat_RGBA16_Unorm = 18
-    Host.TextureFormat_RGBA16_Snorm = 19
-    Host.TextureFormat_RG16_Uint = 20
-    Host.TextureFormat_R32_Float = 21
-    Host.TextureFormat_RG32_Float = 22
-    Host.TextureFormat_RGBA32_Float = 23
-    Host.TextureFormat_R32_Uint = 24
-    Host.TextureFormat_RG32_Uint = 25
-    Host.TextureFormat_RGBA32_Uint = 26
-    Host.TextureFormat_R11G11B10_Float = 27
-    Host.TextureFormat_D32_Float = 28
-    Host.TextureFormat_D16_Unorm = 29
-    Host.TextureFormat_D32_Float_S8 = 30
-    Host.TextureFormat_D24_Unorm_S8 = 31
-    Host.TextureFormat_BC1_Unorm = 32
-    Host.TextureFormat_BC4_Unorm = 33
-    Host.TextureFormat_BC4_Snorm = 34
-    Host.TextureFormat_BC5_Unorm = 35
-    Host.TextureFormat_BC5_Snorm = 36
-    Host.TextureFormat_BC7_Unorm = 37
-    Host.TextureFormat_BC7_Unorm_sRGB = 38
-    Host.TextureFormat_BC6_UF16 = 39
-    Host.TextureFormat_BC6_SF16 = 40
-    Host.TextureFormat_LAST = 40
-    Host.TextureFormat_COUNT = 41
-
   ExternalNode_AMD_FidelityFXSDK_Upscaling_GenerateReactiveMask_ReactiveMaskMode:
     Host.ExternalNode_AMD_FidelityFXSDK_Upscaling_GenerateReactiveMask_ReactiveMaskMode_FIRST = 0
     Host.ExternalNode_AMD_FidelityFXSDK_Upscaling_GenerateReactiveMask_ReactiveMaskMode_Off = 0
@@ -532,56 +582,6 @@
     Host.ExternalNode_AMD_FidelityFXSDK_Upscaling_Version_v3_1_5 = 2
     Host.ExternalNode_AMD_FidelityFXSDK_Upscaling_Version_LAST = 2
     Host.ExternalNode_AMD_FidelityFXSDK_Upscaling_Version_COUNT = 3
-
-  PreviewMsgCS_Log_Level:
-    Host.PreviewMsgCS_Log_Level_FIRST = 0
-    Host.PreviewMsgCS_Log_Level_Info = 0
-    Host.PreviewMsgCS_Log_Level_Warn = 1
-    Host.PreviewMsgCS_Log_Level_Error = 2
-    Host.PreviewMsgCS_Log_Level_LAST = 2
-    Host.PreviewMsgCS_Log_Level_COUNT = 3
-
-  GGUserFile_TLASBuildFlags:
-    Host.GGUserFile_TLASBuildFlags_FIRST = 0
-    Host.GGUserFile_TLASBuildFlags_None = 0
-    Host.GGUserFile_TLASBuildFlags_AllowUpdate = 1
-    Host.GGUserFile_TLASBuildFlags_AllowCompaction = 2
-    Host.GGUserFile_TLASBuildFlags_PreferFastTrace = 3
-    Host.GGUserFile_TLASBuildFlags_PreferFastBuild = 4
-    Host.GGUserFile_TLASBuildFlags_MinimizeMemory = 5
-    Host.GGUserFile_TLASBuildFlags_LAST = 5
-    Host.GGUserFile_TLASBuildFlags_COUNT = 6
-
-  GGUserFile_LoadBufferAs:
-    Host.GGUserFile_LoadBufferAs_FIRST = 0
-    Host.GGUserFile_LoadBufferAs_Auto = 0
-    Host.GGUserFile_LoadBufferAs_Binary = 1
-    Host.GGUserFile_LoadBufferAs_LAST = 1
-    Host.GGUserFile_LoadBufferAs_COUNT = 2
-
-  GGUserFile_SceneDataStream:
-    Host.GGUserFile_SceneDataStream_FIRST = 0
-    Host.GGUserFile_SceneDataStream_GeometryFlat = 0
-    Host.GGUserFile_SceneDataStream_Lights = 1
-    Host.GGUserFile_SceneDataStream_Materials = 2
-    Host.GGUserFile_SceneDataStream_LAST = 2
-    Host.GGUserFile_SceneDataStream_COUNT = 3
-
-  GGUserFile_BLASCullMode:
-    Host.GGUserFile_BLASCullMode_FIRST = 0
-    Host.GGUserFile_BLASCullMode_CullNone = 0
-    Host.GGUserFile_BLASCullMode_FrontIsClockwise = 1
-    Host.GGUserFile_BLASCullMode_FrontIsCounterClockwise = 2
-    Host.GGUserFile_BLASCullMode_LAST = 2
-    Host.GGUserFile_BLASCullMode_COUNT = 3
-
-  GGUserFile_CameraJitterType:
-    Host.GGUserFile_CameraJitterType_FIRST = 0
-    Host.GGUserFile_CameraJitterType_None = 0
-    Host.GGUserFile_CameraJitterType_UniformWhite = 1
-    Host.GGUserFile_CameraJitterType_Halton23 = 2
-    Host.GGUserFile_CameraJitterType_LAST = 2
-    Host.GGUserFile_CameraJitterType_COUNT = 3
 
   BackendTemplateFileType:
     Host.BackendTemplateFileType_FIRST = 0

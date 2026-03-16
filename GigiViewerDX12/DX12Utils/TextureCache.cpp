@@ -18,10 +18,7 @@
 
 TextureCache::Texture& TextureCache::Get(FileCache& fileCache, const char* fileName_)
 {
-	// normalize the string by making it canonical and making it lower case
-	std::filesystem::path p = std::filesystem::weakly_canonical(fileName_);
-	std::string s = p.string();
-	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
+    std::string s = CanonifyFileName(fileName_);
 	const char* fileName = s.c_str();
 
 	// If we don't have an entry for this file, create one
@@ -33,6 +30,8 @@ TextureCache::Texture& TextureCache::Get(FileCache& fileCache, const char* fileN
 		newTexture.fileName = fileName;
 
 		Texture failTexture = newTexture;
+
+        std::filesystem::path p = std::filesystem::path(fileName);
 
 		if (p.extension().string() == ".exr")
 		{

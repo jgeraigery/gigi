@@ -72,6 +72,9 @@
       <AdditionalLibraryDirectories>$(ProjectDir)python\Python310\libs\;$(SolutionDir)external\libffi\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ShowProgress>NotSet</ShowProgress>
     </Link>
+    <Manifest>
+      <AdditionalManifestFiles>app.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -95,6 +98,9 @@
       <AdditionalLibraryDirectories>$(ProjectDir)Pix\bin\x64\;$(ProjectDir)python\Python310\libs\;$(SolutionDir)external\libffi\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ShowProgress>NotSet</ShowProgress>
     </Link>
+    <Manifest>
+      <AdditionalManifestFiles>app.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\external\nativefiledialog\src\nfd_common.c" />
@@ -170,6 +176,7 @@
     <ClInclude Include="DX12Utils\ReadbackObject.h" />
     <ClInclude Include="DX12Utils\ShaderErrorParse.h" />
     <ClInclude Include="DX12Utils\VectorMath.h" />
+    <ClInclude Include="FileDropTarget.h" />
     <ClInclude Include="ImageReadback.h" />
     <ClInclude Include="DX12Utils\Camera.h" />
     <ClInclude Include="DX12Utils\CompileShaders.h" />

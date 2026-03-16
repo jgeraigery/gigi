@@ -54,4 +54,6 @@ nearZ = farZ / 10000
 Host.SetCameraNearFarZ(nearZ, farZ)
 Host.SetCameraFlySpeed(ZRange / 25)
 
-# Vertex buffer contents: position(3), Color(3), Normal(3), Tagent(4), UV(2), MaterialID(1), ShapeID(1)
+Host.SetVariable("MaxTPT", str(farZ))
+
+Host.SetViewedResource("PathTrace.Output: ColorU8sRGB (UAV - After)")

@@ -110,8 +110,9 @@
                     let dx = MouseStateLastFrame[0] - MouseState[0];
                     let dy = MouseStateLastFrame[1] - MouseState[1];
 
-                    dx *= movementMultiplier;
-                    dy *= movementMultiplier;
+                    // Don't need to muliply by frame time. The mouse will move a smaller distance over higher frame times.
+                    //dx *= movementMultiplier;
+                    //dy *= movementMultiplier;
 
                     if (!CameraLeftHanded)
                     {

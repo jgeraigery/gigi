@@ -9,6 +9,10 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include <nfd.h>
+#include <unordered_map>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
 
 ImGuiEnable::ImGuiEnable(bool enabled)
     : m_enabled(enabled)
@@ -455,7 +459,7 @@ void ImGuiKeyValueString(const char* key, const char* value)
 bool ImGuiBeginMenu(const char* label, bool enabled)
 {
     // classic BeginMenu in comparison
-//    return ImGui::BeginMenu(label, enabled);
+    //    return ImGui::BeginMenu(label, enabled);
 
     ImVec4 hideColor = ImVec4(0, 0, 0, 0);
 
@@ -475,4 +479,77 @@ bool ImGuiBeginMenu(const char* label, bool enabled)
     ImGui::SameLine();
 
     return ImGui::BeginMenu(label, enabled);
+}
+
+//Handles all combos states
+//This could be not necessary, but to avoid hitting into edge cases I assume we CAN have multiple combo states somehow open at the same time
+static std::unordered_map<ImGuiID, SearchableComboState> s_searchableComboStates;
+//Only one active though
+static ImGuiID s_activeSearchableComboID = 0;
+
+bool BeginSearchableCombo(const char* label, const char* preview_value, int flags)
+{
+    //We get the id before the begin combo to avoid getting different ids if the combo box is open or close.
+    ImGuiID comboID = ImGui::GetCurrentWindow()->GetID(label);
+    bool opened = ImGui::BeginCombo(label, preview_value, flags);
+
+    if (opened)
+    {
+        s_activeSearchableComboID = comboID;
+        auto& state = s_searchableComboStates[comboID];
+
+        if (state.justOpened)
+        {
+            ImGui::SetKeyboardFocusHere();
+            state.filter[0] = '\0';
+            state.justOpened = false;
+        }
+
+        ImGui::PushItemWidth(-FLT_MIN); // full width
+        ImGui::InputTextWithHint("##searchFilter", "Search...", state.filter, IM_ARRAYSIZE(state.filter));
+        ImGui::PopItemWidth();
+        ImGui::Separator();
+    }
+    else
+    {
+        auto it = s_searchableComboStates.find(comboID);
+        if (it != s_searchableComboStates.end())
+        {
+            s_searchableComboStates.erase(it);
+        }
+    }
+
+    return opened;
+}
+
+static bool ContainsCaseInsensitive(const char* main_c, const char* search_c)
+{
+    if (!search_c || search_c[0] == '\0')
+        return true;
+
+    std::string main_str { main_c };
+    std::string search_str { search_c };
+
+    std::transform(main_str.begin(), main_str.end(), main_str.begin(), [](unsigned char c){ return std::tolower(c); });
+    std::transform(search_str.begin(), search_str.end(), search_str.begin(), [](unsigned char c){ return std::tolower(c); });
+
+    return main_str.find(search_str) != std::string::npos;
+}
+
+bool SearchableComboFilter(const char* itemText)
+{
+    if (s_activeSearchableComboID == 0)
+        return true; 
+
+    auto it = s_searchableComboStates.find(s_activeSearchableComboID);
+    if (it == s_searchableComboStates.end() || it->second.filter[0] == '\0')
+        return true;
+
+    return ContainsCaseInsensitive(itemText, it->second.filter);
+}
+
+void EndSearchableCombo()
+{
+    s_activeSearchableComboID = 0;
+    ImGui::EndCombo();
 }

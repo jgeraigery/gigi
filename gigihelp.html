@@ -272,6 +272,109 @@ table, th, td, tr
 </table>
 <br/>
 
+<b>TextureFormat : </b><br/><br/>
+<table>
+<tr><th colspan=2>TextureFormat</th></tr>
+<tr><td>Any</td><td>Only valid for imported textures.</td></tr>
+<tr><td>R8_Unorm</td><td>R 8 bit unorm</td></tr>
+<tr><td>RG8_Unorm</td><td>RG 8 bit unorm</td></tr>
+<tr><td>RGBA8_Unorm</td><td>RGBA 8 bit unorm</td></tr>
+<tr><td>RGBA8_Unorm_sRGB</td><td>RGBA 8 bit unorm, sRGB</td></tr>
+<tr><td>BGRA8_Unorm</td><td>BGRA 8 bit unorm</td></tr>
+<tr><td>R8_Snorm</td><td>R 8 bit snorm</td></tr>
+<tr><td>RG8_Snorm</td><td>RG 8 bit snorm</td></tr>
+<tr><td>RGBA8_Snorm</td><td>RGBA 8 bit snorm</td></tr>
+<tr><td>R8_Uint</td><td>R 8 bit uint</td></tr>
+<tr><td>RG8_Uint</td><td>RG 8 bit uint</td></tr>
+<tr><td>RGBA8_Uint</td><td>RGBA 8 bit uint</td></tr>
+<tr><td>R8_Sint</td><td>R 8 bit sint</td></tr>
+<tr><td>RG8_Sint</td><td>RG 8 bit sint</td></tr>
+<tr><td>RGBA8_Sint</td><td>RGBA 8 bit sint</td></tr>
+<tr><td>R16_Float</td><td>R 16 bit float</td></tr>
+<tr><td>RG16_Float</td><td>RG 16 bit float</td></tr>
+<tr><td>RGBA16_Float</td><td>RGBA 16 bit float</td></tr>
+<tr><td>RGBA16_Unorm</td><td>RGBA 16 bit unorm</td></tr>
+<tr><td>RGBA16_Snorm</td><td>RGBA 16 bit snorm</td></tr>
+<tr><td>RG16_Uint</td><td>RG 16 bit uint</td></tr>
+<tr><td>R32_Float</td><td>R 32 bit float</td></tr>
+<tr><td>RG32_Float</td><td>RG 32 bit float</td></tr>
+<tr><td>RGBA32_Float</td><td>RGBA 32 bit float</td></tr>
+<tr><td>R32_Uint</td><td>R 32 bit uint</td></tr>
+<tr><td>RG32_Uint</td><td>RG 32 bit uint</td></tr>
+<tr><td>RGBA32_Uint</td><td>RGBA 32 bit uint</td></tr>
+<tr><td>R11G11B10_Float</td><td>RGB 32 bit (total) float</td></tr>
+<tr><td>D32_Float</td><td>32 bit float depth</td></tr>
+<tr><td>D16_Unorm</td><td>16 bit unorm depth</td></tr>
+<tr><td>D32_Float_S8</td><td>32 bit depth, 8 bit stencil, and 24 more bits unused</td></tr>
+<tr><td>D24_Unorm_S8</td><td>24 bit depth, 8 bit stencil</td></tr>
+<tr><td>BC1_Unorm</td><td>RGB 5:6:5 unorm, 1 bit alpha. block compressed.</td></tr>
+<tr><td>BC4_Unorm</td><td>R 8 bit unorm. block compressed.</td></tr>
+<tr><td>BC4_Snorm</td><td>R 8 bit snorm. block compressed.</td></tr>
+<tr><td>BC5_Unorm</td><td>RG 8 bit unorm. block compressed.</td></tr>
+<tr><td>BC5_Snorm</td><td>RG 8 bit snorm. block compressed.</td></tr>
+<tr><td>BC7_Unorm</td><td>RGB, alpha optional. block compressed.</td></tr>
+<tr><td>BC7_Unorm_sRGB</td><td>RGB, alpha optional. sRGB. block compressed.</td></tr>
+<tr><td>BC6_UF16</td><td>RGB, 16 bit float unsigned. block compressed.</td></tr>
+<tr><td>BC6_SF16</td><td>RGB, 16 bit float signed. block compressed.</td></tr>
+</table>
+<br/>
+
+<b>PreviewMsgCS_Log_Level : </b><br/><br/>
+<table>
+<tr><th colspan=2>PreviewMsgCS_Log_Level</th></tr>
+<tr><td>Info</td><td></td></tr>
+<tr><td>Warn</td><td></td></tr>
+<tr><td>Error</td><td></td></tr>
+</table>
+<br/>
+
+<b>GGUserFile_TLASBuildFlags : D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE etc</b><br/><br/>
+<table>
+<tr><th colspan=2>GGUserFile_TLASBuildFlags</th></tr>
+<tr><td>None</td><td></td></tr>
+<tr><td>AllowUpdate</td><td></td></tr>
+<tr><td>AllowCompaction</td><td></td></tr>
+<tr><td>PreferFastTrace</td><td></td></tr>
+<tr><td>PreferFastBuild</td><td></td></tr>
+<tr><td>MinimizeMemory</td><td></td></tr>
+</table>
+<br/>
+
+<b>GGUserFile_LoadBufferAs : How to load a file into a buffer</b><br/><br/>
+<table>
+<tr><th colspan=2>GGUserFile_LoadBufferAs</th></tr>
+<tr><td>Auto</td><td></td></tr>
+<tr><td>Binary</td><td></td></tr>
+</table>
+<br/>
+
+<b>GGUserFile_SceneDataStream : Which type of data to load from a scene</b><br/><br/>
+<table>
+<tr><th colspan=2>GGUserFile_SceneDataStream</th></tr>
+<tr><td>GeometryFlat</td><td>De-indexed and de-instanced geometry as a flattened vertex buffer.</td></tr>
+<tr><td>Lights</td><td>Point and directional lights</td></tr>
+<tr><td>Materials</td><td>material constant values like albedo and roughness.</td></tr>
+</table>
+<br/>
+
+<b>GGUserFile_BLASCullMode : controls D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE and D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE</b><br/><br/>
+<table>
+<tr><th colspan=2>GGUserFile_BLASCullMode</th></tr>
+<tr><td>CullNone</td><td></td></tr>
+<tr><td>FrontIsClockwise</td><td></td></tr>
+<tr><td>FrontIsCounterClockwise</td><td></td></tr>
+</table>
+<br/>
+
+<b>GGUserFile_CameraJitterType : The sequence of the jittered projection matrix</b><br/><br/>
+<table>
+<tr><th colspan=2>GGUserFile_CameraJitterType</th></tr>
+<tr><td>None</td><td>No Jitter</td></tr>
+<tr><td>UniformWhite</td><td>Uniform white noise</td></tr>
+<tr><td>Halton23</td><td>Halton(2,3)</td></tr>
+</table>
+<br/>
+
 <b>ResourceVisibility : </b><br/><br/>
 <table>
 <tr><th colspan=2>ResourceVisibility</th></tr>
@@ -376,53 +479,6 @@ table, th, td, tr
 </table>
 <br/>
 
-<b>TextureFormat : </b><br/><br/>
-<table>
-<tr><th colspan=2>TextureFormat</th></tr>
-<tr><td>Any</td><td>Only valid for imported textures.</td></tr>
-<tr><td>R8_Unorm</td><td>R 8 bit unorm</td></tr>
-<tr><td>RG8_Unorm</td><td>RG 8 bit unorm</td></tr>
-<tr><td>RGBA8_Unorm</td><td>RGBA 8 bit unorm</td></tr>
-<tr><td>RGBA8_Unorm_sRGB</td><td>RGBA 8 bit unorm, sRGB</td></tr>
-<tr><td>BGRA8_Unorm</td><td>BGRA 8 bit unorm</td></tr>
-<tr><td>R8_Snorm</td><td>R 8 bit snorm</td></tr>
-<tr><td>RG8_Snorm</td><td>RG 8 bit snorm</td></tr>
-<tr><td>RGBA8_Snorm</td><td>RGBA 8 bit snorm</td></tr>
-<tr><td>R8_Uint</td><td>R 8 bit uint</td></tr>
-<tr><td>RG8_Uint</td><td>RG 8 bit uint</td></tr>
-<tr><td>RGBA8_Uint</td><td>RGBA 8 bit uint</td></tr>
-<tr><td>R8_Sint</td><td>R 8 bit sint</td></tr>
-<tr><td>RG8_Sint</td><td>RG 8 bit sint</td></tr>
-<tr><td>RGBA8_Sint</td><td>RGBA 8 bit sint</td></tr>
-<tr><td>R16_Float</td><td>R 16 bit float</td></tr>
-<tr><td>RG16_Float</td><td>RG 16 bit float</td></tr>
-<tr><td>RGBA16_Float</td><td>RGBA 16 bit float</td></tr>
-<tr><td>RGBA16_Unorm</td><td>RGBA 16 bit unorm</td></tr>
-<tr><td>RGBA16_Snorm</td><td>RGBA 16 bit snorm</td></tr>
-<tr><td>RG16_Uint</td><td>RG 16 bit uint</td></tr>
-<tr><td>R32_Float</td><td>R 32 bit float</td></tr>
-<tr><td>RG32_Float</td><td>RG 32 bit float</td></tr>
-<tr><td>RGBA32_Float</td><td>RGBA 32 bit float</td></tr>
-<tr><td>R32_Uint</td><td>R 32 bit uint</td></tr>
-<tr><td>RG32_Uint</td><td>RG 32 bit uint</td></tr>
-<tr><td>RGBA32_Uint</td><td>RGBA 32 bit uint</td></tr>
-<tr><td>R11G11B10_Float</td><td>RGB 32 bit (total) float</td></tr>
-<tr><td>D32_Float</td><td>32 bit float depth</td></tr>
-<tr><td>D16_Unorm</td><td>16 bit unorm depth</td></tr>
-<tr><td>D32_Float_S8</td><td>32 bit depth, 8 bit stencil, and 24 more bits unused</td></tr>
-<tr><td>D24_Unorm_S8</td><td>24 bit depth, 8 bit stencil</td></tr>
-<tr><td>BC1_Unorm</td><td>RGB 5:6:5 unorm, 1 bit alpha. block compressed.</td></tr>
-<tr><td>BC4_Unorm</td><td>R 8 bit unorm. block compressed.</td></tr>
-<tr><td>BC4_Snorm</td><td>R 8 bit snorm. block compressed.</td></tr>
-<tr><td>BC5_Unorm</td><td>RG 8 bit unorm. block compressed.</td></tr>
-<tr><td>BC5_Snorm</td><td>RG 8 bit snorm. block compressed.</td></tr>
-<tr><td>BC7_Unorm</td><td>RGB, alpha optional. block compressed.</td></tr>
-<tr><td>BC7_Unorm_sRGB</td><td>RGB, alpha optional. sRGB. block compressed.</td></tr>
-<tr><td>BC6_UF16</td><td>RGB, 16 bit float unsigned. block compressed.</td></tr>
-<tr><td>BC6_SF16</td><td>RGB, 16 bit float signed. block compressed.</td></tr>
-</table>
-<br/>
-
 <b>ExternalNode_AMD_FidelityFXSDK_Upscaling_GenerateReactiveMask_ReactiveMaskMode : </b><br/><br/>
 <table>
 <tr><th colspan=2>ExternalNode_AMD_FidelityFXSDK_Upscaling_GenerateReactiveMask_ReactiveMaskMode</th></tr>
@@ -438,62 +494,6 @@ table, th, td, tr
 <tr><td>Default</td><td></td></tr>
 <tr><td>v2_3_4</td><td>Use 2.3.4</td></tr>
 <tr><td>v3_1_5</td><td>Use 3.1.5</td></tr>
-</table>
-<br/>
-
-<b>PreviewMsgCS_Log_Level : </b><br/><br/>
-<table>
-<tr><th colspan=2>PreviewMsgCS_Log_Level</th></tr>
-<tr><td>Info</td><td></td></tr>
-<tr><td>Warn</td><td></td></tr>
-<tr><td>Error</td><td></td></tr>
-</table>
-<br/>
-
-<b>GGUserFile_TLASBuildFlags : D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE etc</b><br/><br/>
-<table>
-<tr><th colspan=2>GGUserFile_TLASBuildFlags</th></tr>
-<tr><td>None</td><td></td></tr>
-<tr><td>AllowUpdate</td><td></td></tr>
-<tr><td>AllowCompaction</td><td></td></tr>
-<tr><td>PreferFastTrace</td><td></td></tr>
-<tr><td>PreferFastBuild</td><td></td></tr>
-<tr><td>MinimizeMemory</td><td></td></tr>
-</table>
-<br/>
-
-<b>GGUserFile_LoadBufferAs : How to load a file into a buffer</b><br/><br/>
-<table>
-<tr><th colspan=2>GGUserFile_LoadBufferAs</th></tr>
-<tr><td>Auto</td><td></td></tr>
-<tr><td>Binary</td><td></td></tr>
-</table>
-<br/>
-
-<b>GGUserFile_SceneDataStream : Which type of data to load from a scene</b><br/><br/>
-<table>
-<tr><th colspan=2>GGUserFile_SceneDataStream</th></tr>
-<tr><td>GeometryFlat</td><td>De-indexed and de-instanced geometry as a flattened vertex buffer.</td></tr>
-<tr><td>Lights</td><td>Point and directional lights</td></tr>
-<tr><td>Materials</td><td>material constant values like albedo and roughness.</td></tr>
-</table>
-<br/>
-
-<b>GGUserFile_BLASCullMode : controls D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE and D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE</b><br/><br/>
-<table>
-<tr><th colspan=2>GGUserFile_BLASCullMode</th></tr>
-<tr><td>CullNone</td><td></td></tr>
-<tr><td>FrontIsClockwise</td><td></td></tr>
-<tr><td>FrontIsCounterClockwise</td><td></td></tr>
-</table>
-<br/>
-
-<b>GGUserFile_CameraJitterType : The sequence of the jittered projection matrix</b><br/><br/>
-<table>
-<tr><th colspan=2>GGUserFile_CameraJitterType</th></tr>
-<tr><td>None</td><td>No Jitter</td></tr>
-<tr><td>UniformWhite</td><td>Uniform white noise</td></tr>
-<tr><td>Halton23</td><td>Halton(2,3)</td></tr>
 </table>
 <br/>
 
@@ -1116,6 +1116,281 @@ Italicized fields are not serialized, and are just used for runtime storage.<br/
 </table>
 <br/>
 
+<b>PreviewMsg_Ping : The client and server send this periodically to know the other is still alive. It fails to send if the connection closes.</b><br/><br/>
+<table>
+<tr><th colspan=3>PreviewMsg_Ping</th></tr>
+</table>
+<br/>
+
+<b>PreviewMsgCS_Version : The client tells the server what Gigi version it is using</b><br/><br/>
+<table>
+<tr><th colspan=3>PreviewMsgCS_Version</th></tr>
+<tr><td>std::string version</td><td>""</td><td>Gigi Version</td></tr>
+</table>
+<br/>
+
+<b>PreviewMsgCS_Log : The client tells the server what Gigi version it is using</b><br/><br/>
+<table>
+<tr><th colspan=3>PreviewMsgCS_Log</th></tr>
+<tr><td>PreviewMsgCS_Log_Level level</td><td>PreviewMsgCS_Log_Level::Info</td><td>The type of message</td></tr>
+<tr><td>std::string msg</td><td>""</td><td>The log message</td></tr>
+</table>
+<br/>
+
+<b>PreviewMsgSC_VersionResponse : The server tells the client whether or not the version is ok.</b><br/><br/>
+<table>
+<tr><th colspan=3>PreviewMsgSC_VersionResponse</th></tr>
+<tr><td>bool versionOK</td><td>false</td><td>Whether the gigi version is ok or not.</td></tr>
+</table>
+<br/>
+
+<b>PreviewMsgSC_LoadGGFile : The client tells the server to load a gg file</b><br/><br/>
+<table>
+<tr><th colspan=3>PreviewMsgSC_LoadGGFile</th></tr>
+<tr><td>std::string fileName</td><td>""</td><td>The path and name of the .gg file to load</td></tr>
+<tr><td>bool preserveState</td><td>true</td><td>If true, camera state etc should be preserved</td></tr>
+</table>
+<br/>
+
+<b>GGUserFile_Audio : </b><br/><br/>
+<table>
+<tr><th colspan=3>GGUserFile_Audio</th></tr>
+<tr><td>unsigned int sampleRate</td><td>44100</td><td>The sample rate.</td></tr>
+<tr><td>bool stereo</td><td>true</td><td>Stereo or mono.</td></tr>
+<tr><td>std::string Var_Stereo</td><td>"AudioStereo"</td><td>A boolean variable for whether audio is mono or stereo. Stereo has two floats per sample, mono has 1. Holds the value you set above. Meant to be readable by shaders.</td></tr>
+<tr><td>std::string Var_SampleRate</td><td>"AudioSampleRate"</td><td>A uint variable holding the sample rate. Holds the value you set above. Meant to be readable by shaders.</td></tr>
+<tr><td>BufferNodeReference outputBuffer</td><td>{}</td><td>Must be an imported buffer. Gigi controls the size, and the format is always float.</td></tr>
+<tr><td>float outputVolume</td><td>1.0f</td><td>Output volume.</td></tr>
+<tr><td>unsigned int outputBufferLengthMs</td><td>300</td><td>The length of the audio output buffer in milliseconds. Smaller buffers have less latency but are more prone to starvation when there is bad perf.</td></tr>
+<tr><td>std::string Var_AudioOutSampleWindowCount</td><td>"AudioOutSampleWindowCount"</td><td>The uint variable that says how many audio samples should be generated for output. Stereo has 2 floats per sample, mono has 1. Meant to be readable by shaders</td></tr>
+<tr><td>BufferNodeReference inputBuffer</td><td>{}</td><td>Must be an imported buffer. Gigi controls the size, and the format is always float.</td></tr>
+<tr><td>float inputVolume</td><td>1.0f</td><td>Input volume.</td></tr>
+<tr><td>unsigned int inputBufferLengthMs</td><td>300</td><td>The length of the audio input buffer in milliseconds.</td></tr>
+<tr><td>std::string Var_AudioInSampleWindowCount</td><td>"AudioInSampleWindowCount"</td><td>The uint variable that says how many audio samples should be consumed from input. Stereo has 2 floats per sample, mono has 1. Meant to be readable by shaders</td></tr>
+</table>
+<br/>
+
+<b>GGUserFile_WebCam : </b><br/><br/>
+<table>
+<tr><th colspan=3>GGUserFile_WebCam</th></tr>
+<tr><td>TextureNodeReference outputTexture</td><td>{}</td><td>Must be an imported texture. Gigi controls the size and the format.</td></tr>
+</table>
+<br/>
+
+<b>GGUserFile_AMD_FidelityFXSDK_FrameInterpolation : </b><br/><br/>
+<table>
+<tr><th colspan=3>GGUserFile_AMD_FidelityFXSDK_FrameInterpolation</th></tr>
+<tr><td>bool enabled</td><td>{ false }</td><td></td></tr>
+<tr><td>unsigned int sleepMS</td><td>0</td><td>The number of milliseconds to sleep every frame. Useful for artificially slowing down the rendering to see frame interpolation in action.</td></tr>
+<tr><td><i>std::string version</i></td><td>"default"</td><td>The version used</td></tr>
+<tr><td>int fsrUIRenderMode</td><td>2</td><td>UI Render Mode: 0=Standard, 1=Swapchain, 2=Callback, 3=Hudless</td></tr>
+<tr><td>bool ENABLE_ASYNC_WORKLOAD_SUPPORT</td><td>{ true }</td><td></td></tr>
+<tr><td>bool ENABLE_MOTION_VECTORS_JITTER_CANCELLATION</td><td>{ false }</td><td>A bit indicating that the motion vectors have the jittering pattern applied to them.</td></tr>
+<tr><td>bool ENABLE_HIGH_DYNAMIC_RANGE</td><td>{ false }</td><td>A bit indicating if the input color data provided to all inputs is using a high-dynamic range.</td></tr>
+<tr><td>bool ENABLE_DEBUG_CHECKING</td><td>{ true }</td><td>A bit indicating that the runtime should check some API values and report issues.</td></tr>
+<tr><td>bool DRAW_DEBUG_TEAR_LINES</td><td>{ false }</td><td>A bit indicating that the debug tear lines will be drawn to the generated output.</td></tr>
+<tr><td>bool DRAW_DEBUG_RESET_INDICATORS</td><td>{ false }</td><td>A bit indicating that the debug reset indicators will be drawn to the generated output.</td></tr>
+<tr><td><i>bool DRAW_DEBUG_VIEW</i></td><td>{ false }</td><td>A bit indicating that the generated output resource will contain debug views with relevant information.</td></tr>
+<tr><td>bool DRAW_DEBUG_PACING_LINES</td><td>{ false }</td><td>A bit indicating that the debug pacing lines will be drawn to the generated output.</td></tr>
+<tr><td>std::string depth</td><td>""</td><td>The depth buffer data</td></tr>
+<tr><td>std::string motionVectors</td><td>""</td><td>The motion vector data</td></tr>
+<tr><td>std::string uiTexture</td><td>""</td><td>The UI texture data</td></tr>
+<tr><td>std::string hudlessTexture</td><td>""</td><td>The hudless texture (Scene only)</td></tr>
+<tr><td>bool allowAsyncWorkloads</td><td>{ true }</td><td>Sets the state of async workloads. Set to true to enable generation work on async compute.</td></tr>
+<tr><td>bool onlyPresentGenerated</td><td>{ false }</td><td>Set to true to only present generated frames.</td></tr>
+<tr><td>bool constrainToRectangle</td><td>{ true }</td><td>If true, constrains frame generation to the texture being viewed.</td></tr>
+</table>
+<br/>
+
+<b>GGUserFile_ImportedTexture : The details of an imported texture</b><br/><br/>
+<table>
+<tr><th colspan=3>GGUserFile_ImportedTexture</th></tr>
+<tr><td>std::string fileName</td><td>""</td><td>The image file loaded</td></tr>
+<tr><td>bool fileIsSRGB</td><td>true</td><td>Whether the file is an sRGB file or not</td></tr>
+<tr><td>bool makeMips</td><td>false</td><td>Whether to make mips or no</td></tr>
+<tr><td>int size[3]</td><td>{0 , 0 , 1}</td><td>The size of the image to create</td></tr>
+<tr><td>float color[4]</td><td>{ 1 , 1 , 1 , 1}</td><td>The color of the image to create, or the tint of the loaded file</td></tr>
+<tr><td>TextureFormat format</td><td>TextureFormat::RGBA8_Unorm_sRGB</td><td>The format of the texture to create</td></tr>
+<tr><td>int binaryDims[3]</td><td>{0 , 0 , 1}</td><td>The size of the image in the binary file</td></tr>
+<tr><td>TextureFormat binaryFormat</td><td>TextureFormat::RGBA8_Unorm_sRGB</td><td>The format of the binary file</td></tr>
+</table>
+<br/>
+
+<b>GGUserFile_ImportedBuffer : The details of an imported buffer</b><br/><br/>
+<table>
+<tr><th colspan=3>GGUserFile_ImportedBuffer</th></tr>
+<tr><td>std::string fileName</td><td>""</td><td>The file loaded</td></tr>
+<tr><td>bool CSVHeaderRow</td><td>true</td><td>If reading a CSV, and this is true, it will skip everything up to the first newline, to ignore a header row.</td></tr>
+<tr><td>GGUserFile_LoadBufferAs loadBufferAs</td><td>GGUserFile_LoadBufferAs::Auto</td><td>How to load data</td></tr>
+<tr><td>GGUserFile_SceneDataStream dataStream</td><td>GGUserFile_SceneDataStream::GeometryFlat</td><td>What type of data to load</td></tr>
+<tr><td>std::string materialShaderFile</td><td>""</td><td>The name of the shader file to generate for reading the material from a shader.</td></tr>
+<tr><td>int structIndex</td><td>-1</td><td>the index of the struct if a structured buffer</td></tr>
+<tr><td>DataFieldType type</td><td>DataFieldType::Count</td><td>The data field type, if not a structured buffer</td></tr>
+<tr><td>int count</td><td>1</td><td>how many items are stored</td></tr>
+<tr><td>GGUserFile_TLASBuildFlags RT_BuildFlags</td><td>GGUserFile_TLASBuildFlags::PreferFastTrace</td><td>D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE etc</td></tr>
+<tr><td>bool BLASOpaque</td><td>false</td><td>DXR BLAS Option</td></tr>
+<tr><td>bool BLASNoDuplicateAnyhitInvocations</td><td>false</td><td>DXR BLAS Option</td></tr>
+<tr><td>GGUserFile_BLASCullMode BLASCullMode</td><td>GGUserFile_BLASCullMode::CullNone</td><td>BLAS triangle culling settings</td></tr>
+<tr><td>bool IsAABBs</td><td>false</td><td>Set to true if ray tracing AABBs with intersection shaders. Format is Min XYZ, Max XYZ.</td></tr>
+<tr><td>float GeometryTransform[16]</td><td>{ 1.0f , 0.0f , 0.0f , 0.0f , 0.0f , 1.0f , 0.0f , 0.0f , 0.0f , 0.0f , 1.0f , 0.0f , 0.0f , 0.0f , 0.0f , 1.0f }</td><td>A 4x4 matrix to transform pos, normal, tangent.</td></tr>
+<tr><td>CooperativeVectorData cvData</td><td>{}</td><td>Data needed for cooperative vectors support for imported buffer resources</td></tr>
+</table>
+<br/>
+
+<b>GGUserFile_ImportedResource : The details of an imported resource</b><br/><br/>
+<table>
+<tr><th colspan=3>GGUserFile_ImportedResource</th></tr>
+<tr><td>std::string nodeName</td><td>""</td><td>The name of the node this imported texture data is for</td></tr>
+<tr><td>bool resetEveryFrame</td><td>true</td><td>Whether this texture should be reset every frame, or if the technique is allowed to change it over multiple frames</td></tr>
+<tr><td>bool isATexture</td><td>true</td><td>Is it a texture or a buffer</td></tr>
+<tr><td>GGUserFile_ImportedTexture texture</td><td>{}</td><td>Texture data</td></tr>
+<tr><td>GGUserFile_ImportedBuffer buffer</td><td>{}</td><td>Buffer data</td></tr>
+</table>
+<br/>
+
+<b>GGUserFile_Camera : </b><br/><br/>
+<table>
+<tr><th colspan=3>GGUserFile_Camera</th></tr>
+<tr><td>bool perspective</td><td>true</td><td>Perspective if true, orthographic if false.</td></tr>
+<tr><td>bool leftHanded</td><td>true</td><td>Left handed if true, right handed if false.</td></tr>
+<tr><td>bool reverseZ</td><td>true</td><td>If true, reverses the depth values for more precision. https://developer.nvidia.com/content/depth-precision-visualized</td></tr>
+<tr><td>bool reverseZInfiniteDepth</td><td>false</td><td>If true, reverses the depth values and has far plane at infinite z for more precision. https://developer.nvidia.com/content/depth-precision-visualized</td></tr>
+<tr><td>float nearPlane</td><td>0.1f</td><td>The distance to the near plane.</td></tr>
+<tr><td>float farPlane</td><td>1000.0f</td><td>The distance to the far plane. Set to zero for infinite Z.</td></tr>
+<tr><td>float FOV</td><td>45.0f</td><td>Vertical field of view, in degrees</td></tr>
+<tr><td>float flySpeed</td><td>0.1f</td><td>How fast the WASD keys move in the world</td></tr>
+<tr><td>float mouseSensitivity</td><td>0.005f</td><td>How fast the mouse rotates the camera</td></tr>
+<tr><td>GGUserFile_CameraJitterType jitterType</td><td>GGUserFile_CameraJitterType::Halton23</td><td>The sequence of the jittered projection matrix</td></tr>
+<tr><td>int jitterLength</td><td>16</td><td>The length of the sequence used to jitter the jittered projection matrix. 0 means infinite.</td></tr>
+<tr><td>float startingCameraPos[3]</td><td>{ 0.0f , 0.0f , -10.0f }</td><td></td></tr>
+<tr><td>float startingCameraAltitudeAzimuth[2]</td><td>{ 0.0f , 0.0f }</td><td></td></tr>
+<tr><td><i>float cameraPos[3]</i></td><td>{0.0f , 0.0f , -10.0f}</td><td></td></tr>
+<tr><td><i>float cameraAltitudeAzimuth[2]</i></td><td>{0.0f , 0.0f}</td><td></td></tr>
+<tr><td><i>bool cameraChanged</i></td><td>false</td><td></td></tr>
+</table>
+<br/>
+
+<b>GGUserFile_SystemVars : </b><br/><br/>
+<table>
+<tr><th colspan=3>GGUserFile_SystemVars</th></tr>
+<tr><td>std::string iResolution_varName</td><td>"iResolution"</td><td></td></tr>
+<tr><td>std::string iResolution_textureName</td><td>""</td><td></td></tr>
+<tr><td>std::string iTime_varName</td><td>"iTime"</td><td></td></tr>
+<tr><td>std::string iTimeDelta_varName</td><td>"iTimeDelta"</td><td></td></tr>
+<tr><td>std::string iFrameRate_varName</td><td>"iFrameRate"</td><td></td></tr>
+<tr><td>std::string iFrame_varName</td><td>"iFrame"</td><td></td></tr>
+<tr><td>std::string iMouse_varName</td><td>"iMouse"</td><td></td></tr>
+<tr><td>std::string MouseState_varName</td><td>"MouseState"</td><td></td></tr>
+<tr><td>std::string MouseStateLastFrame_varName</td><td>"MouseStateLastFrame"</td><td></td></tr>
+<tr><td>std::string WindowSize_varName</td><td>"WindowSize"</td><td></td></tr>
+<tr><td>GGUserFile_Camera camera</td><td>{}</td><td>The camera settings. Can pluralize if one isn't enough.</td></tr>
+<tr><td>std::string ProjMtx_textureName</td><td>""</td><td>The projection matrix needs a resolution to calculate for. Choose a texture node and that will be used as a resolution.</td></tr>
+<tr><td>std::string ViewMtx_varName</td><td>"ViewMtx"</td><td></td></tr>
+<tr><td>std::string InvViewMtx_varName</td><td>"InvViewMtx"</td><td></td></tr>
+<tr><td>std::string ProjMtx_varName</td><td>"ProjMtx"</td><td></td></tr>
+<tr><td>std::string InvProjMtx_varName</td><td>"InvProjMtx"</td><td></td></tr>
+<tr><td>std::string ViewProjMtx_varName</td><td>"ViewProjMtx"</td><td></td></tr>
+<tr><td>std::string InvViewProjMtx_varName</td><td>"InvViewProjMtx"</td><td></td></tr>
+<tr><td>std::string JitteredProjMtx_varName</td><td>"JitteredProjMtx"</td><td>ProjMtx with jitter.</td></tr>
+<tr><td>std::string InvJitteredProjMtx_varName</td><td>"InvJitteredProjMtx"</td><td>Inverted ProjMtx with jitter.</td></tr>
+<tr><td>std::string JitteredViewProjMtx_varName</td><td>"JitteredViewProjMtx"</td><td>ViewProjMtx with jitter.</td></tr>
+<tr><td>std::string InvJitteredViewProjMtx_varName</td><td>"InvJitteredViewProjMtx"</td><td>Inverted ViewProjMtx with jitter.</td></tr>
+<tr><td>std::string CameraPos_varName</td><td>"CameraPos"</td><td>Camera position in world space</td></tr>
+<tr><td>std::string CameraUp_varName</td><td>"CameraUp"</td><td>Normalized camera up vector in world space</td></tr>
+<tr><td>std::string CameraLeft_varName</td><td>"CameraLeft"</td><td>Normalized camera left vector in world space</td></tr>
+<tr><td>std::string CameraForward_varName</td><td>"CameraForward"</td><td>Normalized camera forward vector in world space</td></tr>
+<tr><td>std::string CameraAltitudeAzimuth_varName</td><td>"CameraAltitudeAzimuth"</td><td></td></tr>
+<tr><td>std::string CameraChanged_varName</td><td>"CameraChanged"</td><td></td></tr>
+<tr><td>std::string CameraJitter_varName</td><td>"CameraJitter"</td><td></td></tr>
+<tr><td>std::string CameraJitterRaw_varName</td><td>"CameraJitterRaw"</td><td></td></tr>
+<tr><td>std::string CameraFOV_varName</td><td>"CameraFOV"</td><td></td></tr>
+<tr><td>std::string CameraNearPlane_varName</td><td>"CameraNearPlane"</td><td></td></tr>
+<tr><td>std::string CameraFarPlane_varName</td><td>"CameraFarPlane"</td><td></td></tr>
+<tr><td>std::string ShadingRateImageTileSize_varName</td><td>"ShadingRateImageTileSize"</td><td></td></tr>
+<tr><td>std::string KeyState_bufferName</td><td>""</td><td>256 entries for the keys this frame, and 256 entries for the keys last frame. 512 entries total.</td></tr>
+<tr><td>float motionVectorDepthThreshold</td><td>0.1f</td><td>Maximum allowed difference between depth values when comparing pixels for motion vector inlier selection.</td></tr>
+</table>
+<br/>
+
+<b>GGUserFile_SavedVariable : Saved Variable Values</b><br/><br/>
+<table>
+<tr><th colspan=3>GGUserFile_SavedVariable</th></tr>
+<tr><td>std::string name</td><td>""</td><td></td></tr>
+<tr><td>std::string value</td><td>""</td><td></td></tr>
+</table>
+<br/>
+
+<b>GGUserFileV1 : The contents of a .gguser file</b><br/><br/>
+<table>
+<tr><th colspan=3>GGUserFileV1</th></tr>
+<tr><td>std::string version</td><td>"1.0"</td><td>The version of the .gguser file</td></tr>
+<tr><td>GGUserFile_SystemVars systemVars</td><td>{}</td><td></td></tr>
+<tr><td>int resourceViewType</td><td>0</td><td>The type of resource being viewed</td></tr>
+<tr><td>int resourceViewNodeIndex</td><td>-1</td><td>The index of the node bieng viewed</td></tr>
+<tr><td>int resourceViewResourceIndex</td><td>-1</td><td>The index of that resource within that node being used</td></tr>
+<tr><td>int syncInterval</td><td>1</td><td>IDXGISwapChain::Present() parameter: Synchronize presentation after the nth vertical blank.</td></tr>
+<tr><td>GGUserFile_ImportedResource importedResources[]</td><td></td><td></td></tr>
+<tr><td>GGUserFile_SavedVariable savedVariables[]</td><td></td><td></td></tr>
+</table>
+<br/>
+
+<b>GGUserFileV2Snapshot : The snapshot of a GGUserFileV2</b><br/><br/>
+<table>
+<tr><th colspan=3>GGUserFileV2Snapshot</th></tr>
+<tr><td>std::string name</td><td>""</td><td>The snapshot name</td></tr>
+<tr><td>int resourceViewType</td><td>0</td><td>The type of resource being viewed</td></tr>
+<tr><td>int resourceViewNodeIndex</td><td>-1</td><td>The index of the node bieng viewed</td></tr>
+<tr><td>int resourceViewResourceIndex</td><td>-1</td><td>The index of that resource within that node being used</td></tr>
+<tr><td>std::string resourceViewResourceName</td><td>""</td><td></td></tr>
+<tr><td>bool loadVars</td><td>true</td><td>Whether variables will be loaded from this snapshot</td></tr>
+<tr><td>bool loadCamera</td><td>true</td><td>Whether the camera will be loaded from this snapshot</td></tr>
+<tr><td>bool loadResources</td><td>true</td><td>Whether imported resources will be loaded from this snapshot</td></tr>
+<tr><td>bool loadView</td><td>true</td><td>Whether the resource viewed will be loaded from this snapshot</td></tr>
+<tr><td>float cameraPos[3]</td><td>{ 0.0f , 0.0f , - 10.0f }</td><td>Used by snapshots to capture the camera position</td></tr>
+<tr><td>float cameraAltitudeAzimuth[2]</td><td>{ 0.0f , 0.0f }</td><td>Used by snapshots to capture the camera orientation</td></tr>
+<tr><td>GGUserFile_ImportedResource importedResources[]</td><td></td><td></td></tr>
+<tr><td>GGUserFile_SavedVariable savedVariables[]</td><td></td><td></td></tr>
+</table>
+<br/>
+
+<b>GGUserFileV2 : The contents of a .gguser file</b><br/><br/>
+<table>
+<tr><th colspan=3>GGUserFileV2</th></tr>
+<tr><td>std::string version</td><td>"2.0"</td><td>The version of the .gguser file</td></tr>
+<tr><td>int syncInterval</td><td>1</td><td>IDXGISwapChain::Present() parameter: Synchronize presentation after the nth vertical blank.</td></tr>
+<tr><td>GGUserFile_SystemVars systemVars</td><td>{}</td><td></td></tr>
+<tr><td>GGUserFileV2Snapshot snapshot</td><td>{}</td><td></td></tr>
+<tr><td>GGUserFileV2Snapshot snapshots[]</td><td></td><td></td></tr>
+<tr><td>GGUserFile_AMD_FidelityFXSDK_FrameInterpolation AMDFrameInterpolation</td><td>{}</td><td></td></tr>
+<tr><td>GGUserFile_Audio Audio</td><td>{}</td><td></td></tr>
+<tr><td>GGUserFile_WebCam WebCam</td><td>{}</td><td></td></tr>
+</table>
+<br/>
+
+<b>GGUserFileVersionOnly : Only the version of the .gguser file</b><br/><br/>
+<table>
+<tr><th colspan=3>GGUserFileVersionOnly</th></tr>
+<tr><td>std::string version</td><td>"1.0"</td><td>The version of the .gguser file</td></tr>
+</table>
+<br/>
+
+<b>GGViewerConfig : The config file for the viewer settings file ViewerConfig.json</b><br/><br/>
+<table>
+<tr><th colspan=3>GGViewerConfig</th></tr>
+<tr><td>std::string version</td><td>"1.0"</td><td>The version of the file</td></tr>
+<tr><td>std::string keyCameraForward</td><td>"W"</td><td>Camera forward key</td></tr>
+<tr><td>std::string keyCameraLeft</td><td>"A"</td><td>Camera left key</td></tr>
+<tr><td>std::string keyCameraBackward</td><td>"S"</td><td>Camera back key</td></tr>
+<tr><td>std::string keyCameraRight</td><td>"D"</td><td>Camera right key</td></tr>
+<tr><td>std::string keyCameraUp</td><td>"E"</td><td>Camera right key</td></tr>
+<tr><td>std::string keyCameraDown</td><td>"Q"</td><td>Camera down key</td></tr>
+<tr><td>std::string keyCameraFast</td><td>"Shift"</td><td>Camera fast key</td></tr>
+<tr><td>std::string keyCameraSlow</td><td>"Control"</td><td>Camera slow key</td></tr>
+<tr><td>bool betterShaderError</td><td>true</td><td>Double click shader errors with an attached debugger.</td></tr>
+<tr><td>std::string windowPersist</td><td>""</td><td></td></tr>
+</table>
+<br/>
+
 <b>NodePinReference : A reference to a pin on a node</b><br/><br/>
 <table>
 <tr><th colspan=3>NodePinReference</th></tr>
@@ -1443,6 +1718,7 @@ Italicized fields are not serialized, and are just used for runtime storage.<br/
 <tr><td>ResourceVisibility visibility</td><td>ResourceVisibility::Internal</td><td>Who can see the buffer and who owns it</td></tr>
 <tr><td>BufferFormatDesc format</td><td>{}</td><td>The format of the texture.</td></tr>
 <tr><td>BufferCountDesc count</td><td>{}</td><td>How many items are in the buffer.</td></tr>
+<tr><td>GGUserFile_ImportedBuffer importedResourceSettings</td><td>{}</td><td>The default values in the viewer</td></tr>
 </table>
 <br/>
 
@@ -1481,6 +1757,7 @@ Italicized fields are not serialized, and are just used for runtime storage.<br/
 <tr><td><i>std::string loadFileName</i></td><td>""</td><td>If not empty, it load it as an image. This is currently not exposed to users, and is created when shaders use an image token</td></tr>
 <tr><td><i>bool loadFileNameAsSRGB</i></td><td>true</td><td>If true, the source file is treated as sRGB</td></tr>
 <tr><td>Resource_Texture_MSAA msaaSettings</td><td>{}</td><td>MSAA Settings for Texture2DMS, multiple samples are stored per pixel for antialiasing</td></tr>
+<tr><td>GGUserFile_ImportedTexture importedResourceSettings</td><td>{}</td><td>The default values in the viewer</td></tr>
 </table>
 <br/>
 
@@ -1649,280 +1926,6 @@ Italicized fields are not serialized, and are just used for runtime storage.<br/
 <tr><td><b>inline static const std::string c_shorterTypeName</b></td><td>"External"</td><td>Used by the editor.</td></tr>
 <tr><td><b>inline static const bool c_showInEditor</b></td><td>false</td><td>Used by the editor.</td></tr>
 <tr><td>ExternalNodeData externalNodeData</td><td>{}</td><td></td></tr>
-</table>
-<br/>
-
-<b>PreviewMsg_Ping : The client and server send this periodically to know the other is still alive. It fails to send if the connection closes.</b><br/><br/>
-<table>
-<tr><th colspan=3>PreviewMsg_Ping</th></tr>
-</table>
-<br/>
-
-<b>PreviewMsgCS_Version : The client tells the server what Gigi version it is using</b><br/><br/>
-<table>
-<tr><th colspan=3>PreviewMsgCS_Version</th></tr>
-<tr><td>std::string version</td><td>""</td><td>Gigi Version</td></tr>
-</table>
-<br/>
-
-<b>PreviewMsgCS_Log : The client tells the server what Gigi version it is using</b><br/><br/>
-<table>
-<tr><th colspan=3>PreviewMsgCS_Log</th></tr>
-<tr><td>PreviewMsgCS_Log_Level level</td><td>PreviewMsgCS_Log_Level::Info</td><td>The type of message</td></tr>
-<tr><td>std::string msg</td><td>""</td><td>The log message</td></tr>
-</table>
-<br/>
-
-<b>PreviewMsgSC_VersionResponse : The server tells the client whether or not the version is ok.</b><br/><br/>
-<table>
-<tr><th colspan=3>PreviewMsgSC_VersionResponse</th></tr>
-<tr><td>bool versionOK</td><td>false</td><td>Whether the gigi version is ok or not.</td></tr>
-</table>
-<br/>
-
-<b>PreviewMsgSC_LoadGGFile : The client tells the server to load a gg file</b><br/><br/>
-<table>
-<tr><th colspan=3>PreviewMsgSC_LoadGGFile</th></tr>
-<tr><td>std::string fileName</td><td>""</td><td>The path and name of the .gg file to load</td></tr>
-<tr><td>bool preserveState</td><td>true</td><td>If true, camera state etc should be preserved</td></tr>
-</table>
-<br/>
-
-<b>GGUserFile_Audio : </b><br/><br/>
-<table>
-<tr><th colspan=3>GGUserFile_Audio</th></tr>
-<tr><td>unsigned int sampleRate</td><td>44100</td><td>The sample rate.</td></tr>
-<tr><td>bool stereo</td><td>true</td><td>Stereo or mono.</td></tr>
-<tr><td>std::string Var_Stereo</td><td>"AudioStereo"</td><td>A boolean variable for whether audio is mono or stereo. Stereo has two floats per sample, mono has 1. Holds the value you set above. Meant to be readable by shaders.</td></tr>
-<tr><td>std::string Var_SampleRate</td><td>"AudioSampleRate"</td><td>A uint variable holding the sample rate. Holds the value you set above. Meant to be readable by shaders.</td></tr>
-<tr><td>BufferNodeReference outputBuffer</td><td>{}</td><td>Must be an imported buffer. Gigi controls the size, and the format is always float.</td></tr>
-<tr><td>float outputVolume</td><td>1.0f</td><td>Output volume.</td></tr>
-<tr><td>unsigned int outputBufferLengthMs</td><td>300</td><td>The length of the audio output buffer in milliseconds. Smaller buffers have less latency but are more prone to starvation when there is bad perf.</td></tr>
-<tr><td>std::string Var_AudioOutSampleWindowCount</td><td>"AudioOutSampleWindowCount"</td><td>The uint variable that says how many audio samples should be generated for output. Stereo has 2 floats per sample, mono has 1. Meant to be readable by shaders</td></tr>
-<tr><td>BufferNodeReference inputBuffer</td><td>{}</td><td>Must be an imported buffer. Gigi controls the size, and the format is always float.</td></tr>
-<tr><td>float inputVolume</td><td>1.0f</td><td>Input volume.</td></tr>
-<tr><td>unsigned int inputBufferLengthMs</td><td>300</td><td>The length of the audio input buffer in milliseconds.</td></tr>
-<tr><td>std::string Var_AudioInSampleWindowCount</td><td>"AudioInSampleWindowCount"</td><td>The uint variable that says how many audio samples should be consumed from input. Stereo has 2 floats per sample, mono has 1. Meant to be readable by shaders</td></tr>
-</table>
-<br/>
-
-<b>GGUserFile_WebCam : </b><br/><br/>
-<table>
-<tr><th colspan=3>GGUserFile_WebCam</th></tr>
-<tr><td>TextureNodeReference outputTexture</td><td>{}</td><td>Must be an imported texture. Gigi controls the size and the format.</td></tr>
-</table>
-<br/>
-
-<b>GGUserFile_AMD_FidelityFXSDK_FrameInterpolation : </b><br/><br/>
-<table>
-<tr><th colspan=3>GGUserFile_AMD_FidelityFXSDK_FrameInterpolation</th></tr>
-<tr><td>bool enabled</td><td>{ false }</td><td></td></tr>
-<tr><td>unsigned int sleepMS</td><td>0</td><td>The number of milliseconds to sleep every frame. Useful for artificially slowing down the rendering to see frame interpolation in action.</td></tr>
-<tr><td><i>std::string version</i></td><td>"default"</td><td>The version used</td></tr>
-<tr><td>int fsrUIRenderMode</td><td>2</td><td>UI Render Mode: 0=Standard, 1=Swapchain, 2=Callback, 3=Hudless</td></tr>
-<tr><td>bool ENABLE_ASYNC_WORKLOAD_SUPPORT</td><td>{ true }</td><td></td></tr>
-<tr><td>bool ENABLE_MOTION_VECTORS_JITTER_CANCELLATION</td><td>{ false }</td><td>A bit indicating that the motion vectors have the jittering pattern applied to them.</td></tr>
-<tr><td>bool ENABLE_HIGH_DYNAMIC_RANGE</td><td>{ false }</td><td>A bit indicating if the input color data provided to all inputs is using a high-dynamic range.</td></tr>
-<tr><td>bool ENABLE_DEBUG_CHECKING</td><td>{ true }</td><td>A bit indicating that the runtime should check some API values and report issues.</td></tr>
-<tr><td>bool DRAW_DEBUG_TEAR_LINES</td><td>{ false }</td><td>A bit indicating that the debug tear lines will be drawn to the generated output.</td></tr>
-<tr><td>bool DRAW_DEBUG_RESET_INDICATORS</td><td>{ false }</td><td>A bit indicating that the debug reset indicators will be drawn to the generated output.</td></tr>
-<tr><td><i>bool DRAW_DEBUG_VIEW</i></td><td>{ false }</td><td>A bit indicating that the generated output resource will contain debug views with relevant information.</td></tr>
-<tr><td>bool DRAW_DEBUG_PACING_LINES</td><td>{ false }</td><td>A bit indicating that the debug pacing lines will be drawn to the generated output.</td></tr>
-<tr><td>std::string depth</td><td>""</td><td>The depth buffer data</td></tr>
-<tr><td>std::string motionVectors</td><td>""</td><td>The motion vector data</td></tr>
-<tr><td>std::string uiTexture</td><td>""</td><td>The UI texture data</td></tr>
-<tr><td>std::string hudlessTexture</td><td>""</td><td>The hudless texture (Scene only)</td></tr>
-<tr><td>bool allowAsyncWorkloads</td><td>{ true }</td><td>Sets the state of async workloads. Set to true to enable generation work on async compute.</td></tr>
-<tr><td>bool onlyPresentGenerated</td><td>{ false }</td><td>Set to true to only present generated frames.</td></tr>
-<tr><td>bool constrainToRectangle</td><td>{ true }</td><td>If true, constrains frame generation to the texture being viewed.</td></tr>
-</table>
-<br/>
-
-<b>GGUserFile_ImportedTexture : The details of an imported texture</b><br/><br/>
-<table>
-<tr><th colspan=3>GGUserFile_ImportedTexture</th></tr>
-<tr><td>std::string fileName</td><td>""</td><td>The image file loaded</td></tr>
-<tr><td>bool fileIsSRGB</td><td>true</td><td>Whether the file is an sRGB file or not</td></tr>
-<tr><td>bool makeMips</td><td>false</td><td>Whether to make mips or no</td></tr>
-<tr><td>int size[3]</td><td>{0 , 0 , 1}</td><td>The size of the image to create</td></tr>
-<tr><td>float color[4]</td><td>{ 1 , 1 , 1 , 1}</td><td>The color of the image to create, or the tint of the loaded file</td></tr>
-<tr><td>TextureFormat format</td><td>TextureFormat::RGBA8_Unorm_sRGB</td><td>The format of the texture to create</td></tr>
-<tr><td>int binaryDims[3]</td><td>{0 , 0 , 1}</td><td>The size of the image in the binary file</td></tr>
-<tr><td>TextureFormat binaryFormat</td><td>TextureFormat::RGBA8_Unorm_sRGB</td><td>The format of the binary file</td></tr>
-</table>
-<br/>
-
-<b>GGUserFile_ImportedBuffer : The details of an imported buffer</b><br/><br/>
-<table>
-<tr><th colspan=3>GGUserFile_ImportedBuffer</th></tr>
-<tr><td>std::string fileName</td><td>""</td><td>The file loaded</td></tr>
-<tr><td>bool CSVHeaderRow</td><td>true</td><td>If reading a CSV, and this is true, it will skip everything up to the first newline, to ignore a header row.</td></tr>
-<tr><td>GGUserFile_LoadBufferAs loadBufferAs</td><td>GGUserFile_LoadBufferAs::Auto</td><td>How to load data</td></tr>
-<tr><td>GGUserFile_SceneDataStream dataStream</td><td>GGUserFile_SceneDataStream::GeometryFlat</td><td>What type of data to load</td></tr>
-<tr><td>std::string materialShaderFile</td><td>""</td><td>The name of the shader file to generate for reading the material from a shader.</td></tr>
-<tr><td>int structIndex</td><td>-1</td><td>the index of the struct if a structured buffer</td></tr>
-<tr><td>DataFieldType type</td><td>DataFieldType::Count</td><td>The data field type, if not a structured buffer</td></tr>
-<tr><td>int count</td><td>1</td><td>how many items are stored</td></tr>
-<tr><td>GGUserFile_TLASBuildFlags RT_BuildFlags</td><td>GGUserFile_TLASBuildFlags::PreferFastTrace</td><td>D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE etc</td></tr>
-<tr><td>bool BLASOpaque</td><td>false</td><td>DXR BLAS Option</td></tr>
-<tr><td>bool BLASNoDuplicateAnyhitInvocations</td><td>false</td><td>DXR BLAS Option</td></tr>
-<tr><td>GGUserFile_BLASCullMode BLASCullMode</td><td>GGUserFile_BLASCullMode::CullNone</td><td>BLAS triangle culling settings</td></tr>
-<tr><td>bool IsAABBs</td><td>false</td><td>Set to true if ray tracing AABBs with intersection shaders. Format is Min XYZ, Max XYZ.</td></tr>
-<tr><td>float GeometryTransform[16]</td><td>{ 1.0f , 0.0f , 0.0f , 0.0f , 0.0f , 1.0f , 0.0f , 0.0f , 0.0f , 0.0f , 1.0f , 0.0f , 0.0f , 0.0f , 0.0f , 1.0f }</td><td>A 4x4 matrix to transform pos, normal, tangent.</td></tr>
-<tr><td>CooperativeVectorData cvData</td><td>{}</td><td>Data needed for cooperative vectors support for imported buffer resources</td></tr>
-</table>
-<br/>
-
-<b>GGUserFile_ImportedResource : The details of an imported resource</b><br/><br/>
-<table>
-<tr><th colspan=3>GGUserFile_ImportedResource</th></tr>
-<tr><td>std::string nodeName</td><td>""</td><td>The name of the node this imported texture data is for</td></tr>
-<tr><td>bool resetEveryFrame</td><td>true</td><td>Whether this texture should be reset every frame, or if the technique is allowed to change it over multiple frames</td></tr>
-<tr><td>bool isATexture</td><td>true</td><td>Is it a texture or a buffer</td></tr>
-<tr><td>GGUserFile_ImportedTexture texture</td><td>{}</td><td>Texture data</td></tr>
-<tr><td>GGUserFile_ImportedBuffer buffer</td><td>{}</td><td>Buffer data</td></tr>
-</table>
-<br/>
-
-<b>GGUserFile_Camera : </b><br/><br/>
-<table>
-<tr><th colspan=3>GGUserFile_Camera</th></tr>
-<tr><td>bool perspective</td><td>true</td><td>Perspective if true, orthographic if false.</td></tr>
-<tr><td>bool leftHanded</td><td>true</td><td>Left handed if true, right handed if false.</td></tr>
-<tr><td>bool reverseZ</td><td>true</td><td>If true, reverses the depth values for more precision. https://developer.nvidia.com/content/depth-precision-visualized</td></tr>
-<tr><td>bool reverseZInfiniteDepth</td><td>false</td><td>If true, reverses the depth values and has far plane at infinite z for more precision. https://developer.nvidia.com/content/depth-precision-visualized</td></tr>
-<tr><td>float nearPlane</td><td>0.1f</td><td>The distance to the near plane.</td></tr>
-<tr><td>float farPlane</td><td>1000.0f</td><td>The distance to the far plane. Set to zero for infinite Z.</td></tr>
-<tr><td>float FOV</td><td>45.0f</td><td>Vertical field of view, in degrees</td></tr>
-<tr><td>float flySpeed</td><td>0.1f</td><td>How fast the WASD keys move in the world</td></tr>
-<tr><td>float mouseSensitivity</td><td>0.01f</td><td>How fast the mouse rotates the camera</td></tr>
-<tr><td>GGUserFile_CameraJitterType jitterType</td><td>GGUserFile_CameraJitterType::Halton23</td><td>The sequence of the jittered projection matrix</td></tr>
-<tr><td>int jitterLength</td><td>16</td><td>The length of the sequence used to jitter the jittered projection matrix. 0 means infinite.</td></tr>
-<tr><td>float startingCameraPos[3]</td><td>{ 0.0f , 0.0f , -10.0f }</td><td></td></tr>
-<tr><td>float startingCameraAltitudeAzimuth[2]</td><td>{ 0.0f , 0.0f }</td><td></td></tr>
-<tr><td><i>float cameraPos[3]</i></td><td>{0.0f , 0.0f , -10.0f}</td><td></td></tr>
-<tr><td><i>float cameraAltitudeAzimuth[2]</i></td><td>{0.0f , 0.0f}</td><td></td></tr>
-<tr><td><i>bool cameraChanged</i></td><td>false</td><td></td></tr>
-</table>
-<br/>
-
-<b>GGUserFile_SystemVars : </b><br/><br/>
-<table>
-<tr><th colspan=3>GGUserFile_SystemVars</th></tr>
-<tr><td>std::string iResolution_varName</td><td>"iResolution"</td><td></td></tr>
-<tr><td>std::string iResolution_textureName</td><td>""</td><td></td></tr>
-<tr><td>std::string iTime_varName</td><td>"iTime"</td><td></td></tr>
-<tr><td>std::string iTimeDelta_varName</td><td>"iTimeDelta"</td><td></td></tr>
-<tr><td>std::string iFrameRate_varName</td><td>"iFrameRate"</td><td></td></tr>
-<tr><td>std::string iFrame_varName</td><td>"iFrame"</td><td></td></tr>
-<tr><td>std::string iMouse_varName</td><td>"iMouse"</td><td></td></tr>
-<tr><td>std::string MouseState_varName</td><td>"MouseState"</td><td></td></tr>
-<tr><td>std::string MouseStateLastFrame_varName</td><td>"MouseStateLastFrame"</td><td></td></tr>
-<tr><td>std::string WindowSize_varName</td><td>"WindowSize"</td><td></td></tr>
-<tr><td>GGUserFile_Camera camera</td><td>{}</td><td>The camera settings. Can pluralize if one isn't enough.</td></tr>
-<tr><td>std::string ProjMtx_textureName</td><td>""</td><td>The projection matrix needs a resolution to calculate for. Choose a texture node and that will be used as a resolution.</td></tr>
-<tr><td>std::string ViewMtx_varName</td><td>"ViewMtx"</td><td></td></tr>
-<tr><td>std::string InvViewMtx_varName</td><td>"InvViewMtx"</td><td></td></tr>
-<tr><td>std::string ProjMtx_varName</td><td>"ProjMtx"</td><td></td></tr>
-<tr><td>std::string InvProjMtx_varName</td><td>"InvProjMtx"</td><td></td></tr>
-<tr><td>std::string ViewProjMtx_varName</td><td>"ViewProjMtx"</td><td></td></tr>
-<tr><td>std::string InvViewProjMtx_varName</td><td>"InvViewProjMtx"</td><td></td></tr>
-<tr><td>std::string JitteredProjMtx_varName</td><td>"JitteredProjMtx"</td><td>ProjMtx with jitter.</td></tr>
-<tr><td>std::string InvJitteredProjMtx_varName</td><td>"InvJitteredProjMtx"</td><td>Inverted ProjMtx with jitter.</td></tr>
-<tr><td>std::string JitteredViewProjMtx_varName</td><td>"JitteredViewProjMtx"</td><td>ViewProjMtx with jitter.</td></tr>
-<tr><td>std::string InvJitteredViewProjMtx_varName</td><td>"InvJitteredViewProjMtx"</td><td>Inverted ViewProjMtx with jitter.</td></tr>
-<tr><td>std::string CameraPos_varName</td><td>"CameraPos"</td><td>Camera position in world space</td></tr>
-<tr><td>std::string CameraUp_varName</td><td>"CameraUp"</td><td>Normalized camera up vector in world space</td></tr>
-<tr><td>std::string CameraLeft_varName</td><td>"CameraLeft"</td><td>Normalized camera left vector in world space</td></tr>
-<tr><td>std::string CameraForward_varName</td><td>"CameraForward"</td><td>Normalized camera forward vector in world space</td></tr>
-<tr><td>std::string CameraAltitudeAzimuth_varName</td><td>"CameraAltitudeAzimuth"</td><td></td></tr>
-<tr><td>std::string CameraChanged_varName</td><td>"CameraChanged"</td><td></td></tr>
-<tr><td>std::string CameraJitter_varName</td><td>"CameraJitter"</td><td></td></tr>
-<tr><td>std::string CameraJitterRaw_varName</td><td>"CameraJitterRaw"</td><td></td></tr>
-<tr><td>std::string CameraFOV_varName</td><td>"CameraFOV"</td><td></td></tr>
-<tr><td>std::string CameraNearPlane_varName</td><td>"CameraNearPlane"</td><td></td></tr>
-<tr><td>std::string CameraFarPlane_varName</td><td>"CameraFarPlane"</td><td></td></tr>
-<tr><td>std::string ShadingRateImageTileSize_varName</td><td>"ShadingRateImageTileSize"</td><td></td></tr>
-<tr><td>std::string KeyState_bufferName</td><td>""</td><td>256 entries for the keys this frame, and 256 entries for the keys last frame. 512 entries total.</td></tr>
-<tr><td>float motionVectorDepthThreshold</td><td>0.1f</td><td>Maximum allowed difference between depth values when comparing pixels for motion vector inlier selection.</td></tr>
-</table>
-<br/>
-
-<b>GGUserFile_SavedVariable : Saved Variable Values</b><br/><br/>
-<table>
-<tr><th colspan=3>GGUserFile_SavedVariable</th></tr>
-<tr><td>std::string name</td><td>""</td><td></td></tr>
-<tr><td>std::string value</td><td>""</td><td></td></tr>
-</table>
-<br/>
-
-<b>GGUserFileV1 : The contents of a .gguser file</b><br/><br/>
-<table>
-<tr><th colspan=3>GGUserFileV1</th></tr>
-<tr><td>std::string version</td><td>"1.0"</td><td>The version of the .gguser file</td></tr>
-<tr><td>GGUserFile_SystemVars systemVars</td><td>{}</td><td></td></tr>
-<tr><td>int resourceViewType</td><td>0</td><td>The type of resource being viewed</td></tr>
-<tr><td>int resourceViewNodeIndex</td><td>-1</td><td>The index of the node bieng viewed</td></tr>
-<tr><td>int resourceViewResourceIndex</td><td>-1</td><td>The index of that resource within that node being used</td></tr>
-<tr><td>int syncInterval</td><td>1</td><td>IDXGISwapChain::Present() parameter: Synchronize presentation after the nth vertical blank.</td></tr>
-<tr><td>GGUserFile_ImportedResource importedResources[]</td><td></td><td></td></tr>
-<tr><td>GGUserFile_SavedVariable savedVariables[]</td><td></td><td></td></tr>
-</table>
-<br/>
-
-<b>GGUserFileV2Snapshot : The snapshot of a GGUserFileV2</b><br/><br/>
-<table>
-<tr><th colspan=3>GGUserFileV2Snapshot</th></tr>
-<tr><td>std::string name</td><td>""</td><td>The snapshot name</td></tr>
-<tr><td>int resourceViewType</td><td>0</td><td>The type of resource being viewed</td></tr>
-<tr><td>int resourceViewNodeIndex</td><td>-1</td><td>The index of the node bieng viewed</td></tr>
-<tr><td>int resourceViewResourceIndex</td><td>-1</td><td>The index of that resource within that node being used</td></tr>
-<tr><td>bool loadVars</td><td>true</td><td>Whether variables will be loaded from this snapshot</td></tr>
-<tr><td>bool loadCamera</td><td>true</td><td>Whether the camera will be loaded from this snapshot</td></tr>
-<tr><td>bool loadResources</td><td>true</td><td>Whether imported resources will be loaded from this snapshot</td></tr>
-<tr><td>bool loadView</td><td>true</td><td>Whether the resource viewed will be loaded from this snapshot</td></tr>
-<tr><td>float cameraPos[3]</td><td>{ 0.0f , 0.0f , - 10.0f }</td><td>Used by snapshots to capture the camera position</td></tr>
-<tr><td>float cameraAltitudeAzimuth[2]</td><td>{ 0.0f , 0.0f }</td><td>Used by snapshots to capture the camera orientation</td></tr>
-<tr><td>GGUserFile_ImportedResource importedResources[]</td><td></td><td></td></tr>
-<tr><td>GGUserFile_SavedVariable savedVariables[]</td><td></td><td></td></tr>
-</table>
-<br/>
-
-<b>GGUserFileV2 : The contents of a .gguser file</b><br/><br/>
-<table>
-<tr><th colspan=3>GGUserFileV2</th></tr>
-<tr><td>std::string version</td><td>"2.0"</td><td>The version of the .gguser file</td></tr>
-<tr><td>int syncInterval</td><td>1</td><td>IDXGISwapChain::Present() parameter: Synchronize presentation after the nth vertical blank.</td></tr>
-<tr><td>GGUserFile_SystemVars systemVars</td><td>{}</td><td></td></tr>
-<tr><td>GGUserFileV2Snapshot snapshot</td><td>{}</td><td></td></tr>
-<tr><td>GGUserFileV2Snapshot snapshots[]</td><td></td><td></td></tr>
-<tr><td>GGUserFile_AMD_FidelityFXSDK_FrameInterpolation AMDFrameInterpolation</td><td>{}</td><td></td></tr>
-<tr><td>GGUserFile_Audio Audio</td><td>{}</td><td></td></tr>
-<tr><td>GGUserFile_WebCam WebCam</td><td>{}</td><td></td></tr>
-</table>
-<br/>
-
-<b>GGUserFileVersionOnly : Only the version of the .gguser file</b><br/><br/>
-<table>
-<tr><th colspan=3>GGUserFileVersionOnly</th></tr>
-<tr><td>std::string version</td><td>"1.0"</td><td>The version of the .gguser file</td></tr>
-</table>
-<br/>
-
-<b>GGViewerConfig : The config file for the viewer settings file ViewerConfig.json</b><br/><br/>
-<table>
-<tr><th colspan=3>GGViewerConfig</th></tr>
-<tr><td>std::string version</td><td>"1.0"</td><td>The version of the file</td></tr>
-<tr><td>std::string keyCameraForward</td><td>"W"</td><td>Camera forward key</td></tr>
-<tr><td>std::string keyCameraLeft</td><td>"A"</td><td>Camera left key</td></tr>
-<tr><td>std::string keyCameraBackward</td><td>"S"</td><td>Camera back key</td></tr>
-<tr><td>std::string keyCameraRight</td><td>"D"</td><td>Camera right key</td></tr>
-<tr><td>std::string keyCameraUp</td><td>"E"</td><td>Camera right key</td></tr>
-<tr><td>std::string keyCameraDown</td><td>"Q"</td><td>Camera down key</td></tr>
-<tr><td>std::string keyCameraFast</td><td>"Shift"</td><td>Camera fast key</td></tr>
-<tr><td>std::string keyCameraSlow</td><td>"Control"</td><td>Camera slow key</td></tr>
-<tr><td>bool betterShaderError</td><td>true</td><td>Double click shader errors with an attached debugger.</td></tr>
-<tr><td>std::string windowPersist</td><td>""</td><td></td></tr>
 </table>
 <br/>
 
@@ -2270,6 +2273,24 @@ See .bat for more info</td></tr>
 
 
 <h1>Variants</h1>
+<b>PreviewMsgClientToServer : Viewer client to server messages</b><br/><br/>
+<table>
+<tr><th colspan=3>PreviewMsgClientToServer</th></tr>
+<tr><td>PreviewMsg_Ping ping</td><td>{}</td><td></td></tr>
+<tr><td>PreviewMsgCS_Version version</td><td>{}</td><td></td></tr>
+<tr><td>PreviewMsgCS_Log log</td><td>{}</td><td></td></tr>
+</table>
+<br/>
+
+<b>PreviewMsgServerToClient : Viewer server to client messages</b><br/><br/>
+<table>
+<tr><th colspan=3>PreviewMsgServerToClient</th></tr>
+<tr><td>PreviewMsg_Ping ping</td><td>{}</td><td></td></tr>
+<tr><td>PreviewMsgSC_VersionResponse versionResponse</td><td>{}</td><td></td></tr>
+<tr><td>PreviewMsgSC_LoadGGFile loadGGFile</td><td>{}</td><td></td></tr>
+</table>
+<br/>
+
 <b>ExternalNodeData : Render graph node variant</b><br/><br/>
 <table>
 <tr><th colspan=3>ExternalNodeData</th></tr>
@@ -2292,24 +2313,6 @@ See .bat for more info</td></tr>
 <tr><td>RenderGraphNode_Action_SubGraph actionSubGraph</td><td>{}</td><td></td></tr>
 <tr><td>RenderGraphNode_Action_Barrier actionBarrier</td><td>{}</td><td></td></tr>
 <tr><td>RenderGraphNode_Action_External actionExternal</td><td>{}</td><td></td></tr>
-</table>
-<br/>
-
-<b>PreviewMsgClientToServer : Viewer client to server messages</b><br/><br/>
-<table>
-<tr><th colspan=3>PreviewMsgClientToServer</th></tr>
-<tr><td>PreviewMsg_Ping ping</td><td>{}</td><td></td></tr>
-<tr><td>PreviewMsgCS_Version version</td><td>{}</td><td></td></tr>
-<tr><td>PreviewMsgCS_Log log</td><td>{}</td><td></td></tr>
-</table>
-<br/>
-
-<b>PreviewMsgServerToClient : Viewer server to client messages</b><br/><br/>
-<table>
-<tr><th colspan=3>PreviewMsgServerToClient</th></tr>
-<tr><td>PreviewMsg_Ping ping</td><td>{}</td><td></td></tr>
-<tr><td>PreviewMsgSC_VersionResponse versionResponse</td><td>{}</td><td></td></tr>
-<tr><td>PreviewMsgSC_LoadGGFile loadGGFile</td><td>{}</td><td></td></tr>
 </table>
 <br/>
 

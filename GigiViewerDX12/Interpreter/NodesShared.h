@@ -459,6 +459,20 @@ inline BufferFormatInfo GetBufferFormatInfo(const GigiInterpreterPreviewWindowDX
 
 inline IVec3 GetDesiredSize(const GigiInterpreterPreviewWindowDX12& interpreter, const RenderGraphNode_Resource_Texture& node, int rootNodeId = -1)
 {
+    // Protect against dependency loops
+    static std::unordered_set<int> visitedNodeIds;
+    if (rootNodeId == -1)
+    {
+        rootNodeId = node.nodeIndex;
+        visitedNodeIds.clear();
+    }
+    if (visitedNodeIds.find(node.nodeIndex) != visitedNodeIds.end())
+    {
+        GigiAssert(false, "GetDesiredSize() hit a dependency loop for node \"%s\"", GetNodeName(interpreter.GetRenderGraph(), rootNodeId).c_str());
+        return IVec3{ 0, 0, 0 };
+    }
+    visitedNodeIds.insert(node.nodeIndex);
+
 	// If this is an imported texture, the size is whatever it has been set to
 	IVec3 ret = { 1, 1, 1 };
 	if (node.visibility == ResourceVisibility::Imported)
@@ -470,14 +484,7 @@ inline IVec3 GetDesiredSize(const GigiInterpreterPreviewWindowDX12& interpreter,
 		return ret;
 	}
 
-	// protect against dependency loops
-	if (rootNodeId == -1)
-		rootNodeId = node.nodeIndex;
-	else if (rootNodeId == node.nodeIndex)
-		return IVec3{ 0, 0, 0 };
-
 	// Get desired size
-
 	if (node.size.variable.variableIndex != -1)
 	{
 		GigiInterpreterPreviewWindowDX12::RuntimeVariable rtVar = interpreter.GetRuntimeVariable(node.size.variable.variableIndex);

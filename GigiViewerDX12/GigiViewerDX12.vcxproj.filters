@@ -298,6 +298,7 @@
       <Filter>DX12Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\Shared\UI\WindowPersist.h" />
+    <ClInclude Include="FileDropTarget.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GigiViewerDX12.rc" />

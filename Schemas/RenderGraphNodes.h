@@ -87,30 +87,9 @@ ENUM_BEGIN(MemoryUnitOfMeasurement, "")
     ENUM_ITEM(Bytes, "")
 ENUM_END()
 
-#include "TextureFormats.h"
-
 //========================================================
 // Helper Structures
 //========================================================
-
-STRUCT_BEGIN(NodeReference, "A generic node reference")
-    STRUCT_FIELD(std::string, name, "", "The name of the node", 0)
-
-    STRUCT_FIELD(int, nodeIndex, -1, "Calculated for convenience.", SCHEMA_FLAG_NO_SERIALIZE)
-STRUCT_END()
-
-STRUCT_INHERIT_BEGIN(TextureNodeReference, NodeReference, "A texture node reference")
-    STRUCT_FIELD(struct RenderGraphNode_Resource_Texture*, textureNode, nullptr, "A pointer to the texture node", SCHEMA_FLAG_NO_SERIALIZE)
-STRUCT_END()
-
-STRUCT_INHERIT_BEGIN(BufferNodeReference, NodeReference, "A buffer node reference")
-    STRUCT_FIELD(struct RenderGraphNode_Resource_Buffer*, bufferNode, nullptr, "A pointer to the buffer node", SCHEMA_FLAG_NO_SERIALIZE)
-STRUCT_END()
-
-STRUCT_INHERIT_BEGIN(TextureOrBufferNodeReference, NodeReference, "A texture or buffer node reference")
-    STRUCT_FIELD(struct RenderGraphNode_Resource_Texture*, textureNode, nullptr, "A pointer to the texture node", SCHEMA_FLAG_NO_SERIALIZE)
-    STRUCT_FIELD(struct RenderGraphNode_Resource_Buffer*, bufferNode, nullptr, "A pointer to the texture node", SCHEMA_FLAG_NO_SERIALIZE)
-STRUCT_END()
 
 STRUCT_BEGIN(NodePinReference, "A reference to a pin on a node")
     STRUCT_FIELD(std::string, node, "", "The name of the node", 0)
@@ -331,6 +310,8 @@ STRUCT_INHERIT_BEGIN(RenderGraphNode_Resource_Buffer, RenderGraphNode_ResourceBa
     STRUCT_FIELD(ResourceVisibility, visibility, ResourceVisibility::Internal, "Who can see the buffer and who owns it", 0)
     STRUCT_FIELD(BufferFormatDesc, format, {}, "The format of the texture.", SCHEMA_FLAG_UI_COLLAPSABLE)
     STRUCT_FIELD(BufferCountDesc, count, {}, "How many items are in the buffer.", SCHEMA_FLAG_UI_COLLAPSABLE)
+
+    STRUCT_FIELD(GGUserFile_ImportedBuffer, importedResourceSettings, {}, "The default values in the viewer", SCHEMA_FLAG_UI_COLLAPSABLE)
 STRUCT_END()
 
 STRUCT_INHERIT_BEGIN(RenderGraphNode_Resource_ShaderConstants, RenderGraphNode_ResourceBase, "Declares a shader constant buffer")
@@ -364,6 +345,8 @@ STRUCT_INHERIT_BEGIN(RenderGraphNode_Resource_Texture, RenderGraphNode_ResourceB
     STRUCT_FIELD(std::string, loadFileName, "", "If not empty, it load it as an image. This is currently not exposed to users, and is created when shaders use an image token", SCHEMA_FLAG_NO_SERIALIZE)
     STRUCT_FIELD(bool, loadFileNameAsSRGB, true, "If true, the source file is treated as sRGB", SCHEMA_FLAG_NO_SERIALIZE)
     STRUCT_FIELD(Resource_Texture_MSAA, msaaSettings, {}, "MSAA Settings for Texture2DMS, multiple samples are stored per pixel for antialiasing", 0)
+
+    STRUCT_FIELD(GGUserFile_ImportedTexture, importedResourceSettings, {}, "The default values in the viewer", SCHEMA_FLAG_UI_COLLAPSABLE)
 STRUCT_END()
 
 //========================================================

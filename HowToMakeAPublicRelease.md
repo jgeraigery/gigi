@@ -15,9 +15,11 @@ That branch is meant to be mirrored verbatim to the public repo at https://githu
 
 So, the first step is to get the "ExternalRelease" branch to contain what you want the public repo to contain.  Like for instance, by merging main into the branch.
 
-You should also increment the build number in Version.h, in the GIGI_VERSION_WITH_BUILD_NUMBER() macro. Or, if the
+You should also increment the build number in Version.h if needed, in the GIGI_VERSION_WITH_BUILD_NUMBER() macro. Or, if the
 major or minor version number changed since last release, set the build number to 0.  Make sure install.nsi has the same
-version numbers specified for VERSIONMAJOR, VERSIONMINOR and VERSIONBUILD.
+version numbers specified for VERSIONMAJOR, VERSIONMINOR and VERSIONBUILD.  It's best practice to increment the build number
+after making a release, so the internal version uses the future version number, but that might not always happen, or a new minor
+or major version may be needed for the next release.
 
 This branch should be tested to verify that things are working correctly.
 
@@ -52,6 +54,9 @@ In the private gitlab repo, find the job for the ExternalRelease branch and down
 To make the installer, extract that zip file. Inside, right click **Install.nsi** and select "Compile NSIS Script".  If you don't have NSIS installed, you can download it from https://sourceforge.net/projects/nsis/.  This will make a file named based on the version numbers E.g. Gigi-0.99.0.x64.windows.installer.exe.  This is the second file that needs to be manually added to the release as an asset.
 
 In the public github repo, create a new release through the web interface at https://github.com/electronicarts/gigi/releases/new.  You should create a new tag named from the version number (such as v0.99.0) and the release should be the same name.  You can put change notes into the description.  Then click "Publish release" and you are done!
+
+After the release is made, it's best practice to increment the build number in the internal repo so that internal users are using the
+next version of Gigi, and the next build will have the right version number waiting to be used.
 
 # Reviewing Public PRs
 
