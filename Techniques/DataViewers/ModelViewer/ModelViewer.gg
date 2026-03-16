@@ -562,6 +562,17 @@
             "UIGroup": "PathTracing"
         },
         {
+            "name": "MaxTPT",
+            "comment": "Maximum ray length",
+            "type": "Float",
+            "dflt": "1000.0f",
+            "visibility": "User",
+            "onUserChange": {
+                "name": "ResetPT"
+            },
+            "UIGroup": "PathTracing"
+        },
+        {
             "name": "ExposureFStops",
             "comment": "+1 doubles the brightness, -1 halves the brightness, and so on",
             "type": "Float",
@@ -917,7 +928,7 @@
                 {
                     "name": "roughness",
                     "type": "Float",
-                    "dflt": "0.0f",
+                    "dflt": "1.0f",
                     "semantic": "Material_Roughness"
                 },
                 {

@@ -72,3 +72,37 @@ void ImGuiRightAlign(const char* text);
 
 // todo: use table? copy to clipboard
 void ImGuiKeyValueString(const char* key, const char* value);
+
+//
+// Searchable combo box: a combo/dropdown that shows a text filter at the top
+// of the popup so users can type-search large lists.
+//
+//Usage pattern:
+//  if (BeginSearchableCombo("Format", currentLabel))
+//  {
+//      for (auto& item : items)
+//      {
+//          if (!SearchableComboFilter(item.name))
+//              continue;
+//          if (ImGui::Selectable(item.name, item == selected))
+//              selected = item;
+//      }
+//      EndSearchableCombo();
+//  }
+//
+
+struct SearchableComboState
+{
+    char filter[256] = {};
+    bool justOpened = true;
+};
+
+// Replaces ImGui::BeginCombo(). Opens the combo popup with a search input at the top.
+// Returns true if the popup is open (caller should then emit selectables and call EndSearchableCombo).
+bool BeginSearchableCombo(const char* label, const char* preview_value, int flags = 0);
+
+// Returns true if the given item text passes the current search filter (case-insensitive substring match).
+bool SearchableComboFilter(const char* itemText);
+
+// Replaces ImGui::EndCombo().
+void EndSearchableCombo();

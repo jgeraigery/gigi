@@ -19,6 +19,7 @@
 #include "UICache.h"
 #include "Shared/HashAll.h"
 #include "Shared/UI/Shared.h"
+#include "Shared/UI/ImGuiHelper.h"
 // clang-format on
 
 #define BASIC_INPUTBOX_WIDTH 75.0f
@@ -53,6 +54,9 @@ inline void ShowUIToolTip(const char* tooltip, bool sameline = true)
         ImGui::SetTooltip("%s", tooltip);
 }
 
+// Forward declarations, as needed
+inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS, bool& dirtyFlag, const char* label, const char* tooltip, StructReference& value, TypePathEntry path, ShowUIOverrideContext showUIOverrideContext);
+
 // Enums
 
 #define ENUM_BEGIN(_NAME, _DESCRIPTION) \
@@ -82,13 +86,15 @@ inline void ShowUIToolTip(const char* tooltip, bool sameline = true)
         for (int enumItemIndex = 0; enumItemIndex < _countof(enumItems); ++enumItemIndex) \
             itemWidth = std::max(itemWidth, ImGui::CalcTextSize(enumItems[enumItemIndex].name).x + ImGui::GetStyle().FramePadding.x * 2.0f); \
         ImGui::SetNextItemWidth(itemWidth + ImGui::GetTextLineHeightWithSpacing() + 10); \
-        if (ImGui::BeginCombo(label, labelNameOuter.c_str())) \
+        if (BeginSearchableCombo(label, labelNameOuter.c_str())) \
         { \
             for (int enumItemIndex = 0; enumItemIndex < _countof(enumItems); ++enumItemIndex) \
             { \
                 std::string labelName = enumItems[enumItemIndex].name; \
                 if (labelName == "Count") \
                     labelName = "<None>"; \
+                if (!SearchableComboFilter(labelName.c_str())) \
+                    continue; \
                 bool is_selected = (std::string(enumItems[enumItemIndex].name) == EnumToString(value)); \
                 if (ImGui::Selectable(labelName.c_str(), is_selected)) \
                 { \
@@ -101,7 +107,7 @@ inline void ShowUIToolTip(const char* tooltip, bool sameline = true)
                 if (is_selected) \
                     ImGui::SetItemDefaultFocus(); \
             } \
-            ImGui::EndCombo();\
+            EndSearchableCombo();\
         } \
         if (ret) \
             OnUIValueChange(label, value, path); \
@@ -578,10 +584,12 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
 
     // Node drop down
     ImGui::SetNextItemWidth(nodeWidth + ImGui::GetTextLineHeightWithSpacing() + 10);
-    if (ImGui::BeginCombo("##node", value.node.c_str()))
+    if (BeginSearchableCombo("##node", value.node.c_str()))
     {
         for (const std::string& node : nodes)
         {
+            if (!SearchableComboFilter(node.c_str()))
+                continue;
             bool is_selected = value.node == node;
             if (ImGui::Selectable(node.c_str(), is_selected))
             {
@@ -592,17 +600,19 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
                 ImGui::SetItemDefaultFocus();
         }
 
-        ImGui::EndCombo();
+        EndSearchableCombo();
     }
 
     ImGui::SameLine();
 
     // pin drop down
     ImGui::SetNextItemWidth(pinWidth + ImGui::GetTextLineHeightWithSpacing() + 10);
-    if (ImGui::BeginCombo("##node", value.pin.c_str()))
+    if (BeginSearchableCombo("##node", value.pin.c_str()))
     {
         for (const std::string& pin : pins)
         {
+            if (!SearchableComboFilter(pin.c_str()))
+                continue;
             bool is_selected = value.pin == pin;
             if (ImGui::Selectable(pin.c_str(), is_selected))
             {
@@ -613,7 +623,7 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
                 ImGui::SetItemDefaultFocus();
         }
 
-        ImGui::EndCombo();
+        EndSearchableCombo();
     }
 
     ImGui::PopID();
@@ -655,10 +665,12 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
 
     // Node drop down
     ImGui::SetNextItemWidth(nodeWidth + ImGui::GetTextLineHeightWithSpacing() + 10);
-    if (ImGui::BeginCombo("##node", value.node.c_str()))
+    if (BeginSearchableCombo("##node", value.node.c_str()))
     {
         for (const std::string& node : nodes)
         {
+            if (!SearchableComboFilter(node.c_str()))
+                continue;
             bool is_selected = value.node == node;
             if (ImGui::Selectable(node.c_str(), is_selected))
             {
@@ -669,17 +681,19 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
                 ImGui::SetItemDefaultFocus();
         }
 
-        ImGui::EndCombo();
+        EndSearchableCombo();
     }
 
     ImGui::SameLine();
 
     // pin drop down
     ImGui::SetNextItemWidth(pinWidth + ImGui::GetTextLineHeightWithSpacing() + 10);
-    if (ImGui::BeginCombo("##pin", value.pin.c_str()))
+    if (BeginSearchableCombo("##pin", value.pin.c_str()))
     {
         for (const std::string& pin : pins)
         {
+            if (!SearchableComboFilter(pin.c_str()))
+                continue;
             bool is_selected = value.pin == pin;
             if (ImGui::Selectable(pin.c_str(), is_selected))
             {
@@ -690,12 +704,45 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
                 ImGui::SetItemDefaultFocus();
         }
 
-        ImGui::EndCombo();
+        EndSearchableCombo();
     }
 
     ImGui::PopID();
     ShowUIToolTip(tooltip);
     return UIOverrideResult::Finished;
+}
+
+inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS, bool& dirtyFlag, const char* label, const char* tooltip, int& value, TypePathEntry path, ShowUIOverrideContext showUIOverrideContext)
+{
+    switch (path.operator()())
+    {
+        case TypePaths::Get(TypePaths::cEmpty, TypePaths::RenderGraph::cStruct, TypePaths::RenderGraph::c_nodes, TypePaths::RenderGraphNode::cVariant, TypePaths::RenderGraphNode::c_resourceBuffer, TypePaths::RenderGraphNode_Resource_Buffer::cStruct, TypePaths::RenderGraphNode_Resource_Buffer::c_importedResourceSettings, TypePaths::GGUserFile_ImportedBuffer::cStruct, TypePaths::GGUserFile_ImportedBuffer::c_structIndex)() :
+        {
+            StructReference ref;
+
+            if (value >= 0 && value < renderGraph.structs.size())
+            {
+                ref.name = renderGraph.structs[value].name;
+                ref.structIndex = value;
+            }
+
+            UIOverrideResult ret = ShowUIOverride(renderGraph, _FLAGS, dirtyFlag, "Struct Type", tooltip, ref, path, showUIOverrideContext);
+            if (dirtyFlag)
+            {
+                for (int structIndex = 0; structIndex < renderGraph.structs.size(); ++structIndex)
+                {
+                    if (renderGraph.structs[structIndex].name == ref.name)
+                    {
+                        value = structIndex;
+                        break;
+                    }
+                }
+            }
+            return ret;
+        }
+    }
+
+    return UIOverrideResult::Continue;
 }
 
 inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS, bool& dirtyFlag, const char* label, const char* tooltip, TextureNodeReference& value, TypePathEntry path, ShowUIOverrideContext showUIOverrideContext)
@@ -714,7 +761,7 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
     };
 
     // Texture nodes drop down
-    if (ImGui::BeginCombo(label, value.name.c_str()))
+    if (BeginSearchableCombo(label, value.name.c_str()))
     {
         std::vector<std::string> labels;
 
@@ -762,9 +809,13 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
 
         ProcessLabel(" ");
         for (const std::string& label : labels)
+        {
+            if (!SearchableComboFilter(label.c_str()))
+                continue;
             ProcessLabel(label);
+        }
 
-        ImGui::EndCombo();
+        EndSearchableCombo();
     }
     ShowUIToolTip(tooltip);
     return UIOverrideResult::Finished;
@@ -773,7 +824,7 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
 inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS, bool& dirtyFlag, const char* label, const char* tooltip, BufferNodeReference& value, TypePathEntry path, ShowUIOverrideContext showUIOverrideContext)
 {
     // Buffer nodes drop down
-    if (ImGui::BeginCombo(label, value.name.c_str()))
+    if (BeginSearchableCombo(label, value.name.c_str()))
     {
         for (int index = 0; index < renderGraph.nodes.size() + 1; ++index)
         {
@@ -782,6 +833,9 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
 
             std::string label = (index == 0) ? " " : GetNodeName(renderGraph.nodes[index - 1]).c_str();
 
+            if (!SearchableComboFilter(label.c_str()))
+                continue;
+
             bool is_selected = value.name == label;
             std::string safeLabel = label + "##";
             if (ImGui::Selectable(safeLabel.c_str(), is_selected))
@@ -793,7 +847,7 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
                 ImGui::SetItemDefaultFocus();
         }
 
-        ImGui::EndCombo();
+        EndSearchableCombo();
     }
     ShowUIToolTip(tooltip);
     return UIOverrideResult::Finished;
@@ -802,7 +856,7 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
 inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS, bool& dirtyFlag, const char* label, const char* tooltip, TextureOrBufferNodeReference& value, TypePathEntry path, ShowUIOverrideContext showUIOverrideContext)
 {
     // Texture and buffer nodes drop down
-    if (ImGui::BeginCombo(label, value.name.c_str()))
+    if (BeginSearchableCombo(label, value.name.c_str()))
     {
         for (int index = 0; index < renderGraph.nodes.size() + 1; ++index)
         {
@@ -810,6 +864,9 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
                 continue;
 
             std::string label = (index == 0) ? " " : GetNodeName(renderGraph.nodes[index - 1]).c_str();
+
+            if (!SearchableComboFilter(label.c_str()))
+                continue;
 
             bool is_selected = value.name == label;
             std::string safeLabel = label + "##";
@@ -822,7 +879,7 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
                 ImGui::SetItemDefaultFocus();
         }
 
-        ImGui::EndCombo();
+        EndSearchableCombo();
     }
     ShowUIToolTip(tooltip);
     return UIOverrideResult::Finished;
@@ -834,7 +891,7 @@ inline UIOverrideResult ShowShaderReferenceUIOverride(RenderGraph& renderGraph, 
     ImGui::PushID(label);
 
     // Compute shader drop down
-    if (ImGui::BeginCombo(label, value.name.c_str()))
+    if (BeginSearchableCombo(label, value.name.c_str()))
     {
         for (int index = 0; index < renderGraph.shaders.size() + 1; ++index)
         {
@@ -842,6 +899,9 @@ inline UIOverrideResult ShowShaderReferenceUIOverride(RenderGraph& renderGraph, 
                 continue;
 
             std::string label = (index == 0) ? " " : renderGraph.shaders[index - 1].name.c_str();
+
+            if (!SearchableComboFilter(label.c_str()))
+                continue;
 
             bool is_selected = value.name == label;
             std::string safeLabel = label + "##";
@@ -854,7 +914,7 @@ inline UIOverrideResult ShowShaderReferenceUIOverride(RenderGraph& renderGraph, 
                 ImGui::SetItemDefaultFocus();
         }
 
-        ImGui::EndCombo();
+        EndSearchableCombo();
     }
     ShowUIToolTip(tooltip);
 
@@ -996,7 +1056,7 @@ inline void VariableDropDownList(RenderGraph& renderGraph, bool& dirtyFlag, cons
 
     // Show a drop down
     ImGui::SetNextItemWidth(vars.maxTextWidth + ImGui::GetTextLineHeightWithSpacing() + 10);
-    if (ImGui::BeginCombo(label, value.c_str()))
+    if (BeginSearchableCombo(label, value.c_str()))
     {
         // Show the blank option
         {
@@ -1014,6 +1074,9 @@ inline void VariableDropDownList(RenderGraph& renderGraph, bool& dirtyFlag, cons
         // Show the variables
         for (const std::string& label : vars.names)
         {
+            if (!SearchableComboFilter(label.c_str()))
+                continue;
+
             bool is_selected = value == label;
             std::string safeLabel = label + "##";
             if (ImGui::Selectable(safeLabel.c_str(), is_selected))
@@ -1025,7 +1088,7 @@ inline void VariableDropDownList(RenderGraph& renderGraph, bool& dirtyFlag, cons
                 ImGui::SetItemDefaultFocus();
         }
 
-        ImGui::EndCombo();
+        EndSearchableCombo();
     }
     ShowUIToolTip(tooltip);
 }
@@ -1095,11 +1158,14 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
 {
     ImGui::PushID(label);
 
-    if (ImGui::BeginCombo(label, value.name.c_str()))
+    if (BeginSearchableCombo(label, value.name.c_str()))
     {
         for (int index = 0; index < renderGraph.structs.size() + 1; ++index)
         {
             std::string label = (index == 0) ? " " : renderGraph.structs[index - 1].name.c_str();
+
+            if (!SearchableComboFilter(label.c_str()))
+                continue;
 
             bool is_selected = value.name == label;
             std::string safeLabel = label + "##";
@@ -1112,7 +1178,7 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
                 ImGui::SetItemDefaultFocus();
         }
 
-        ImGui::EndCombo();
+        EndSearchableCombo();
     }
     ShowUIToolTip(tooltip);
 
@@ -1191,7 +1257,7 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
     if (labelNameOuter == "Count")
         labelNameOuter = "<None>";
 
-    if (ImGui::BeginCombo(label, labelNameOuter.c_str()))
+    if (BeginSearchableCombo(label, labelNameOuter.c_str()))
     {
         for (int i = 0; i <= (int)ShaderResourceType::Count; ++i)
         {
@@ -1201,6 +1267,9 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
             std::string labelName = EnumToString((ShaderResourceType)i);
             if (labelName == "Count")
                 labelName = "<None>";
+
+            if (!SearchableComboFilter(labelName.c_str()))
+                continue;
 
             bool is_selected = (std::string(labelName) == EnumToString(value));
             if (ImGui::Selectable(labelName.c_str(), is_selected))
@@ -1212,7 +1281,7 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
                 ImGui::SetItemDefaultFocus();
         }
 
-        ImGui::EndCombo();
+        EndSearchableCombo();
     }
     ShowUIToolTip(tooltip);
 
@@ -1314,11 +1383,14 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
         case TypePaths::Get(TypePaths::cEmpty, TypePaths::RenderGraph::cStruct, TypePaths::RenderGraph::c_variables, TypePaths::Variable::cStruct, TypePaths::Variable::c_Enum)():
         case TypePaths::Get(TypePaths::cEmpty, TypePaths::RenderGraph::cStruct, TypePaths::RenderGraph::c_structs, TypePaths::Struct::cStruct, TypePaths::Struct::c_fields, TypePaths::StructField::cStruct, TypePaths::StructField::c_Enum)():
         {
-            if (ImGui::BeginCombo(label, value.c_str()))
+            if (BeginSearchableCombo(label, value.c_str()))
             {
                 for (int enumIndex = 0; enumIndex < renderGraph.enums.size() + 1; ++enumIndex)
                 {
                     std::string label = (enumIndex == 0) ? " " : renderGraph.enums[enumIndex-1].name.c_str();
+
+                    if (!SearchableComboFilter(label.c_str()))
+                        continue;
 
                     bool is_selected = value == label;
                     std::string safeLabel = label + "##";
@@ -1331,7 +1403,7 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
                         ImGui::SetItemDefaultFocus();
                 }
 
-                ImGui::EndCombo();
+                EndSearchableCombo();
             }
             ShowUIToolTip(tooltip);
             return UIOverrideResult::Finished;
@@ -1353,7 +1425,7 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
         case TypePaths::Get(TypePaths::cEmpty, TypePaths::RenderGraph::cStruct, TypePaths::RenderGraph::c_nodes, TypePaths::RenderGraphNode::cVariant, TypePaths::RenderGraphNode::c_actionExternal, TypePaths::RenderGraphNode_Action_External::cStruct, TypePaths::RenderGraphNode_ActionBase::cStruct, TypePaths::RenderGraphNode_ActionBase::c_condition, TypePaths::Condition::cStruct, TypePaths::Condition::c_variable1)() :
         case TypePaths::Get(TypePaths::cEmpty, TypePaths::RenderGraph::cStruct, TypePaths::RenderGraph::c_nodes, TypePaths::RenderGraphNode::cVariant, TypePaths::RenderGraphNode::c_actionExternal, TypePaths::RenderGraphNode_Action_External::cStruct, TypePaths::RenderGraphNode_ActionBase::cStruct, TypePaths::RenderGraphNode_ActionBase::c_condition, TypePaths::Condition::cStruct, TypePaths::Condition::c_variable2)() :
         {
-            if (ImGui::BeginCombo(label, value.c_str()))
+            if (BeginSearchableCombo(label, value.c_str()))
             {
                 // Sort the list of variables
                 std::vector<std::string> vars;
@@ -1367,6 +1439,9 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
                 // Show a drop down
                 for (const std::string& label : vars)
                 {
+                    if (!SearchableComboFilter(label.c_str()))
+                        continue;
+
                     bool is_selected = value == label;
                     std::string safeLabel = label + "##";
                     if (ImGui::Selectable(safeLabel.c_str(), is_selected))
@@ -1378,7 +1453,7 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
                         ImGui::SetItemDefaultFocus();
                 }
 
-                ImGui::EndCombo();
+                EndSearchableCombo();
             }
             ShowUIToolTip(tooltip);
             return UIOverrideResult::Finished;

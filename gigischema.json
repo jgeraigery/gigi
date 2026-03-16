@@ -640,6 +640,116 @@
                     "type": "integer"
                   }
                 }
+              },
+              "importedResourceSettings": {
+                "description": "The default values in the viewer",
+                "type": "object",
+                "properties": {
+                  "fileName": {
+                    "description": "The file loaded",
+                    "type": "string"
+                  },
+                  "CSVHeaderRow": {
+                    "description": "If reading a CSV, and this is true, it will skip everything up to the first newline, to ignore a header row.",
+                    "type": "boolean"
+                  },
+                  "loadBufferAs": {
+                    "description": "How to load data",
+                    "type": "string",
+                    "enum": ["Auto", "Binary"]
+                  },
+                  "dataStream": {
+                    "description": "What type of data to load",
+                    "type": "string",
+                    "enum": ["GeometryFlat", "Lights", "Materials"]
+                  },
+                  "materialShaderFile": {
+                    "description": "The name of the shader file to generate for reading the material from a shader.",
+                    "type": "string"
+                  },
+                  "structIndex": {
+                    "description": "the index of the struct if a structured buffer",
+                    "type": "integer"
+                  },
+                  "type": {
+                    "description": "The data field type, if not a structured buffer",
+                    "type": "string",
+                    "enum": ["Int", "Int2", "Int3", "Int4", "Uint", "Uint2", "Uint3", "Uint4", "Float", "Float2", "Float3", "Float4", "Bool", "Float4x4", "Uint_16", "Int_64", "Uint_64", "Float_16", "Count"]
+                  },
+                  "count": {
+                    "description": "how many items are stored",
+                    "type": "integer"
+                  },
+                  "RT_BuildFlags": {
+                    "description": "D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE etc",
+                    "type": "string",
+                    "enum": ["None", "AllowUpdate", "AllowCompaction", "PreferFastTrace", "PreferFastBuild", "MinimizeMemory"]
+                  },
+                  "BLASOpaque": {
+                    "description": "DXR BLAS Option",
+                    "type": "boolean"
+                  },
+                  "BLASNoDuplicateAnyhitInvocations": {
+                    "description": "DXR BLAS Option",
+                    "type": "boolean"
+                  },
+                  "BLASCullMode": {
+                    "description": "BLAS triangle culling settings",
+                    "type": "string",
+                    "enum": ["CullNone", "FrontIsClockwise", "FrontIsCounterClockwise"]
+                  },
+                  "IsAABBs": {
+                    "description": "Set to true if ray tracing AABBs with intersection shaders. Format is Min XYZ, Max XYZ.",
+                    "type": "boolean"
+                  },
+                  "GeometryTransform": {
+                    "description": "A 4x4 matrix to transform pos, normal, tangent.",
+                    "type": "array",
+                    "minItems": 16,
+                    "maxItems": 16,
+                    "items": {
+                      "type": "number"
+                    }
+                  },
+                  "cvData": {
+                    "description": "Data needed for cooperative vectors support for imported buffer resources",
+                    "type": "object",
+                    "properties": {
+                      "convert": {
+                        "description": "If true, does the data conversion described below",
+                        "type": "boolean"
+                      },
+                      "width": {
+                        "description": "How many columns in the matrix or vector.",
+                        "type": "integer"
+                      },
+                      "height": {
+                        "description": "How many rows in the matrix or vector.",
+                        "type": "integer"
+                      },
+                      "srcType": {
+                        "description": "The data type of the source data.",
+                        "type": "string",
+                        "enum": ["_sint16", "_uint16", "_sint32", "_uint32", "_float16", "_float32", "_sint8x4", "_uint8x4", "_uint8", "_sint8", "_float8_e4m3", "_float8_e5m2"]
+                      },
+                      "srcLayout": {
+                        "description": "The layout of the source data.",
+                        "type": "string",
+                        "enum": ["RowMajor", "ColMajor", "MulOptimal", "OuterProductOptimal"]
+                      },
+                      "destType": {
+                        "description": "The data type you want it to be converted to.",
+                        "type": "string",
+                        "enum": ["_sint16", "_uint16", "_sint32", "_uint32", "_float16", "_float32", "_sint8x4", "_uint8x4", "_uint8", "_sint8", "_float8_e4m3", "_float8_e5m2"]
+                      },
+                      "destLayout": {
+                        "description": "The layout you want it to be converted to.",
+                        "type": "string",
+                        "enum": ["RowMajor", "ColMajor", "MulOptimal", "OuterProductOptimal"]
+                      }
+                    }
+                  }
+                }
               }
             }
           },
@@ -878,6 +988,61 @@
                   "sampleCount": {
                     "description": "MSAA sample count, usually 2 or 4, most hardware also has 8 and some even 16 or more.",
                     "type": "integer"
+                  }
+                }
+              },
+              "importedResourceSettings": {
+                "description": "The default values in the viewer",
+                "type": "object",
+                "properties": {
+                  "fileName": {
+                    "description": "The image file loaded",
+                    "type": "string"
+                  },
+                  "fileIsSRGB": {
+                    "description": "Whether the file is an sRGB file or not",
+                    "type": "boolean"
+                  },
+                  "makeMips": {
+                    "description": "Whether to make mips or no",
+                    "type": "boolean"
+                  },
+                  "size": {
+                    "description": "The size of the image to create",
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "items": {
+                      "type": "integer"
+                    }
+                  },
+                  "color": {
+                    "description": "The color of the image to create, or the tint of the loaded file",
+                    "type": "array",
+                    "minItems": 4,
+                    "maxItems": 4,
+                    "items": {
+                      "type": "number"
+                    }
+                  },
+                  "format": {
+                    "description": "The format of the texture to create",
+                    "type": "string",
+                    "enum": ["Any", "R8_Unorm", "RG8_Unorm", "RGBA8_Unorm", "RGBA8_Unorm_sRGB", "BGRA8_Unorm", "R8_Snorm", "RG8_Snorm", "RGBA8_Snorm", "R8_Uint", "RG8_Uint", "RGBA8_Uint", "R8_Sint", "RG8_Sint", "RGBA8_Sint", "R16_Float", "RG16_Float", "RGBA16_Float", "RGBA16_Unorm", "RGBA16_Snorm", "RG16_Uint", "R32_Float", "RG32_Float", "RGBA32_Float", "R32_Uint", "RG32_Uint", "RGBA32_Uint", "R11G11B10_Float", "D32_Float", "D16_Unorm", "D32_Float_S8", "D24_Unorm_S8", "BC1_Unorm", "BC4_Unorm", "BC4_Snorm", "BC5_Unorm", "BC5_Snorm", "BC7_Unorm", "BC7_Unorm_sRGB", "BC6_UF16", "BC6_SF16"]
+                  },
+                  "binaryDims": {
+                    "description": "The size of the image in the binary file",
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "items": {
+                      "type": "integer"
+                    }
+                  },
+                  "binaryFormat": {
+                    "description": "The format of the binary file",
+                    "type": "string",
+                    "enum": ["Any", "R8_Unorm", "RG8_Unorm", "RGBA8_Unorm", "RGBA8_Unorm_sRGB", "BGRA8_Unorm", "R8_Snorm", "RG8_Snorm", "RGBA8_Snorm", "R8_Uint", "RG8_Uint", "RGBA8_Uint", "R8_Sint", "RG8_Sint", "RGBA8_Sint", "R16_Float", "RG16_Float", "RGBA16_Float", "RGBA16_Unorm", "RGBA16_Snorm", "RG16_Uint", "R32_Float", "RG32_Float", "RGBA32_Float", "R32_Uint", "RG32_Uint", "RGBA32_Uint", "R11G11B10_Float", "D32_Float", "D16_Unorm", "D32_Float_S8", "D24_Unorm_S8", "BC1_Unorm", "BC4_Unorm", "BC4_Snorm", "BC5_Unorm", "BC5_Snorm", "BC7_Unorm", "BC7_Unorm_sRGB", "BC6_UF16", "BC6_SF16"]
                   }
                 }
               }

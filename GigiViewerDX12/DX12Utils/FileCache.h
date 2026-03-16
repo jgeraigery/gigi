@@ -72,3 +72,5 @@ public:
 private:
 	std::unordered_map<std::string, File> m_cache;
 };
+
+std::string CanonifyFileName(const char* fileName);

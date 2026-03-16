@@ -26,7 +26,7 @@ public:
 	{
 		ID3D12Resource* resource = nullptr;
 		D3D12_RESOURCE_STATES newState = D3D12_RESOURCE_STATE_COMMON;
-		std::string debugText = nullptr;
+		std::string debugText;
 		bool isUAVBarrier = false;
 	};
 

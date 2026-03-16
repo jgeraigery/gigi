@@ -6,7 +6,7 @@ Struct_Materials Material_MaterialBuffer(StructuredBuffer<Struct_Materials> Mate
     ret.baseColor = float4(1.f, 1.f, 1.f, 1.f);
     ret.emissive = float3(0.f, 0.f, 0.f);
     ret.metallic = float(0.f);
-    ret.roughness = float(0.f);
+    ret.roughness = float(1.f);
     ret.alphaMode = int(0);
     ret.alphaCutoff = float(0.f);
     ret.doubleSided = int(1);
@@ -39,7 +39,7 @@ Struct_Materials Material_MaterialBuffer_Level(StructuredBuffer<Struct_Materials
     ret.baseColor = float4(1.f, 1.f, 1.f, 1.f);
     ret.emissive = float3(0.f, 0.f, 0.f);
     ret.metallic = float(0.f);
-    ret.roughness = float(0.f);
+    ret.roughness = float(1.f);
     ret.alphaMode = int(0);
     ret.alphaCutoff = float(0.f);
     ret.doubleSided = int(1);

@@ -27,7 +27,15 @@ Gigi Compiler Generated Code (DX12) | Gigi Browser
 
 Gigi is being actively used and developed, but is young software. You may hit bugs or missing features. Please report these so we can improve Gigi and push forward in the most useful directions. Pull requests are also appreciated! Please see the "Contributing" section below.
 
-# Platform Support
+# Minimum Requirements
+
+* Windows 11
+* A GPU capable of DX12
+
+Gigi is currently windows only and runs DX12.  If a system doesn't support something used in a Gigi graph such as ray tracing, variable
+rate shading, or similar, Gigi is supposed to put an error in the error log, but otherwise run normally.
+
+# Code Generation Platform Support
 
 Different platforms have different levels of feature support both due to platform limitations, as well as functionality needing to be implemented.  Please see this for details about what is supported on what platforms.
 
@@ -115,6 +123,8 @@ Owens Junior Nicolas
 Patrick Anderson
 
 Richard Raquepo
+
+Stefano Scolari
 
 Stephane Levesque
 

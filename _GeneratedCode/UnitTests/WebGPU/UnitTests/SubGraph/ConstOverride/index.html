@@ -62,7 +62,7 @@
             let CameraAltitudeAzimuth = [ 0, 0 ];
             let CameraLeftHanded = true;
             let CameraFlySpeed = 0.1;
-            let CameraMouseSensitivity = 0.01;
+            let CameraMouseSensitivity = 0.005;
             let CameraChanged = false;
 
             let CameraPos_Starting = [ 0, 0, -10 ];
@@ -85,7 +85,7 @@
             document.getElementById("CameraAltitudeAzimuth1").addEventListener('change', (event) => { CameraAltitudeAzimuth[1] = event.target.value; });
 
             // Camera mouse sensitivity and fly speed
-            document.getElementById("CameraMouseSensitivity").value = 0.01;
+            document.getElementById("CameraMouseSensitivity").value = 0.005;
             document.getElementById("CameraFlySpeed").value = 0.1;
             document.getElementById("CameraMouseSensitivity").addEventListener('change', (event) => { CameraMouseSensitivity = event.target.value; });
             document.getElementById("CameraFlySpeed").addEventListener('change', (event) => { CameraFlySpeed = event.target.value; });
@@ -113,8 +113,9 @@
                     let dx = MouseStateLastFrame[0] - MouseState[0];
                     let dy = MouseStateLastFrame[1] - MouseState[1];
 
-                    dx *= movementMultiplier;
-                    dy *= movementMultiplier;
+                    // Don't need to muliply by frame time. The mouse will move a smaller distance over higher frame times.
+                    //dx *= movementMultiplier;
+                    //dy *= movementMultiplier;
 
                     if (!CameraLeftHanded)
                     {
@@ -526,7 +527,7 @@
                     <span id="FPS"></span>
                     <br />
                     <br />
-                    <b>Created using <a href="https://github.com/electronicarts/gigi/">Gigi v1.01.9</a></b>
+                    <b>Created using <a href="https://github.com/electronicarts/gigi/">Gigi v1.01.10</a></b>
                 </td>
             </tr>
         </table>

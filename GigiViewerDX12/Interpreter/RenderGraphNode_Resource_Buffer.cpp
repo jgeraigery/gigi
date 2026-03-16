@@ -891,6 +891,71 @@ static std::vector<char> LoadStructuredBuffer(const GigiInterpreterPreviewWindow
         case GGUserFile_SceneDataStream::GeometryFlat: ret.resize(destStructSize * vertexCount, 0); break;
         case GGUserFile_SceneDataStream::Lights: ret.resize(destStructSize * lightCount, 0); break;
         case GGUserFile_SceneDataStream::Materials: ret.resize(destStructSize * materialCount, 0); break;
+        default:
+        {
+            GigiAssert(false, "Unhandled data stream in " __FUNCTION__);
+            break;
+        }
+    }
+
+    // Default initialize the destination
+    // Note: even though we default initialize, we may not get the default values when we expect them.
+    // For instance, if the obj material file doesn't have roughness for a specific material, the obj loader will default initialize roughness and we will take that value.
+    // We could add a bool for each material value about whether it was set in the source file, but the loaders would have to also support exposing that concept.
+    {
+        // Make a default initialized struct
+        std::vector<unsigned char> defaultStruct(destStructSize, 0);
+        {
+            size_t offset = 0;
+            for (const StructField& field : structDesc.fields)
+            {
+                DataFieldTypeInfoStruct fieldTypeInfo = DataFieldTypeInfo(field.type);
+                switch (fieldTypeInfo.componentType)
+                {
+                    case DataFieldComponentType::_int:
+                    {
+                        SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (int*)&defaultStruct[offset]);
+                        break;
+                    }
+                    case DataFieldComponentType::_uint16_t:
+                    {
+                        SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (uint16_t*)&defaultStruct[offset]);
+                        break;
+                    }
+                    case DataFieldComponentType::_uint32_t:
+                    {
+                        SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (uint32_t*)&defaultStruct[offset]);
+                        break;
+                    }
+                    case DataFieldComponentType::_int64_t:
+                    {
+                        SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (int64_t*)&defaultStruct[offset]);
+                        break;
+                    }
+                    case DataFieldComponentType::_uint64_t:
+                    {
+                        SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (uint64_t*)&defaultStruct[offset]);
+                        break;
+                    }
+                    case DataFieldComponentType::_float:
+                    {
+                        SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (float*)&defaultStruct[offset]);
+                        break;
+                    }
+                    default:
+                    {
+                        GigiAssert(false, "Unhandled component type in " __FUNCTION__);
+                        break;
+                    }
+                }
+                offset += field.sizeInBytes;
+            }
+        }
+
+        // memcpy the default object to default initialize the entire buffer
+        size_t count = ret.size() / destStructSize;
+        for (size_t i = 0; i < count; ++i)
+            memcpy(&ret[i * destStructSize], defaultStruct.data(), destStructSize);
     }
 
 	// gather the data
@@ -931,6 +996,7 @@ static std::vector<char> LoadStructuredBuffer(const GigiInterpreterPreviewWindow
             }
         ;
 
+        // Unknown and invalid semantics are left at their default values
         switch (desc.buffer.dataStream)
         {
             // Material data stream
@@ -948,13 +1014,6 @@ static std::vector<char> LoadStructuredBuffer(const GigiInterpreterPreviewWindow
                         case StructFieldSemantic::Material_AlphaMode: CopyFieldScalar(sceneData.materials[materialIndex].alphaMode, dest); break;
                         case StructFieldSemantic::Material_AlphaCutoff: CopyFieldScalar(sceneData.materials[materialIndex].alphaCutoff, dest); break;
                         case StructFieldSemantic::Material_DoubleSided: CopyFieldScalar(sceneData.materials[materialIndex].doubleSided, dest); break;
-
-                        // unknown semantics are zeroed out
-                        default:
-                        {
-                            for (int index = 0; index < typeInfo.componentCount; ++index)
-                                SetToZero(&ret[materialIndex * destStructSize + offset], index, typeInfo.componentType);
-                        }
                     }
                 }
                 break;
@@ -971,13 +1030,6 @@ static std::vector<char> LoadStructuredBuffer(const GigiInterpreterPreviewWindow
                         case StructFieldSemantic::Light_ColorIntensity: CopyFieldArray(sceneData.lights[lightIndex].colorIntensity, dest); break;
                         case StructFieldSemantic::Light_Range: CopyFieldScalar(sceneData.lights[lightIndex].range, dest); break;
                         case StructFieldSemantic::Light_SpotInnerOuterRad: CopyFieldArray(sceneData.lights[lightIndex].spotInnerOuterRad, dest); break;
-
-                        // unknown semantics are zeroed out
-                        default:
-                        {
-                            for (int index = 0; index < typeInfo.componentCount; ++index)
-                                SetToZero(&ret[lightIndex * destStructSize + offset], index, typeInfo.componentType);
-                        }
                     }
                 }
                 break;
@@ -1027,37 +1079,17 @@ static std::vector<char> LoadStructuredBuffer(const GigiInterpreterPreviewWindow
                         case StructFieldSemantic::UV:
                         {
                             if (field.semanticIndex < _countof(SceneData::Vertex::uvs))
-                            {
                                 CopyFieldArray(sceneData.flattenedVertices[vertexIndex].uvs[field.semanticIndex], dest);
-                            }
-                            else
-                            {
-                                // invalid UVs are zeroed out
-                                for (int index = 0; index < typeInfo.componentCount; ++index)
-                                    SetToZero(&ret[vertexIndex * destStructSize + offset], index, typeInfo.componentType);
-                            }
                             break;
                         }
                         case StructFieldSemantic::MaterialID: CopyFieldScalar(sceneData.flattenedVertices[vertexIndex].materialID, dest); break;
                         case StructFieldSemantic::ShapeID: CopyFieldScalar(sceneData.flattenedVertices[vertexIndex].shapeIndex, dest); break;
-
-                        // unknown semantics are zeroed out
-                        default:
-                        {
-                            for (int index = 0; index < typeInfo.componentCount; ++index)
-                                SetToZero(&ret[vertexIndex * destStructSize + offset], index, typeInfo.componentType);
-                        }
                     }
                 }
 
                 break;
             }
-            // unknown data stream
-            default:
-            {
-                memset(ret.data(), 0, ret.size());
-                break;
-            }
+
         }
 
 		offset += field.sizeInBytes;
@@ -1439,6 +1471,7 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeActionImported(const RenderGraphNod
 	if (nodeAction == NodeAction::Execute)
 	{
 		ImportedResourceDesc& desc = m_importedResources[node.name];
+        desc.stale = false;
 
 		bool hasFileName = !desc.buffer.fileName.empty();
 		bool hasEnoughInfoToCreate = false;

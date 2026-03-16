@@ -30,6 +30,9 @@
 #include "backends/imgui_impl_dx12.h"
 #include <d3d12.h>
 #include <dxgi1_6.h>
+#include <oleidl.h>
+#include <shellapi.h>
+#include <shlobj.h>
 #include <tchar.h>
 #include <string>
 #include <stdarg.h>
@@ -452,6 +455,17 @@ struct ResourceViewState
         type = textureType;
         nodeIndex = _nodeIndex;
         resourceIndex = _resourceIndex;
+        resourceName = "";
+    }
+
+    void Texture(int _nodeIndex, const char* _resourceName, RuntimeTypes::ViewableResource::Type textureType)
+    {
+        StoreLast();
+
+        type = textureType;
+        nodeIndex = _nodeIndex;
+        resourceIndex = -1;
+        resourceName = _resourceName;
     }
 
     void ConstantBuffer(int _nodeIndex, int _resourceIndex)
@@ -461,6 +475,17 @@ struct ResourceViewState
         type = RuntimeTypes::ViewableResource::Type::ConstantBuffer;
         nodeIndex = _nodeIndex;
         resourceIndex = _resourceIndex;
+        resourceName = "";
+    }
+
+    void ConstantBuffer(int _nodeIndex, const char* _resourceName)
+    {
+        StoreLast();
+
+        type = RuntimeTypes::ViewableResource::Type::ConstantBuffer;
+        nodeIndex = _nodeIndex;
+        resourceIndex = -1;
+        resourceName = resourceName;
     }
 
     void Buffer(int _nodeIndex, int _resourceIndex)
@@ -470,25 +495,39 @@ struct ResourceViewState
         type = RuntimeTypes::ViewableResource::Type::Buffer;
         nodeIndex = _nodeIndex;
         resourceIndex = _resourceIndex;
+        resourceName = "";
+    }
+
+    void Buffer(int _nodeIndex, const char* _resourceName)
+    {
+        StoreLast();
+
+        type = RuntimeTypes::ViewableResource::Type::Buffer;
+        nodeIndex = _nodeIndex;
+        resourceIndex = -1;
+        resourceName = _resourceName;
     }
 
     void ViewLast()
     {
-        if (nodeIndex == -1 || lastNodeIndex == -1 || resourceIndex == -1 || lastResourceIndex == -1)
+        if (nodeIndex == -1 || lastNodeIndex == -1 || (resourceIndex == -1 && resourceName.empty()) || (lastResourceIndex == -1 && lastResourceName.empty()))
             return;
 
         std::swap(type, lastType);
         std::swap(nodeIndex, lastNodeIndex);
         std::swap(resourceIndex, lastResourceIndex);
+        std::swap(resourceName, lastResourceName);
     }
 
     RuntimeTypes::ViewableResource::Type type = RuntimeTypes::ViewableResource::Type::Texture2D;
     int nodeIndex = -1;
     int resourceIndex = -1;
+    std::string resourceName;
 
     RuntimeTypes::ViewableResource::Type lastType = RuntimeTypes::ViewableResource::Type::Texture2D;
     int lastNodeIndex = -1;
     int lastResourceIndex = -1;
+    std::string lastResourceName;
 
     // These are in image space (pixels of viewed image)
     int mousePosImageX = 0;
@@ -510,6 +549,32 @@ struct ResourceViewState
         lastType = type;
         lastNodeIndex = nodeIndex;
         lastResourceIndex = resourceIndex;
+        lastResourceName = resourceName;
+    }
+
+    void Update(GigiInterpreterPreviewWindowDX12& interpreter)
+    {
+        // if there is a name, resolve that name to an index every frame.
+        // This comes up in the model viewer, when the resource index changes for the path tracing output, after the model changes and new textures are loaded etc.
+        if (resourceName.empty())
+            return;
+
+        interpreter.RuntimeDataLambda(
+            [this](auto& key, const RuntimeTypes::RenderGraphNode_Base& runtimeData)
+            {
+                int viewableResourceIndex = -1;
+                for (const RuntimeTypes::ViewableResource& viewableResource : runtimeData.m_viewableResources)
+                {
+                    viewableResourceIndex++;
+                    if (!_stricmp(viewableResource.m_displayName.c_str(), resourceName.c_str()))
+                    {
+                        resourceIndex = viewableResourceIndex;
+                        break;
+                    }
+                }
+            }
+        );
+
     }
 };
 static ResourceViewState g_resourceView;
@@ -526,6 +591,10 @@ void CleanupRenderTarget();
 void WaitForLastSubmittedFrame();
 FrameContext* WaitForNextFrameResources();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+#include "FileDropTarget.h"
+
+static IDropTarget* g_fileDropTarget = nullptr;
 
 bool g_isForEditor = false;
 std::string g_editorIP = "";
@@ -895,6 +964,7 @@ void ScatterSnapshotData(const GGUserFileV2Snapshot& snapshot, bool switchingSna
         g_resourceView.type = (RuntimeTypes::ViewableResource::Type)snapshot.resourceViewType;
         g_resourceView.nodeIndex = snapshot.resourceViewNodeIndex;
         g_resourceView.resourceIndex = snapshot.resourceViewResourceIndex;
+        g_resourceView.resourceName = snapshot.resourceViewResourceName;
     }
 
     if (loadResources)
@@ -936,6 +1006,7 @@ void GatherSnapshotData(GGUserFileV2Snapshot& snapshot)
     snapshot.resourceViewType = (int)g_resourceView.type;
     snapshot.resourceViewNodeIndex = g_resourceView.nodeIndex;
     snapshot.resourceViewResourceIndex = g_resourceView.resourceIndex;
+    snapshot.resourceViewResourceName = g_resourceView.resourceName;
 
     snapshot.cameraPos = g_systemVariables.camera.cameraPos;
     snapshot.cameraAltitudeAzimuth = g_systemVariables.camera.cameraAltitudeAzimuth;
@@ -1065,8 +1136,10 @@ bool ConvertGGUserFile(const GGUserFileV1& oldFile, GGUserFileV2& newFile)
     return true;
 }
 
-GGUserFileV2 LoadGGUserFile()
+GGUserFileV2 LoadGGUserFile(const RenderGraph& renderGraph)
 {
+    bool existed = false;
+
     // nothing to do if no file name
     if (g_renderGraphFileName.empty())
         return GGUserFileV2();
@@ -1094,6 +1167,7 @@ GGUserFileV2 LoadGGUserFile()
         GGUserFileVersionOnly ggUserDataVersion;
         if (ReadFromJSONFile(ggUserDataVersion, ggUserFileName.c_str()))
         {
+            // 1.x
             if (ggUserDataVersion.version == "1.0")
             {
                 GGUserFileV1 ggUserDataOld;
@@ -1101,7 +1175,8 @@ GGUserFileV2 LoadGGUserFile()
                 if (!ReadFromJSONFile(ggUserDataOld, ggUserFileName.c_str()) || !ConvertGGUserFile(ggUserDataOld, ggUserData))
                     loadFailed = true;
             }
-            else if (ggUserDataVersion.version == "2.0")
+            // 2.x
+            else if (StringBeginsWith(ggUserDataVersion.version.c_str(), "2."))
             {
                 if (!ReadFromJSONFile(ggUserData, ggUserFileName.c_str()))
                     loadFailed = true;
@@ -1114,10 +1189,48 @@ GGUserFileV2 LoadGGUserFile()
 
         if (loadFailed)
             ggUserData = GGUserFileV2();
+        else
+            existed = true;
+    }
+
+    // If the gguser data file didn't exist, set the imported resource settings from the nodes in the graph
+    if (!existed)
+    {
+        for (const RenderGraphNode& nodeBase : g_interpreter.GetRenderGraph().nodes)
+        {
+            switch (nodeBase._index)
+            {
+                case RenderGraphNode::c_index_resourceBuffer:
+                {
+                    const RenderGraphNode_Resource_Buffer& node = nodeBase.resourceBuffer;
+                    if (node.visibility != ResourceVisibility::Imported)
+                        continue;
+
+                    GGUserFile_ImportedResource importedResourceInfo;
+                    importedResourceInfo.nodeName = node.name;
+                    importedResourceInfo.isATexture = false;
+                    importedResourceInfo.buffer = node.importedResourceSettings;
+                    ggUserData.snapshot.importedResources.push_back(importedResourceInfo);
+                    break;
+                }
+                case RenderGraphNode::c_index_resourceTexture:
+                {
+                    const RenderGraphNode_Resource_Texture& node = nodeBase.resourceTexture;
+                    if (node.visibility != ResourceVisibility::Imported)
+                        continue;
+
+                    GGUserFile_ImportedResource importedResourceInfo;
+                    importedResourceInfo.nodeName = node.name;
+                    importedResourceInfo.isATexture = true;
+                    importedResourceInfo.texture = node.importedResourceSettings;
+                    ggUserData.snapshot.importedResources.push_back(importedResourceInfo);
+                    break;
+                }
+            }
+        }
     }
 
     // restore the saved data
-    g_interpreter.m_importedResources.clear();
     ScatterSnapshotData(ggUserData.snapshot, false, true, true, true);
     g_syncInterval = ggUserData.syncInterval;
     g_systemVariables = ggUserData.systemVars;
@@ -1248,10 +1361,9 @@ bool LoadGGFile(const char* fileName, bool preserveState, bool addToRecentFiles)
         cameraAltitudeAzimuth = g_systemVariables.camera.cameraAltitudeAzimuth;
     }
 
-    // save the old gg user file, and then load the new one after we change our file name
+    // save the old gg user file
     SaveGGUserFile();
     g_renderGraphFileName = fileName;
-    auto ggUserData = LoadGGUserFile();
 
     // clear if we should
     if (g_renderGraphFileName.empty())
@@ -1262,6 +1374,7 @@ bool LoadGGFile(const char* fileName, bool preserveState, bool addToRecentFiles)
     }
 
     // compile the file
+    g_interpreter.m_importedResources.clear();
     GigiCompileResult compileResult = g_interpreter.Compile(g_renderGraphFileName.c_str(), PostLoad_DX12);
 
     // Add the .gg file and any subgraph .gg files to the file watcher, whether or not compilation was successful.
@@ -1283,6 +1396,9 @@ bool LoadGGFile(const char* fileName, bool preserveState, bool addToRecentFiles)
         g_interpreter.Clear();
         return false;
     }
+
+    // Load the new gg user file
+    auto ggUserData = LoadGGUserFile(g_interpreter.GetRenderGraph());
 
     ScatterSnapshotVariables(ggUserData.snapshot);
 
@@ -1354,7 +1470,7 @@ void ReloadGGFile(bool clearCachedFiles)
     if (clearCachedFiles)
         g_interpreter.ClearCachedFiles();
 
-    LoadGGFile(g_renderGraphFileName.c_str(), true, true);
+    LoadGGFile(g_renderGraphFileName.c_str(), true, false);
 }
 
 void OnServerMessage(const PreviewMsgSC_VersionResponse& msg)
@@ -2358,8 +2474,12 @@ void SynchronizeSystemVariables()
             // Get the resolution if we can
             float resolution[2] = { 1, 1 };
             {
+                std::string projMtxTextureName = g_systemVariables.ProjMtx_textureName;
+                if (projMtxTextureName.empty() && g_interpreter.GetRenderGraph().PrimaryOutput.nodeIndex != -1)
+                    projMtxTextureName = GetNodeName(g_interpreter.GetRenderGraph().nodes[g_interpreter.GetRenderGraph().PrimaryOutput.nodeIndex]);
+
                 bool exists = false;
-                auto rtTex = g_interpreter.GetRuntimeNodeData_RenderGraphNode_Resource_Texture(g_systemVariables.ProjMtx_textureName.c_str(), exists);
+                auto rtTex = g_interpreter.GetRuntimeNodeData_RenderGraphNode_Resource_Texture(projMtxTextureName.c_str(), exists);
                 if (exists)
                 {
                     resolution[0] = (float)rtTex.m_size[0];
@@ -2447,7 +2567,8 @@ void SynchronizeSystemVariables()
             }
 
             // Warn if a matrix involving projection is used, but there is no texture specified for aspect ratio
-            if (g_systemVariables.ProjMtx_textureName.empty() && (
+            if (g_systemVariables.ProjMtx_textureName.empty() &&
+                g_interpreter.GetRenderGraph().PrimaryOutput.nodeIndex == -1 && (
                 GetVariableIndex(g_interpreter.GetRenderGraph(), g_systemVariables.ProjMtx_varName.c_str()) != -1 ||
                 GetVariableIndex(g_interpreter.GetRenderGraph(), g_systemVariables.InvProjMtx_varName.c_str()) != -1 ||
                 GetVariableIndex(g_interpreter.GetRenderGraph(), g_systemVariables.JitteredProjMtx_varName.c_str()) != -1 ||
@@ -2461,7 +2582,7 @@ void SynchronizeSystemVariables()
                 static bool shown = false;
                 if (!shown)
                 {
-                    Log(LogLevel::Warn, "No texture is specified for the projection matrix aspect ratio, assuming 1:1. You can set the \"Proj Mtx Texture\" in the camera settings in the system variables tab.");
+                    Log(LogLevel::Warn, "No texture is specified for the projection matrix aspect ratio, assuming 1:1. You can set the \"Proj Mtx Texture\" in the camera settings in the system variables tab, or set the render graph primary output.");
                     shown = true;
                 }
             }
@@ -5951,6 +6072,8 @@ void ShowResourceView()
     g_resourceViewImageClipMin = ImVec2{ 0.0f, 0.0f };
     g_resourceViewImageClipMax = ImVec2{ 0.0f, 0.0f };
 
+    g_resourceView.Update(g_interpreter);
+
     // See if we have a texture selected, so we can turn off mouse wheel scroll if so, since that contols zoom.
     bool textureSelected = false;
     const RenderGraph& renderGraph = g_interpreter.GetRenderGraph();
@@ -8503,31 +8626,12 @@ public:
                         if (nodeIndex == -1)
                             continue;
 
-                        const RenderGraphNode& nodeBase = g_interpreter.GetRenderGraph().nodes[nodeIndex];
-                        switch (nodeBase._index)
-                        {
-                            case RenderGraphNode::c_index_resourceBuffer:
-                            {
-                                const RenderGraphNode_Resource_Buffer& node = nodeBase.resourceBuffer;
-                                g_resourceView.Buffer(nodeIndex, viewableResourceIndex);
-                                break;
-                            }
-                            case RenderGraphNode::c_index_resourceTexture:
-                            {
-                                const RenderGraphNode_Resource_Texture& node = nodeBase.resourceTexture;
-                                RuntimeTypes::ViewableResource::Type type = RuntimeTypes::ViewableResource::Type::Texture2D;
-                                switch (node.dimension)
-                                {
-                                    case TextureDimensionType::Texture2D: type = RuntimeTypes::ViewableResource::Type::Texture2D; break;
-                                    case TextureDimensionType::Texture2DArray: type = RuntimeTypes::ViewableResource::Type::Texture2DArray; break;
-                                    case TextureDimensionType::Texture3D: type = RuntimeTypes::ViewableResource::Type::Texture3D; break;
-                                    case TextureDimensionType::TextureCube: type = RuntimeTypes::ViewableResource::Type::TextureCube; break;
-                                    case TextureDimensionType::Texture2DMS: type = RuntimeTypes::ViewableResource::Type::Texture2DMS; break;
-                                }
-                                g_resourceView.Texture(nodeIndex, viewableResourceIndex, type);
-                                break;
-                            }
-                        }
+                        if (viewableResource.m_type == RuntimeTypes::ViewableResource::Type::Buffer)
+                            g_resourceView.Buffer(nodeIndex, resourceName);
+                        else if(viewableResource.m_type == RuntimeTypes::ViewableResource::Type::ConstantBuffer)
+                            g_resourceView.ConstantBuffer(nodeIndex, resourceName);
+                        else
+                            g_resourceView.Texture(nodeIndex, resourceName, viewableResource.m_type);
                     }
                 }
             }
@@ -9146,6 +9250,8 @@ void RenderFrame(bool forceExecute)
 // Main code
 int main(int argc, char** argv)
 {
+    bool oleInitialized = false;
+
     // Load recent files
     g_recentFiles.LoadAllEntries();
     g_recentPythonScripts.LoadAllEntries();
@@ -9363,9 +9469,6 @@ int main(int argc, char** argv)
         g_fullscreen = g_windowPersist.fullscreen;
         g_windowPersist.ApplyState(g_hwnd);
     }
-    DragAcceptFiles(g_hwnd, true);
-
-
     g_interpreter.SetLogFn(&Log);
 	Log(LogLevel::Info, "Gigi Viewer " GIGI_VERSION_WITH_BUILD_NUMBER() " DX12 " BUILD_FLAVOR);
 
@@ -9375,6 +9478,18 @@ int main(int argc, char** argv)
         CleanupDeviceD3D();
         ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
         return 1;
+    }
+
+    oleInitialized = SUCCEEDED(OleInitialize(nullptr));
+    if (oleInitialized)
+    {
+        g_fileDropTarget = new FileDropTarget();
+        HRESULT registerDropResult = RegisterDragDrop(g_hwnd, g_fileDropTarget);
+        if (FAILED(registerDropResult))
+        {
+            g_fileDropTarget->Release();
+            g_fileDropTarget = nullptr;
+        }
     }
 
     // Initialize audio
@@ -9485,7 +9600,8 @@ int main(int argc, char** argv)
         // Font Awesome 4 (before it was commercialized), more useful icons
         const char* fontName = "external/FontAwesome/fontawesome-webfont.ttf";
 
-        io.Fonts->AddFontFromFileTTF(fontName, icons_config.GlyphMinAdvanceX, &icons_config, icons_ranges);
+        std::filesystem::path fontFile = GetExePath() / fontName;
+        io.Fonts->AddFontFromFileTTF(fontFile.string().c_str(), icons_config.GlyphMinAdvanceX, &icons_config, icons_ranges);
     }
 
     // just to have something in the log making it clear where the content is located
@@ -9677,6 +9793,13 @@ int main(int argc, char** argv)
 
     CleanupDeviceD3D();
 
+    if (g_fileDropTarget)
+    {
+        RevokeDragDrop(g_hwnd);
+        g_fileDropTarget->Release();
+        g_fileDropTarget = nullptr;
+    }
+
     ::DestroyWindow(g_hwnd);
     ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
 
@@ -9691,6 +9814,9 @@ int main(int argc, char** argv)
     {
         FreeLibrary(g_renderDocModule);
     }
+
+    if (oleInitialized)
+        OleUninitialize();
 
     return mainRet;
 }
@@ -10098,14 +10224,6 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             lpMMI->ptMinTrackSize.y = 200;
         }
         break;
-    case WM_DROPFILES:
-    {
-        unsigned int dropFileNameLen = DragQueryFileA((HDROP)wParam, 0, nullptr, 0);
-        std::vector<char> dropFileName(dropFileNameLen + 1);
-        unsigned int ret = DragQueryFileA((HDROP)wParam, 0, dropFileName.data(), (UINT)dropFileName.size());
-        LoadGGFile(dropFileName.data(), false, true);
-        return 0;
-    }
     case WM_SIZE:
         if (g_pd3dDevice != NULL && wParam != SIZE_MINIMIZED)
         {

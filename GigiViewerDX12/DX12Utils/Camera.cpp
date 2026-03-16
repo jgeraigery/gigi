@@ -25,8 +25,9 @@ void Camera::Update(const KeyStates& keyStates, const float mouseState[4], const
         float dx = mouseStateLastFrame[0] - mouseState[0];
         float dy = mouseStateLastFrame[1] - mouseState[1];
 
-        dx *= movementMultiplier;
-        dy *= movementMultiplier;
+        // Don't need to muliply by frame time. The mouse will move a smaller distance over higher frame times.
+        //dx *= movementMultiplier;
+        //dy *= movementMultiplier;
 
         if (!m_leftHanded)
         {

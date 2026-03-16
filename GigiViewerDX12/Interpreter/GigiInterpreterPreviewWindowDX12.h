@@ -504,17 +504,6 @@ public:
 		{
 			ScopeProfiler _p(m_profiler, "Total", m_renderGraph.name.c_str(), true, false);
 
-			// Remove imported textures that are marked as stale.
-			// Only happens in OnCompileOK() but no better place to do this work it at the moment.
-			std::vector<std::string> keysToRemove;
-			for (auto& it : m_importedResources)
-			{
-				if (it.second.stale)
-					keysToRemove.push_back(it.first);
-			}
-			for (const std::string& key : keysToRemove)
-				m_importedResources.erase(key);
-
 			// Let systems know that a new frame is happening
 			m_uploadBufferTracker.OnNewFrame(m_maxFramesInFlight);
 			m_delayedRelease.OnNewFrame(m_maxFramesInFlight);
@@ -572,6 +561,20 @@ public:
 
 		// Clear out the GPU resource writes
 		m_GPUResourceWrites.clear();
+
+        // Remove imported textures that are marked as stale.
+        // Being set as stale only happens in OnCompileOK().
+        // Being stale is cleared on node init and node execute.
+        {
+            std::vector<std::string> keysToRemove;
+            for (auto& it : m_importedResources)
+            {
+                if (it.second.stale)
+                    keysToRemove.push_back(it.first);
+            }
+            for (const std::string& key : keysToRemove)
+                m_importedResources.erase(key);
+        }
 
 		return ret;
 	}
@@ -687,6 +690,8 @@ public:
 		int resourceIndex = -1;
 		ImportedResourceState state = ImportedResourceState::dirty;
 		bool resetEveryFrame = true;
+
+		// This flag being true means that nothing in the render graph wants this entry, and it is safe to delete.
 		bool stale = false;
 
 		// specific type info

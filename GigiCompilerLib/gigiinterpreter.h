@@ -45,14 +45,6 @@ public:
 
 	void Clear() { m_storage.Clear(); }
 
-	static void SetFromString(const char* text, size_t count, int* value);
-	static void SetFromString(const char* text, size_t count, unsigned int* value);
-	static void SetFromString(const char* text, size_t count, float* value);
-	static void SetFromString(const char* text, size_t count, bool* value);
-	static void SetFromString(const char* text, size_t count, uint16_t* value);
-	static void SetFromString(const char* text, size_t count, int64_t* value);
-	static void SetFromString(const char* text, size_t count, uint64_t* value);
-
 private:
 	template<typename T>
 	Storage Get(const RenderGraph& renderGraph, const Variable& variable, size_t count, T* dummy)
@@ -103,14 +95,6 @@ private:
 		// return the storage object
 		return ret;
 	}
-
-	static std::string GetAsString(size_t count, int* value);
-	static std::string GetAsString(size_t count, unsigned int* value);
-	static std::string GetAsString(size_t count, float* value);
-	static std::string GetAsString(size_t count, bool* value);
-	static std::string GetAsString(size_t count, uint16_t* value);
-	static std::string GetAsString(size_t count, int64_t* value);
-	static std::string GetAsString(size_t count, uint64_t* value);
 
 	template<typename LAMBDA>
 	void CallFor_Int(const RenderGraph& renderGraph, const Variable& variable, const LAMBDA& lambda)
@@ -536,7 +520,7 @@ public:
 			ABuffer.resize(3 * componentByteCount);
 			A = (T*)ABuffer.data();
 
-			VariableStorage::SetFromString(sizeAsString, 3, A);
+			SetFromString(sizeAsString, 3, A);
 		}
 		else if (setVar.ANode.bufferNode)
 		{
@@ -548,11 +532,11 @@ public:
 			ABuffer.resize(1 * componentByteCount);
 			A = (T*)ABuffer.data();
 
-			VariableStorage::SetFromString(sizeAsString, 1, A);
+            SetFromString(sizeAsString, 1, A);
 		}
 		else if (setVar.AVar.variableIndex == -1)
 		{
-			VariableStorage::SetFromString(setVar.ALiteral.c_str(), componentCount, A);
+            SetFromString(setVar.ALiteral.c_str(), componentCount, A);
 		}
 
 		// Set the B value from texture size, buffer count, or literal, if not previously set by a variable
@@ -566,7 +550,7 @@ public:
 			BBuffer.resize(3 * componentByteCount);
 			B = (T*)BBuffer.data();
 
-			VariableStorage::SetFromString(sizeAsString, 3, B);
+            SetFromString(sizeAsString, 3, B);
 		}
 		else if (setVar.BNode.bufferNode)
 		{
@@ -578,10 +562,10 @@ public:
 			BBuffer.resize(1 * componentByteCount);
 			B = (T*)BBuffer.data();
 
-			VariableStorage::SetFromString(sizeAsString, 1, B);
+            SetFromString(sizeAsString, 1, B);
 		}
 		else if (setVar.BVar.variableIndex == -1)
-			VariableStorage::SetFromString(setVar.BLiteral.c_str(), componentCount, B);
+			SetFromString(setVar.BLiteral.c_str(), componentCount, B);
 
 		// Limit the values involved to the appropriate index
 		if (setVar.destinationIndex != -1)
@@ -877,7 +861,7 @@ public:
 
 		// Read from literals as needed
 		if (condition.variable2Index == -1)
-			VariableStorage::SetFromString(condition.value2.c_str(), componentCount, B);
+            SetFromString(condition.value2.c_str(), componentCount, B);
 
 		// Do the operation on each component
 		bool ret = true;

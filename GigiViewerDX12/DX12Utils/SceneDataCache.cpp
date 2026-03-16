@@ -9,9 +9,7 @@
 
 SceneData& SceneDataCache::Get(FileCache& fileCache, const char* fileName_)
 {
-    // normalize the string by making it canonical and making it lower case
-    std::string s = std::filesystem::weakly_canonical(fileName_).string();
-    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
+    std::string s = CanonifyFileName(fileName_);
     const char* fileName = s.c_str();
 
     if (m_cache.count(fileName) != 0)

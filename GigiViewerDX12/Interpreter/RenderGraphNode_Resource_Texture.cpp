@@ -694,10 +694,7 @@ static void MakeMip(GigiInterpreterPreviewWindowDX12& interpreter, ID3D12Device*
 
 static TextureCache::Texture LoadTextureFromBinaryFile(FileCache& fileCache, const char* fileName_, TextureDimensionType dimension, int width, int height, int depth, TextureFormat textureFormat)
 {
-	// normalize the filename by making it canonical and making it lower case
-	std::filesystem::path p = std::filesystem::weakly_canonical(fileName_);
-	std::string s = p.string();
-	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
+    std::string s = CanonifyFileName(fileName_);
 	const char* fileName = s.c_str();
 
 	// init the texture object to an invalid result
@@ -1173,6 +1170,7 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeActionImported(const RenderGraphNod
 	if (nodeAction == NodeAction::Execute)
 	{
 		ImportedResourceDesc& desc = m_importedResources[node.name];
+        desc.stale = false;
 
 		if (desc.state == ImportedResourceState::failed)
 		{

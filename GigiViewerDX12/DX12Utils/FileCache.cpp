@@ -7,11 +7,20 @@
 
 #include <filesystem>
 
+std::string CanonifyFileName(const char* fileName)
+{
+    std::string ret = std::filesystem::weakly_canonical(fileName).string();
+
+    // Don't make wsl paths lower case, because they are case sensitive!
+    if (ret.length() > 0 && ret[0] != '\\')
+        std::transform(ret.begin(), ret.end(), ret.begin(), [](unsigned char c) { return std::tolower(c); });
+
+    return ret;
+}
+
 FileCache::File& FileCache::Get(const char* fileName)
 {
-	// normalize the string by making it canonical and making it lower case
-	std::string s = std::filesystem::weakly_canonical(fileName).string();
-	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
+    std::string s = CanonifyFileName(fileName);
 
 	// If we don't have an entry for this file, create one
 	// Add an extra null character at the end for text files.
@@ -21,8 +30,14 @@ FileCache::File& FileCache::Get(const char* fileName)
 		File newFile;
         newFile.fileName = s;
 
+        std::string longFileName;
+        if (s.c_str() && fileName[0] == '\\' && fileName[1] == '\\')
+            longFileName = std::string("\\\\?\\UNC") + &s[1];
+        else
+            longFileName = std::string("\\\\?\\") + s;
+
 		FILE* file = nullptr;
-		fopen_s(&file, s.c_str(), "rb");
+		auto e = fopen_s(&file, longFileName.c_str(), "rb");
 		if (file)
 		{
 			fseek(file, 0, SEEK_END);
@@ -32,6 +47,12 @@ FileCache::File& FileCache::Get(const char* fileName)
 			newFile.bytes[newFile.bytes.size() - 1] = 0;
 			fclose(file);
 		}
+        else
+        {
+            char err_msg[4096];
+            strerror_s(err_msg, sizeof(err_msg), e); // Use strerror_s for security
+            int ijkl = 0;
+        }
 
 		m_cache[s] = newFile;
 	}

@@ -234,7 +234,6 @@
     </None>
     <ClCompile Include="Backends\WebGPU\Backend_WebGPU.cpp" />
     <ClCompile Include="gigicompiler.cpp" />
-    <ClCompile Include="gigiinterpreter.cpp" />
     <ClCompile Include="Parse.cpp" />
     <ClCompile Include="ProcessSlang.cpp" />
     <ClCompile Include="structParser.cpp" />
@@ -327,6 +326,7 @@
     <ClInclude Include="..\Schemas\PreviewWindow\PreviewMsgClientToServerVariant.h" />
     <ClInclude Include="..\Schemas\PreviewWindow\PreviewMsgServerToClientVariant.h" />
     <ClInclude Include="..\Schemas\PreviewWindow\PreviewWindowSchemas.h" />
+    <ClInclude Include="..\Schemas\RenderGraphNodeHelpers.h" />
     <ClInclude Include="..\Schemas\TextureFormats.h" />
     <ClInclude Include="..\Schemas\Utils.h" />
     <ClInclude Include="..\Schemas\WebGPU\WebGPUSchemas.h" />

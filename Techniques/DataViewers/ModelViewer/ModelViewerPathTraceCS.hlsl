@@ -67,7 +67,7 @@ float3 EstimateDirectLighting(float3 P, float3 N, float3 V, Struct_Materials mat
 
         float3 L = 0.0f;
         float attenuation = 1.0f;
-        float maxT = 1000.0f;
+        float maxT = /*$(Variable:MaxTPT)*/;
 
         // Point light
         if (Lights[i].PosDir.w == 1.0f)
@@ -91,7 +91,7 @@ float3 EstimateDirectLighting(float3 P, float3 N, float3 V, Struct_Materials mat
         else
         {
             L = normalize(Lights[i].PosDir.xyz);
-            maxT = 1000.0f;
+            maxT = /*$(Variable:MaxTPT)*/;
         }
 
         float NoL = saturate(dot(N, L));
@@ -119,7 +119,7 @@ RayHit RayVsScene(float3 rayPos, float3 rayDir)
     RayDesc ray;
     ray.Origin = rayPos;
     ray.TMin = 0;
-    ray.TMax = 1000.0f;
+    ray.TMax = /*$(Variable:MaxTPT)*/;
     ray.Direction = normalize(rayDir);
 
     // Do a ray query to see if the ray hit anything
