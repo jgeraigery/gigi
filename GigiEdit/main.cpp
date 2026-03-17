@@ -2580,7 +2580,7 @@ struct Example :
         for (int i = 0; i < int(ExternalNodeData::c_index__Count); ++i)
         {
             ExternalNodeInfo& nodeInfo = ret[i];
-            nodeInfo.nodeType = i + 1;
+            nodeInfo.nodeType = i + ExternalNodeData::c_index__None + 1;
 
             switch (nodeInfo.nodeType)
             {
