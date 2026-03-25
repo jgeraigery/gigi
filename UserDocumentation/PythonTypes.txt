@@ -411,16 +411,17 @@
     Host.TextureFormat_D32_Float_S8 = 30
     Host.TextureFormat_D24_Unorm_S8 = 31
     Host.TextureFormat_BC1_Unorm = 32
-    Host.TextureFormat_BC4_Unorm = 33
-    Host.TextureFormat_BC4_Snorm = 34
-    Host.TextureFormat_BC5_Unorm = 35
-    Host.TextureFormat_BC5_Snorm = 36
-    Host.TextureFormat_BC7_Unorm = 37
-    Host.TextureFormat_BC7_Unorm_sRGB = 38
-    Host.TextureFormat_BC6_UF16 = 39
-    Host.TextureFormat_BC6_SF16 = 40
-    Host.TextureFormat_LAST = 40
-    Host.TextureFormat_COUNT = 41
+    Host.TextureFormat_BC3_Unorm = 33
+    Host.TextureFormat_BC4_Unorm = 34
+    Host.TextureFormat_BC4_Snorm = 35
+    Host.TextureFormat_BC5_Unorm = 36
+    Host.TextureFormat_BC5_Snorm = 37
+    Host.TextureFormat_BC7_Unorm = 38
+    Host.TextureFormat_BC7_Unorm_sRGB = 39
+    Host.TextureFormat_BC6_UF16 = 40
+    Host.TextureFormat_BC6_SF16 = 41
+    Host.TextureFormat_LAST = 41
+    Host.TextureFormat_COUNT = 42
 
   PreviewMsgCS_Log_Level:
     Host.PreviewMsgCS_Log_Level_FIRST = 0

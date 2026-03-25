@@ -722,6 +722,7 @@ namespace Texture2DRW_CS
             m_output.texture_NodeTexture = nullptr;
         }
 
+        // Loaded from: ..\cabinsmall.png
         if(m_internal.texture__loadedTexture_0)
         {
             s_delayedRelease.Add(m_internal.texture__loadedTexture_0);
@@ -957,6 +958,7 @@ namespace Texture2DRW_CS
         }
 
         // _loadedTexture_0
+        // Loaded from: ..\cabinsmall.png
         {
             if (!m_internal.texture__loadedTexture_0)
             {

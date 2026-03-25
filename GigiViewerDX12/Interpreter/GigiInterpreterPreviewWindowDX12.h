@@ -670,8 +670,14 @@ public:
             0.0f, 0.0f, 0.0f, 1.0f,
         };
 
+        LoadPLYSettings PLYSettings;
+
 		// Cooperative vectors
 		CooperativeVectorData cvData;
+
+        // Transient. Do not serialize. Calculated for convenience
+        float boundsMin[3] = { 0.0f, 0.0f, 0.0f };
+        float boundsMax[3] = { 0.0f, 0.0f, 0.0f };
 	};
 
 	struct ImportedResourceDesc

@@ -18,6 +18,58 @@
 #include <DirectXMathMatrix.inl>
 // clang-format on
 
+static std::vector<unsigned char> MakeDefaultStruct(const Struct& structDesc)
+{
+    std::vector<unsigned char> ret(structDesc.sizeInBytes, 0);
+
+    size_t offset = 0;
+    for (const StructField& field : structDesc.fields)
+    {
+        DataFieldTypeInfoStruct fieldTypeInfo = DataFieldTypeInfo(field.type);
+        switch (fieldTypeInfo.componentType)
+        {
+            case DataFieldComponentType::_int:
+            {
+                SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (int*)&ret[offset]);
+                break;
+            }
+            case DataFieldComponentType::_uint16_t:
+            {
+                SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (uint16_t*)&ret[offset]);
+                break;
+            }
+            case DataFieldComponentType::_uint32_t:
+            {
+                SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (uint32_t*)&ret[offset]);
+                break;
+            }
+            case DataFieldComponentType::_int64_t:
+            {
+                SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (int64_t*)&ret[offset]);
+                break;
+            }
+            case DataFieldComponentType::_uint64_t:
+            {
+                SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (uint64_t*)&ret[offset]);
+                break;
+            }
+            case DataFieldComponentType::_float:
+            {
+                SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (float*)&ret[offset]);
+                break;
+            }
+            default:
+            {
+                GigiAssert(false, "Unhandled component type in " __FUNCTION__);
+                break;
+            }
+        }
+        offset += field.sizeInBytes;
+    }
+
+    return ret;
+}
+
 static std::string MakeDefaultMaterial(const Struct& structDesc, const char* indent)
 {
     std::ostringstream out;
@@ -316,19 +368,38 @@ static void WriteMaterialShaderFile(const RenderGraph& renderGraph, const Render
         out2 << out2Switch.str();
     }
 
-    // Close the functions
     out1 <<
         "\n"
         "    normal = normalize((normal * 2.0f - 1.0f) * float3(normalScale, normalScale, 1.0f));\n"
-        "    ret.baseColor.rgb = lerp(ret.baseColor.rgb, ret.baseColor.rgb * occlusion, occlusionStrength);\n"
+        ;
+
+    out2 <<
+        "\n"
+        "    normal = normalize((normal * 2.0f - 1.0f) * float3(normalScale, normalScale, 1.0f));\n"
+        ;
+
+
+    for (const StructField& field : structDesc.fields)
+    {
+        if (field.semantic == StructFieldSemantic::Material_BaseColor)
+        {
+            out1 <<
+                "    ret." << field.name << ".rgb = lerp(ret." << field.name << ".rgb, ret." << field.name << ".rgb * occlusion, occlusionStrength);\n"
+                ;
+            out2 <<
+                "    ret." << field.name << ".rgb = lerp(ret." << field.name << ".rgb, ret." << field.name << ".rgb * occlusion, occlusionStrength);\n"
+                ;
+            break;
+        }
+    }
+
+    // Close the functions
+    out1 <<
         "\n"
         "    return ret;\n"
         "};\n";
 
     out2 <<
-        "\n"
-        "    normal = normalize((normal * 2.0f - 1.0f) * float3(normalScale, normalScale, 1.0f));\n"
-        "    ret.baseColor.rgb = lerp(ret.baseColor.rgb, ret.baseColor.rgb * occlusion, occlusionStrength);\n"
         "\n"
         "    return ret;\n"
         "};\n";
@@ -675,7 +746,7 @@ inline void SetToZero(char* dest, int index, DataFieldComponentType destType)
 	}
 }
 
-static std::vector<char> LoadTypedBufferPly(const GigiInterpreterPreviewWindowDX12::ImportedResourceDesc& desc, const PLYCache::PLYData& plyData)
+static std::vector<char> LoadTypedBufferPlyFlattened(const GigiInterpreterPreviewWindowDX12::ImportedResourceDesc& desc, const PLYCache::PLYData& plyData)
 {
 	std::vector<char> ret;
 
@@ -743,7 +814,113 @@ static std::vector<char> LoadTypedBufferPly(const GigiInterpreterPreviewWindowDX
 	return ret;
 }
 
-static std::vector<char> LoadStructuredBufferPly(const GigiInterpreterPreviewWindowDX12::ImportedResourceDesc& desc, const RenderGraph& renderGraph, const PLYCache::PLYData& plyData)
+static std::vector<char> LoadStructuredBufferPly(const GigiInterpreterPreviewWindowDX12::ImportedResourceDesc& desc, const RenderGraph& renderGraph, const PLYCache::ElementGroup& plyData)
+{
+    struct FieldCopy
+    {
+        size_t fieldIndex = 0;
+        size_t fieldOffset = 0;
+    };
+    std::unordered_map<size_t, FieldCopy> fieldCopies;
+
+    // Allocate the return buffer
+    const Struct& structDesc = renderGraph.structs[desc.buffer.structIndex];
+    std::vector<char> ret(structDesc.sizeInBytes* plyData.count);
+    if (structDesc.sizeInBytes == 0)
+        return ret;
+
+    // Map the destination struct fields to the source properties
+    size_t structOffset = 0;
+    for (size_t fieldIndex = 0; fieldIndex < structDesc.fields.size(); ++fieldIndex)
+    {
+        const StructField& field = structDesc.fields[fieldIndex];
+
+        for (size_t propertyIndex = 0; propertyIndex < plyData.properties.size(); ++propertyIndex)
+        {
+            if (!plyData.properties[propertyIndex].isList && plyData.properties[propertyIndex].name == field.name)
+            {
+                FieldCopy fieldCopy;
+                fieldCopy.fieldIndex = fieldIndex;
+                fieldCopy.fieldOffset = structOffset;
+                fieldCopies[propertyIndex] = fieldCopy;
+                break;
+            }
+        }
+        structOffset += field.sizeInBytes;
+    }
+
+    // Default initialize the struct
+    {
+        // Make a default initialized struct
+        std::vector<unsigned char> defaultStruct = MakeDefaultStruct(structDesc);
+
+        // memcpy the default object to default initialize the entire buffer
+        size_t count = ret.size() / structDesc.sizeInBytes;
+        for (size_t i = 0; i < count; ++i)
+            memcpy(&ret[i * structDesc.sizeInBytes], defaultStruct.data(), structDesc.sizeInBytes);
+    }
+
+    // Do the copies
+    const unsigned char* src = plyData.data.data();
+    for (size_t rowIndex = 0; rowIndex < plyData.count; ++rowIndex)
+    {
+        char* dest = &ret[rowIndex * structDesc.sizeInBytes];
+
+        for (size_t propertyIndex = 0; propertyIndex < plyData.properties.size(); ++propertyIndex)
+        {
+            const PLYCache::Property& property = plyData.properties[propertyIndex];
+
+            // If we want to copy this property to the struct
+            auto it = fieldCopies.find(propertyIndex);
+            if (it != fieldCopies.end())
+            {
+                // Note: lists are not added to fieldCopies, so this is never a list
+                GigiAssert(!property.isList, "Lists not supported");
+
+                const FieldCopy& fieldCopy = it->second;
+                const StructField& field = structDesc.fields[fieldCopy.fieldIndex];
+                DataFieldTypeInfoStruct fieldTypeInfo = DataFieldTypeInfo(field.type);
+
+                switch (fieldTypeInfo.componentType)
+                {
+                    case DataFieldComponentType::_int: src = PLYCache::ReadFromBinaryAndCastTo(src, property.type, *(int*)&dest[fieldCopy.fieldOffset]); break;
+                    case DataFieldComponentType::_uint16_t: src = PLYCache::ReadFromBinaryAndCastTo(src, property.type, *(uint16_t*)&dest[fieldCopy.fieldOffset]); break;
+                    case DataFieldComponentType::_uint32_t: src = PLYCache::ReadFromBinaryAndCastTo(src, property.type, *(uint32_t*)&dest[fieldCopy.fieldOffset]); break;
+                    case DataFieldComponentType::_int64_t: src = PLYCache::ReadFromBinaryAndCastTo(src, property.type, *(int64_t*)&dest[fieldCopy.fieldOffset]); break;
+                    case DataFieldComponentType::_uint64_t: src = PLYCache::ReadFromBinaryAndCastTo(src, property.type, *(uint64_t*)&dest[fieldCopy.fieldOffset]); break;
+                    case DataFieldComponentType::_float: src = PLYCache::ReadFromBinaryAndCastTo(src, property.type, *(float*)&dest[fieldCopy.fieldOffset]); break;
+                    default:
+                    {
+                        GigiAssert(false, "Unhandled DataFieldComponentType in " __FUNCTION__);
+                    }
+                }
+            }
+            // Else we want to skip this property
+            else
+            {
+                if (property.isList)
+                {
+                    int listSize = 0;
+                    src = PLYCache::ReadFromBinaryAndCastTo(src, property.listSizeType, listSize);
+                    for (int listIndex = 0; listIndex < listSize; ++listIndex)
+                    {
+                        float dummy = 0.0f;
+                        src = PLYCache::ReadFromBinaryAndCastTo(src, property.type, dummy);
+                    }
+                }
+                else
+                {
+                    float dummy = 0.0f;
+                    src = PLYCache::ReadFromBinaryAndCastTo(src, property.type, dummy);
+                }
+            }
+        }
+    }
+
+    return ret;
+}
+
+static std::vector<char> LoadStructuredBufferPlyFlattened(const GigiInterpreterPreviewWindowDX12::ImportedResourceDesc& desc, const RenderGraph& renderGraph, const PLYCache::PLYData& plyData)
 {
 	std::vector<char> ret;
 
@@ -824,8 +1001,19 @@ static std::vector<char> LoadStructuredBufferPly(const GigiInterpreterPreviewWin
 	return ret;
 }
 
-static std::vector<char> LoadStructuredBuffer(const GigiInterpreterPreviewWindowDX12::ImportedResourceDesc& desc, const RenderGraph &renderGraph, const SceneData& sceneData)
+static std::vector<char> LoadStructuredBuffer(GigiInterpreterPreviewWindowDX12::ImportedResourceDesc& desc, const RenderGraph &renderGraph, const SceneData& sceneData)
 {
+    const Struct& structDesc = renderGraph.structs[desc.buffer.structIndex];
+    std::vector<char> ret;
+    if (structDesc.sizeInBytes == 0)
+        return ret;
+
+    // Init the bounds
+    bool firstPos = true;
+    desc.buffer.boundsMin[0] = desc.buffer.boundsMax[0] = 0.0f;
+    desc.buffer.boundsMin[1] = desc.buffer.boundsMax[1] = 0.0f;
+    desc.buffer.boundsMin[2] = desc.buffer.boundsMax[2] = 0.0f;
+
     // Get the transforms
     DirectX::XMMATRIX transform, transformInverseTranspose;
     {
@@ -880,8 +1068,6 @@ static std::vector<char> LoadStructuredBuffer(const GigiInterpreterPreviewWindow
     };
 
 	// Allocate space to hold the results
-	const Struct& structDesc = renderGraph.structs[desc.buffer.structIndex];
-    std::vector<char> ret;
 	size_t vertexCount = sceneData.flattenedVertices.size();
     size_t lightCount = sceneData.lights.size();
     size_t materialCount = sceneData.materials.size();
@@ -904,53 +1090,7 @@ static std::vector<char> LoadStructuredBuffer(const GigiInterpreterPreviewWindow
     // We could add a bool for each material value about whether it was set in the source file, but the loaders would have to also support exposing that concept.
     {
         // Make a default initialized struct
-        std::vector<unsigned char> defaultStruct(destStructSize, 0);
-        {
-            size_t offset = 0;
-            for (const StructField& field : structDesc.fields)
-            {
-                DataFieldTypeInfoStruct fieldTypeInfo = DataFieldTypeInfo(field.type);
-                switch (fieldTypeInfo.componentType)
-                {
-                    case DataFieldComponentType::_int:
-                    {
-                        SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (int*)&defaultStruct[offset]);
-                        break;
-                    }
-                    case DataFieldComponentType::_uint16_t:
-                    {
-                        SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (uint16_t*)&defaultStruct[offset]);
-                        break;
-                    }
-                    case DataFieldComponentType::_uint32_t:
-                    {
-                        SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (uint32_t*)&defaultStruct[offset]);
-                        break;
-                    }
-                    case DataFieldComponentType::_int64_t:
-                    {
-                        SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (int64_t*)&defaultStruct[offset]);
-                        break;
-                    }
-                    case DataFieldComponentType::_uint64_t:
-                    {
-                        SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (uint64_t*)&defaultStruct[offset]);
-                        break;
-                    }
-                    case DataFieldComponentType::_float:
-                    {
-                        SetFromString(field.dflt.c_str(), fieldTypeInfo.componentCount, (float*)&defaultStruct[offset]);
-                        break;
-                    }
-                    default:
-                    {
-                        GigiAssert(false, "Unhandled component type in " __FUNCTION__);
-                        break;
-                    }
-                }
-                offset += field.sizeInBytes;
-            }
-        }
+        std::vector<unsigned char> defaultStruct = MakeDefaultStruct(structDesc);
 
         // memcpy the default object to default initialize the entire buffer
         size_t count = ret.size() / destStructSize;
@@ -1049,6 +1189,23 @@ static std::vector<char> LoadStructuredBuffer(const GigiInterpreterPreviewWindow
                             if (needsTransformation)
                                 transformPosition(position.data());
 
+                            if (firstPos)
+                            {
+                                desc.buffer.boundsMin[0] = desc.buffer.boundsMax[0] = position[0];
+                                desc.buffer.boundsMin[1] = desc.buffer.boundsMax[1] = position[1];
+                                desc.buffer.boundsMin[2] = desc.buffer.boundsMax[2] = position[2];
+                                firstPos = false;
+                            }
+                            else
+                            {
+                                desc.buffer.boundsMin[0] = min(desc.buffer.boundsMin[0], position[0]);
+                                desc.buffer.boundsMin[1] = min(desc.buffer.boundsMin[1], position[1]);
+                                desc.buffer.boundsMin[2] = min(desc.buffer.boundsMin[2], position[2]);
+                                desc.buffer.boundsMax[0] = max(desc.buffer.boundsMax[0], position[0]);
+                                desc.buffer.boundsMax[1] = max(desc.buffer.boundsMax[1], position[1]);
+                                desc.buffer.boundsMax[2] = max(desc.buffer.boundsMax[2], position[2]);
+                            }
+
                             CopyFieldArray(position, dest);
 
                             break;
@@ -1098,8 +1255,13 @@ static std::vector<char> LoadStructuredBuffer(const GigiInterpreterPreviewWindow
 	return ret;
 }
 
-static std::vector<char> LoadTypedBuffer(const GigiInterpreterPreviewWindowDX12::ImportedResourceDesc& desc, const std::vector<SceneData::Vertex>& flattenedVertices)
+static std::vector<char> LoadTypedBuffer(GigiInterpreterPreviewWindowDX12::ImportedResourceDesc& desc, const std::vector<SceneData::Vertex>& flattenedVertices)
 {
+    // Init the bounds
+    desc.buffer.boundsMin[0] = desc.buffer.boundsMax[0] = 0.0f;
+    desc.buffer.boundsMin[1] = desc.buffer.boundsMax[1] = 0.0f;
+    desc.buffer.boundsMin[2] = desc.buffer.boundsMax[2] = 0.0f;
+
     // Get the transforms
     DirectX::XMMATRIX transform, transformInverseTranspose;
     {
@@ -1141,6 +1303,22 @@ static std::vector<char> LoadTypedBuffer(const GigiInterpreterPreviewWindowDX12:
         Vec3 position = flattenedVertices[vertexIndex].position;
         if (needsTransformation)
             transformPosition(position.data());
+
+        if (vertexIndex == 0)
+        {
+            desc.buffer.boundsMin[0] = desc.buffer.boundsMax[0] = position[0];
+            desc.buffer.boundsMin[1] = desc.buffer.boundsMax[1] = position[1];
+            desc.buffer.boundsMin[2] = desc.buffer.boundsMax[2] = position[2];
+        }
+        else
+        {
+            desc.buffer.boundsMin[0] = min(desc.buffer.boundsMin[0], position[0]);
+            desc.buffer.boundsMin[1] = min(desc.buffer.boundsMin[1], position[1]);
+            desc.buffer.boundsMin[2] = min(desc.buffer.boundsMin[2], position[2]);
+            desc.buffer.boundsMax[0] = max(desc.buffer.boundsMax[0], position[0]);
+            desc.buffer.boundsMax[1] = max(desc.buffer.boundsMax[1], position[1]);
+            desc.buffer.boundsMax[2] = max(desc.buffer.boundsMax[2], position[2]);
+        }
 
 		int index = 0;
 		while (index < min(3, typeInfo.componentCount))
@@ -1552,24 +1730,70 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeActionImported(const RenderGraphNod
                 }
                 else if (fileWatchOwner == FileWatchOwner::PLYCache && desc.buffer.loadBufferAs == GGUserFile_LoadBufferAs::Auto)
 				{
-					// Load the ply data
-					PLYCache::PLYData plyData = m_plys.GetFlattened(m_files, desc.buffer.fileName.c_str());
+                    // If we should flatten it as a mesh
+                    if (desc.buffer.PLYSettings.flatten)
+                    {
+                        // Load the ply data
+                        PLYCache::PLYData plyData = m_plys.GetFlattened(m_files, desc.buffer.fileName.c_str());
 
-					if (!plyData.warn.empty())
-						m_logFn(LogLevel::Warn, "Loading Ply for buffer \"%s\": %s", node.name.c_str(), plyData.warn.c_str());
-					if (!plyData.error.empty())
-						m_logFn(LogLevel::Warn, "Loading Ply for buffer \"%s\": %s", node.name.c_str(), plyData.error.c_str());
+                        if (!plyData.warn.empty())
+                            m_logFn(LogLevel::Warn, "Loading Ply for buffer \"%s\": %s", node.name.c_str(), plyData.warn.c_str());
+                        if (!plyData.error.empty())
+                            m_logFn(LogLevel::Warn, "Loading Ply for buffer \"%s\": %s", node.name.c_str(), plyData.error.c_str());
 
-					// load the data if it's valid
-					if (plyData.valid)
-					{
-						// Load a typed buffer
-						if (desc.buffer.type != DataFieldType::Count)
-							rawBytes = LoadTypedBufferPly(desc, plyData);
-						// Load a structured buffer
-						else
-							rawBytes = LoadStructuredBufferPly(desc, m_renderGraph, plyData);
-					}
+                        // load the data if it's valid
+                        if (plyData.valid)
+                        {
+                            // Load a typed buffer
+                            if (desc.buffer.type != DataFieldType::Count)
+                                rawBytes = LoadTypedBufferPlyFlattened(desc, plyData);
+                            // Load a structured buffer
+                            else
+                                rawBytes = LoadStructuredBufferPlyFlattened(desc, m_renderGraph, plyData);
+                        }
+                    }
+                    // otherwise load it like a generic data file
+                    else
+                    {
+                        // Load the ply data
+                        const PLYCache::PLYData& plyData = m_plys.Get(m_files, desc.buffer.fileName.c_str());
+
+                        if (!plyData.warn.empty())
+                            m_logFn(LogLevel::Warn, "Loading Ply for buffer \"%s\": %s", node.name.c_str(), plyData.warn.c_str());
+                        if (!plyData.error.empty())
+                            m_logFn(LogLevel::Warn, "Loading Ply for buffer \"%s\": %s", node.name.c_str(), plyData.error.c_str());
+
+                        const PLYCache::ElementGroup* elementGroup = nullptr;
+                        if (!desc.buffer.PLYSettings.element.empty())
+                        {
+                            for (size_t i = 0; i < plyData.elementGroups.size(); ++i)
+                            {
+                                if (plyData.elementGroups[i].name == desc.buffer.PLYSettings.element)
+                                {
+                                    elementGroup = &plyData.elementGroups[i];
+                                    break;
+                                }
+                            }
+
+                            if (!elementGroup)
+                                m_logFn(LogLevel::Error, "PLY file \"%s\" does not have an element group named \"%s\", so cannot load buffer \"%s\".", desc.buffer.fileName.c_str(), desc.buffer.PLYSettings.element.c_str(), node.name.c_str());
+                        }
+                        else if (plyData.elementGroups.size() == 1)
+                            elementGroup = &plyData.elementGroups[0];
+                        else
+                            m_logFn(LogLevel::Error, "PLY file \"%s\" has multiple element groups, so you must specify which one to load from in the buffer's PLY settings.  Cannot load buffer \"%s\".", desc.buffer.fileName.c_str(), node.name.c_str());
+
+                        // load the data if it's valid, and if we have an element group to load from.
+                        if (plyData.valid && elementGroup)
+                        {
+                            // Load a typed buffer
+                            if (desc.buffer.type != DataFieldType::Count)
+                                m_logFn(LogLevel::Error, "PLY files must be loaded as a structured format. Cannot load buffer \"%s\" with a typed format.", node.name.c_str());
+                            // Load a structured buffer
+                            else
+                                rawBytes = LoadStructuredBufferPly(desc, m_renderGraph, *elementGroup);
+                        }
+                    }
 				}
 				else if (p.extension() == ".csv" && desc.buffer.loadBufferAs == GGUserFile_LoadBufferAs::Auto)
 				{

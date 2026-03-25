@@ -39,6 +39,7 @@ namespace Stencil
         ID3D12PipelineState* drawCall_Draw_1_pso = nullptr;
         ID3D12RootSignature* drawCall_Draw_1_rootSig = nullptr;
 
+        // Loaded from: cabinsmall.png
         ID3D12Resource* texture__loadedTexture_0 = nullptr;
         unsigned int texture__loadedTexture_0_size[3] = { 0, 0, 0 };
         unsigned int texture__loadedTexture_0_numMips = 0;

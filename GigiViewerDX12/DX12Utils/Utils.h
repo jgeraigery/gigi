@@ -174,6 +174,7 @@ inline DXGI_FORMAT_Info Get_DXGI_FORMAT_Info(DXGI_FORMAT format)
 
 		// Block compressed formats
         DXGI_FORMAT_INFO_CASE(DXGI_FORMAT_BC1_UNORM, uint8_t, 3, false, false, false, 0, 1, UNorm, true, DXGI_FORMAT_R8G8B8A8_UNORM);
+        DXGI_FORMAT_INFO_CASE(DXGI_FORMAT_BC3_UNORM, uint8_t, 3, false, false, false, 0, 1, UNorm, true, DXGI_FORMAT_R8G8B8A8_UNORM);
 
         DXGI_FORMAT_INFO_CASE(DXGI_FORMAT_BC4_UNORM, uint8_t, 1, false, false, false, 0, 1, UNorm, true, DXGI_FORMAT_R8G8B8A8_UNORM);
 		DXGI_FORMAT_INFO_CASE(DXGI_FORMAT_BC4_SNORM, int8_t, 1, false, false, false, 0, 1, SNorm, true, DXGI_FORMAT_R8G8B8A8_SNORM);

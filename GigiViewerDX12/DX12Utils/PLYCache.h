@@ -31,6 +31,23 @@ public:
 		f64,
 	};
 
+    static const char* FieldTypeToString(FieldType fieldType)
+    {
+        switch (fieldType)
+        {
+            case FieldType::unknown: return "unknown";
+            case FieldType::i8: return "i8";
+            case FieldType::u8: return "u8";
+            case FieldType::i16: return "i16";
+            case FieldType::u16: return "u16";
+            case FieldType::i32: return "i32";
+            case FieldType::u32: return "u32";
+            case FieldType::f32: return "f32";
+            case FieldType::f64: return "f64";
+            default: return "<Unhandled>";
+        }
+    }
+
 	// property structure for E.g. vertices and indices
 	struct Property
 	{
@@ -63,10 +80,20 @@ public:
 
 	PLYData& Get(FileCache& fileCache, const char* fileName);
 
+    const PLYData* GetOrFail(const char* fileName_) const
+    {
+        std::string fileName = CanonifyFileName(fileName_);
+        auto it = m_cache.find(fileName);
+        if (it == m_cache.end())
+            return nullptr;
+        return &it->second;
+    }
+
 	PLYData GetFlattened(FileCache& fileCache, const char* fileName);
 
-	bool Remove(const char* fileName)
+	bool Remove(const char* fileName_)
 	{
+        std::string fileName = CanonifyFileName(fileName_);
 		if (m_cache.count(fileName) == 0)
 			return false;
 

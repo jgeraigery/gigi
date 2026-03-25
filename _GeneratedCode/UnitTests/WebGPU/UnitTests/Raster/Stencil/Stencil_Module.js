@@ -207,7 +207,7 @@ BindGroupLayout_DrawCall_Draw_1 = null;
 PipelineLayout_DrawCall_Draw_1 = null;
 Pipeline_DrawCall_Draw_1 = null;
 
-// Texture _loadedTexture_0
+// Texture _loadedTexture_0 : Loaded from: cabinsmall.png
 texture__loadedTexture_0 = null;
 texture__loadedTexture_0_size = [0, 0, 0];
 texture__loadedTexture_0_format = "";

@@ -39,6 +39,9 @@ public:
 // @return see ImGui::InputText()
 bool ImGui_File(const char* label, std::string& inOutName, const char* filterList);
 
+// A helper to deal with imgui using char* for string.
+bool ImGui_String(const char* label, std::string& value);
+
 // like ImGui::Checkbox(); but right aligned like other properties
 bool ImGui_Checkbox(const char* label, bool *value);
 

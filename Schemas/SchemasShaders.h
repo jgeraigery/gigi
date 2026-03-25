@@ -166,6 +166,11 @@ STRUCT_BEGIN(CooperativeVectorData, "Data needed for cooperative vectors support
     STRUCT_FIELD(CooperativeVectorBufferLayout, destLayout, CooperativeVectorBufferLayout::RowMajor, "The layout you want it to be converted to.", 0)
 STRUCT_END()
 
+STRUCT_BEGIN(LoadPLYSettings, "Settings for loading ply files")
+    STRUCT_FIELD(bool, flatten, false, "If true, when there is an element named face, with a single list property, then the element named vertex will be duplicated to flatten the vertixes into a deindexed list.", 0)
+    STRUCT_FIELD(std::string, element, "", "The name of the element to load. If none specified and there is only one element, that element will be loaded.", 0)
+STRUCT_END()
+
 STRUCT_BEGIN(StructReference, "A reference to a struct")
     STRUCT_FIELD(std::string, name, "", "The name of the struct.", 0)
 

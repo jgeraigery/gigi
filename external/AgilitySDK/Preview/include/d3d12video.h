@@ -283,6 +283,27 @@ typedef interface ID3D12VideoEncodeCommandListPreview ID3D12VideoEncodeCommandLi
 #endif 	/* __ID3D12VideoEncodeCommandListPreview_FWD_DEFINED__ */
 
 
+#ifndef __ID3D12VideoProcessor3DLUT_FWD_DEFINED__
+#define __ID3D12VideoProcessor3DLUT_FWD_DEFINED__
+typedef interface ID3D12VideoProcessor3DLUT ID3D12VideoProcessor3DLUT;
+
+#endif 	/* __ID3D12VideoProcessor3DLUT_FWD_DEFINED__ */
+
+
+#ifndef __ID3D12VideoProcessCommandList3DLUT_FWD_DEFINED__
+#define __ID3D12VideoProcessCommandList3DLUT_FWD_DEFINED__
+typedef interface ID3D12VideoProcessCommandList3DLUT ID3D12VideoProcessCommandList3DLUT;
+
+#endif 	/* __ID3D12VideoProcessCommandList3DLUT_FWD_DEFINED__ */
+
+
+#ifndef __ID3D12VideoDevice3DLUT_FWD_DEFINED__
+#define __ID3D12VideoDevice3DLUT_FWD_DEFINED__
+typedef interface ID3D12VideoDevice3DLUT ID3D12VideoDevice3DLUT;
+
+#endif 	/* __ID3D12VideoDevice3DLUT_FWD_DEFINED__ */
+
+
 /* header files for imported files */
 #include "oaidl.h"
 #include "ocidl.h"
@@ -388,6 +409,8 @@ enum D3D12_FEATURE_VIDEO
         D3D12_FEATURE_VIDEO_ENCODER_QPMAP_INPUT	= 50,
         D3D12_FEATURE_VIDEO_ENCODER_DIRTY_REGIONS	= 51,
         D3D12_FEATURE_VIDEO_ENCODER_MOTION_SEARCH	= 52,
+        D3D12_FEATURE_VIDEO_PROCESS_SUPPORT1	= 53,
+        D3D12_FEATURE_VIDEO_PROCESSOR_SIZE2	= 54,
         D3D12_FEATURE_VIDEO_ENCODER_SUPPORT2	= 55,
         D3D12_FEATURE_VIDEO_ENCODER_HEAP_SIZE1	= 56,
         D3D12_FEATURE_VIDEO_ENCODER_RATE_CONTROL_FRAME_ANALYSIS	= 57
@@ -7088,7 +7111,8 @@ enum D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAGS
         D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAG_MOTION_MODE_SWITCHABLE	= 0x400000,
         D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAG_ALLOW_HIGH_PRECISION_MV	= 0x800000,
         D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAG_SKIP_MODE_PRESENT	= 0x1000000,
-        D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAG_DELTA_LF_PARAMS	= 0x2000000
+        D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAG_DELTA_LF_PARAMS	= 0x2000000,
+        D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAG_DISABLE_CDF_UPDATE_UNSUPPORTED	= 0x4000000
     } 	D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAGS;
 
 DEFINE_ENUM_FLAG_OPERATORS(D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAGS)
@@ -7487,7 +7511,8 @@ enum D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAGS
         D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_MAX_FRAME_SIZE	= 0x10,
         D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_VBV_SIZES	= 0x20,
         D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_EXTENSION1_SUPPORT	= 0x40,
-        D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_QUALITY_VS_SPEED	= 0x80
+        D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_QUALITY_VS_SPEED	= 0x80,
+        D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_SPATIAL_ADAPTIVE_QP	= 0x100
     } 	D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAGS;
 
 DEFINE_ENUM_FLAG_OPERATORS(D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAGS)
@@ -8025,7 +8050,11 @@ enum D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS1
     {
         D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAG1_NONE	= 0,
         D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAG1_SEPARATE_COLOUR_PLANE_SUPPORT	= 0x1,
-        D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAG1_SEPARATE_COLOUR_PLANE_REQUIRED	= 0x2
+        D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAG1_SEPARATE_COLOUR_PLANE_REQUIRED	= 0x2,
+        D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAG1_TEMPORAL_MVP_ENABLED_SUPPORT	= 0x4,
+        D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAG1_TEMPORAL_MVP_ENABLED_REQUIRED	= 0x8,
+        D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAG1_STRONG_INTRA_SMOOTHING_ENABLED_SUPPORT	= 0x10,
+        D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAG1_STRONG_INTRA_SMOOTHING_ENABLED_REQUIRED	= 0x20
     } 	D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS1;
 
 DEFINE_ENUM_FLAG_OPERATORS(D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS1)
@@ -8133,7 +8162,9 @@ enum D3D12_VIDEO_ENCODER_SUPPORT_FLAGS
         D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_NOTIFICATION_ARRAY_OF_BUFFERS_AVAILABLE	= 0x80000,
         D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_NOTIFICATION_SINGLE_BUFFER_AVAILABLE	= 0x100000,
         D3D12_VIDEO_ENCODER_SUPPORT_FLAG_FRAME_PSNR_METADATA_AVAILABLE	= 0x200000,
-        D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGIONS_PSNR_METADATA_AVAILABLE	= 0x400000
+        D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGIONS_PSNR_METADATA_AVAILABLE	= 0x400000,
+        D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_SPATIAL_ADAPTIVE_QP_AVAILABLE	= 0x800000,
+        D3D12_VIDEO_ENCODER_SUPPORT_FLAG_INTRA_REFRESH_NO_SUBREGION_LAYOUT_CONSTRAINTS_AVAILABLE	= 0x1000000
     } 	D3D12_VIDEO_ENCODER_SUPPORT_FLAGS;
 
 DEFINE_ENUM_FLAG_OPERATORS(D3D12_VIDEO_ENCODER_SUPPORT_FLAGS)
@@ -8183,7 +8214,9 @@ enum D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS
         D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAG_HIGH_PRECISION_OFFSETS	= 0x2000,
         D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAG_PERSISTENT_RICE_ADAPTATION	= 0x4000,
         D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAG_CABAC_BYPASS_ALIGNMENT	= 0x8000,
-        D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAG_SEPARATE_COLOUR_PLANE	= 0x10000
+        D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAG_SEPARATE_COLOUR_PLANE	= 0x10000,
+        D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAG_TEMPORAL_MVP_ENABLED	= 0x20000,
+        D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAG_STRONG_INTRA_SMOOTHING_ENABLED	= 0x40000
     } 	D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS;
 
 DEFINE_ENUM_FLAG_OPERATORS(D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS)
@@ -11673,6 +11706,718 @@ EXTERN_C const IID IID_ID3D12VideoEncodeCommandListPreview;
 /* interface __MIDL_itf_d3d12video_0000_0033 */
 /* [local] */ 
 
+typedef 
+enum D3D12_VIDEO_PROCESS_LUT_SUPPORT_FLAGS
+    {
+        D3D12_VIDEO_PROCESS_LUT_SUPPORT_FLAG_NONE	= 0,
+        D3D12_VIDEO_PROCESS_LUT_SUPPORT_FLAG_SUPPORTED	= 0x1,
+        D3D12_VIDEO_PROCESS_LUT_SUPPORT_FLAG_1DLUT_SPACING_CURVE	= 0x2,
+        D3D12_VIDEO_PROCESS_LUT_SUPPORT_FLAG_1DLUT_NON_MONOTONICALLY_INCREASING_CURVE	= 0x4
+    } 	D3D12_VIDEO_PROCESS_LUT_SUPPORT_FLAGS;
+
+DEFINE_ENUM_FLAG_OPERATORS(D3D12_VIDEO_PROCESS_LUT_SUPPORT_FLAGS)
+typedef 
+enum D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION
+    {
+        D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_17x17x17	= 0,
+        D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_33x33x33	= 1,
+        D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_45x45x45	= 2,
+        D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_65x65x65	= 3
+    } 	D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION;
+
+typedef 
+enum D3D12_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE
+    {
+        D3D12_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_TRILINEAR	= 0,
+        D3D12_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_TETRAHEDRAL	= 1
+    } 	D3D12_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE;
+
+typedef 
+enum D3D12_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_SUPPORT_FLAGS
+    {
+        D3D12_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_SUPPORT_FLAG_NONE	= 0,
+        D3D12_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_SUPPORT_FLAG_TRILINEAR	= ( 1 << D3D12_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_TRILINEAR ) ,
+        D3D12_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_SUPPORT_FLAG_TETRAHEDRAL	= ( 1 << D3D12_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_TETRAHEDRAL ) 
+    } 	D3D12_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_SUPPORT_FLAGS;
+
+typedef 
+enum D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_SUPPORT_FLAGS
+    {
+        D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_SUPPORT_FLAG_NONE	= 0,
+        D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_SUPPORT_FLAG_17x17x17	= ( 1 << D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_17x17x17 ) ,
+        D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_SUPPORT_FLAG_33x33x33	= ( 1 << D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_33x33x33 ) ,
+        D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_SUPPORT_FLAG_45x45x45	= ( 1 << D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_45x45x45 ) ,
+        D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_SUPPORT_FLAG_65x65x65	= ( 1 << D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_65x65x65 ) 
+    } 	D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_SUPPORT_FLAGS;
+
+DEFINE_ENUM_FLAG_OPERATORS(D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_SUPPORT_FLAGS )
+typedef struct D3D12_VIDEO_PROCESS_LUT_SUPPORT
+    {
+    DXGI_FORMAT Format1DLUT;
+    DXGI_FORMAT Format3DLUT;
+    DXGI_COLOR_SPACE_TYPE ColorSpace3DLUTOutput;
+    D3D12_VIDEO_PROCESS_LUT_SUPPORT_FLAGS Flags;
+    UINT Native1DLUTSize;
+    D3D12_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_SUPPORT_FLAGS Interpolation3DLUTFlags;
+    D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_SUPPORT_FLAGS Dimension3DLUTFlags;
+    } 	D3D12_VIDEO_PROCESS_LUT_SUPPORT;
+
+typedef 
+enum D3D12_VIDEO_PROCESS_LUT_UPDATE_FLAGS
+    {
+        D3D12_VIDEO_PROCESS_LUT_UPDATE_FLAG_NONE	= 0,
+        D3D12_VIDEO_PROCESS_LUT_UPDATE_FLAG_CSC	= 0x1,
+        D3D12_VIDEO_PROCESS_LUT_UPDATE_FLAG_1DLUT	= 0x2,
+        D3D12_VIDEO_PROCESS_LUT_UPDATE_FLAG_1DLUT_SPACING	= 0x4,
+        D3D12_VIDEO_PROCESS_LUT_UPDATE_FLAG_3DLUT	= 0x8
+    } 	D3D12_VIDEO_PROCESS_LUT_UPDATE_FLAGS;
+
+DEFINE_ENUM_FLAG_OPERATORS(D3D12_VIDEO_PROCESS_LUT_UPDATE_FLAGS )
+typedef 
+enum D3D12_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_FLAGS
+    {
+        D3D12_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_FLAG_NONE	= 0,
+        D3D12_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_FLAG_ENABLE	= 0x1
+    } 	D3D12_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_FLAGS;
+
+DEFINE_ENUM_FLAG_OPERATORS(D3D12_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_FLAGS )
+typedef struct D3D12_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION
+    {
+    D3D12_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_FLAGS ConfigFlags;
+    DXGI_COLOR_SPACE_TYPE UpsampledChromaInput;
+    DXGI_FORMAT Format1DLUT;
+    DXGI_FORMAT Format3DLUT;
+    DXGI_COLOR_SPACE_TYPE ColorSpace3DLUTOutput;
+    D3D12_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE Interpolation3DLUT;
+    D3D12_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION Dimension3DLUT;
+    } 	D3D12_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION;
+
+typedef struct D3D12_VIDEO_PROCESS_TRANSFORM_LUT
+    {
+    D3D12_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION Configuration;
+    D3D12_VIDEO_PROCESS_LUT_UPDATE_FLAGS UpdateFlags;
+    float pCSCMatrix[ 4 ][ 3 ];
+    ID3D12Resource *p1DLUTtransform;
+    UINT Subresource1DLUT;
+    ID3D12Resource *p1DLUTInputSpacing;
+    UINT Subresource1DLUTInputSpacing;
+    ID3D12Resource *p3DLUTTransform;
+    } 	D3D12_VIDEO_PROCESS_TRANSFORM_LUT;
+
+typedef struct D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC1
+    {
+    DXGI_FORMAT Format;
+    DXGI_COLOR_SPACE_TYPE ColorSpace;
+    DXGI_RATIONAL SourceAspectRatio;
+    DXGI_RATIONAL DestinationAspectRatio;
+    DXGI_RATIONAL FrameRate;
+    D3D12_VIDEO_SIZE_RANGE SourceSizeRange;
+    D3D12_VIDEO_SIZE_RANGE DestinationSizeRange;
+    BOOL EnableOrientation;
+    D3D12_VIDEO_PROCESS_FILTER_FLAGS FilterFlags;
+    D3D12_VIDEO_FRAME_STEREO_FORMAT StereoFormat;
+    D3D12_VIDEO_FIELD_TYPE FieldType;
+    D3D12_VIDEO_PROCESS_DEINTERLACE_FLAGS DeinterlaceMode;
+    BOOL EnableAlphaBlending;
+    D3D12_VIDEO_PROCESS_LUMA_KEY LumaKey;
+    UINT NumPastFrames;
+    UINT NumFutureFrames;
+    BOOL EnableAutoProcessing;
+    D3D12_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION ConfigurationLUT;
+    } 	D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC1;
+
+typedef struct D3D12_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS2
+    {
+    D3D12_VIDEO_PROCESS_INPUT_STREAM InputStream[ 2 ];
+    D3D12_VIDEO_PROCESS_TRANSFORM Transform;
+    D3D12_VIDEO_PROCESS_INPUT_STREAM_FLAGS Flags;
+    D3D12_VIDEO_PROCESS_INPUT_STREAM_RATE RateInfo;
+    INT FilterLevels[ 32 ];
+    D3D12_VIDEO_PROCESS_ALPHA_BLENDING AlphaBlending;
+    D3D12_VIDEO_FIELD_TYPE FieldType;
+    D3D12_VIDEO_PROCESS_TRANSFORM_LUT LUTMode;
+    } 	D3D12_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS2;
+
+
+
+extern RPC_IF_HANDLE __MIDL_itf_d3d12video_0000_0033_v0_0_c_ifspec;
+extern RPC_IF_HANDLE __MIDL_itf_d3d12video_0000_0033_v0_0_s_ifspec;
+
+#ifndef __ID3D12VideoProcessor3DLUT_INTERFACE_DEFINED__
+#define __ID3D12VideoProcessor3DLUT_INTERFACE_DEFINED__
+
+/* interface ID3D12VideoProcessor3DLUT */
+/* [unique][local][object][uuid] */ 
+
+
+EXTERN_C const IID IID_ID3D12VideoProcessor3DLUT;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("e8f885e6-0e57-4954-84d7-38cfb1bc5684")
+    ID3D12VideoProcessor3DLUT : public ID3D12VideoProcessor1
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE GetInputStreamDescs1( 
+            UINT NumInputStreamDescs,
+            _Out_writes_(NumInputStreamDescs)  D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC1 *pInputStreamDescs) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct ID3D12VideoProcessor3DLUTVtbl
+    {
+        BEGIN_INTERFACE
+        
+        DECLSPEC_XFGVIRT(IUnknown, QueryInterface)
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            ID3D12VideoProcessor3DLUT * This,
+            REFIID riid,
+            _COM_Outptr_  void **ppvObject);
+        
+        DECLSPEC_XFGVIRT(IUnknown, AddRef)
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            ID3D12VideoProcessor3DLUT * This);
+        
+        DECLSPEC_XFGVIRT(IUnknown, Release)
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            ID3D12VideoProcessor3DLUT * This);
+        
+        DECLSPEC_XFGVIRT(ID3D12Object, GetPrivateData)
+        HRESULT ( STDMETHODCALLTYPE *GetPrivateData )( 
+            ID3D12VideoProcessor3DLUT * This,
+            _In_  REFGUID guid,
+            _Inout_  UINT *pDataSize,
+            _Out_writes_bytes_opt_( *pDataSize )  void *pData);
+        
+        DECLSPEC_XFGVIRT(ID3D12Object, SetPrivateData)
+        HRESULT ( STDMETHODCALLTYPE *SetPrivateData )( 
+            ID3D12VideoProcessor3DLUT * This,
+            _In_  REFGUID guid,
+            _In_  UINT DataSize,
+            _In_reads_bytes_opt_( DataSize )  const void *pData);
+        
+        DECLSPEC_XFGVIRT(ID3D12Object, SetPrivateDataInterface)
+        HRESULT ( STDMETHODCALLTYPE *SetPrivateDataInterface )( 
+            ID3D12VideoProcessor3DLUT * This,
+            _In_  REFGUID guid,
+            _In_opt_  const IUnknown *pData);
+        
+        DECLSPEC_XFGVIRT(ID3D12Object, SetName)
+        HRESULT ( STDMETHODCALLTYPE *SetName )( 
+            ID3D12VideoProcessor3DLUT * This,
+            _In_z_  LPCWSTR Name);
+        
+        DECLSPEC_XFGVIRT(ID3D12DeviceChild, GetDevice)
+        HRESULT ( STDMETHODCALLTYPE *GetDevice )( 
+            ID3D12VideoProcessor3DLUT * This,
+            REFIID riid,
+            _COM_Outptr_opt_  void **ppvDevice);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoProcessor, GetNodeMask)
+        UINT ( STDMETHODCALLTYPE *GetNodeMask )( 
+            ID3D12VideoProcessor3DLUT * This);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoProcessor, GetNumInputStreamDescs)
+        UINT ( STDMETHODCALLTYPE *GetNumInputStreamDescs )( 
+            ID3D12VideoProcessor3DLUT * This);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoProcessor, GetInputStreamDescs)
+        HRESULT ( STDMETHODCALLTYPE *GetInputStreamDescs )( 
+            ID3D12VideoProcessor3DLUT * This,
+            UINT NumInputStreamDescs,
+            _Out_writes_(NumInputStreamDescs)  D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC *pInputStreamDescs);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoProcessor, GetOutputStreamDesc)
+#if !defined(_WIN32)
+        D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC ( STDMETHODCALLTYPE *GetOutputStreamDesc )( 
+            ID3D12VideoProcessor3DLUT * This);
+        
+#else
+        D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC *( STDMETHODCALLTYPE *GetOutputStreamDesc )( 
+            ID3D12VideoProcessor3DLUT * This,
+            D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC * RetVal);
+        
+#endif
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoProcessor1, GetProtectedResourceSession)
+        HRESULT ( STDMETHODCALLTYPE *GetProtectedResourceSession )( 
+            ID3D12VideoProcessor3DLUT * This,
+            REFIID riid,
+            _COM_Outptr_opt_  void **ppProtectedSession);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoProcessor3DLUT, GetInputStreamDescs1)
+        HRESULT ( STDMETHODCALLTYPE *GetInputStreamDescs1 )( 
+            ID3D12VideoProcessor3DLUT * This,
+            UINT NumInputStreamDescs,
+            _Out_writes_(NumInputStreamDescs)  D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC1 *pInputStreamDescs);
+        
+        END_INTERFACE
+    } ID3D12VideoProcessor3DLUTVtbl;
+
+    interface ID3D12VideoProcessor3DLUT
+    {
+        CONST_VTBL struct ID3D12VideoProcessor3DLUTVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define ID3D12VideoProcessor3DLUT_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define ID3D12VideoProcessor3DLUT_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define ID3D12VideoProcessor3DLUT_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define ID3D12VideoProcessor3DLUT_GetPrivateData(This,guid,pDataSize,pData)	\
+    ( (This)->lpVtbl -> GetPrivateData(This,guid,pDataSize,pData) ) 
+
+#define ID3D12VideoProcessor3DLUT_SetPrivateData(This,guid,DataSize,pData)	\
+    ( (This)->lpVtbl -> SetPrivateData(This,guid,DataSize,pData) ) 
+
+#define ID3D12VideoProcessor3DLUT_SetPrivateDataInterface(This,guid,pData)	\
+    ( (This)->lpVtbl -> SetPrivateDataInterface(This,guid,pData) ) 
+
+#define ID3D12VideoProcessor3DLUT_SetName(This,Name)	\
+    ( (This)->lpVtbl -> SetName(This,Name) ) 
+
+
+#define ID3D12VideoProcessor3DLUT_GetDevice(This,riid,ppvDevice)	\
+    ( (This)->lpVtbl -> GetDevice(This,riid,ppvDevice) ) 
+
+
+
+#define ID3D12VideoProcessor3DLUT_GetNodeMask(This)	\
+    ( (This)->lpVtbl -> GetNodeMask(This) ) 
+
+#define ID3D12VideoProcessor3DLUT_GetNumInputStreamDescs(This)	\
+    ( (This)->lpVtbl -> GetNumInputStreamDescs(This) ) 
+
+#define ID3D12VideoProcessor3DLUT_GetInputStreamDescs(This,NumInputStreamDescs,pInputStreamDescs)	\
+    ( (This)->lpVtbl -> GetInputStreamDescs(This,NumInputStreamDescs,pInputStreamDescs) ) 
+#if !defined(_WIN32)
+
+#define ID3D12VideoProcessor3DLUT_GetOutputStreamDesc(This)	\
+    ( (This)->lpVtbl -> GetOutputStreamDesc(This) ) 
+#else
+#define ID3D12VideoProcessor3DLUT_GetOutputStreamDesc(This,RetVal)	\
+    ( (This)->lpVtbl -> GetOutputStreamDesc(This,RetVal) ) 
+#endif
+
+
+#define ID3D12VideoProcessor3DLUT_GetProtectedResourceSession(This,riid,ppProtectedSession)	\
+    ( (This)->lpVtbl -> GetProtectedResourceSession(This,riid,ppProtectedSession) ) 
+
+
+#define ID3D12VideoProcessor3DLUT_GetInputStreamDescs1(This,NumInputStreamDescs,pInputStreamDescs)	\
+    ( (This)->lpVtbl -> GetInputStreamDescs1(This,NumInputStreamDescs,pInputStreamDescs) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __ID3D12VideoProcessor3DLUT_INTERFACE_DEFINED__ */
+
+
+#ifndef __ID3D12VideoProcessCommandList3DLUT_INTERFACE_DEFINED__
+#define __ID3D12VideoProcessCommandList3DLUT_INTERFACE_DEFINED__
+
+/* interface ID3D12VideoProcessCommandList3DLUT */
+/* [unique][local][object][uuid] */ 
+
+
+EXTERN_C const IID IID_ID3D12VideoProcessCommandList3DLUT;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("0b725df5-dd55-42ad-bb7b-3a8552194ae9")
+    ID3D12VideoProcessCommandList3DLUT : public IUnknown
+    {
+    public:
+        virtual void STDMETHODCALLTYPE ProcessFrames2( 
+            _In_  ID3D12VideoProcessor3DLUT *pVideoProcessor,
+            _In_  const D3D12_VIDEO_PROCESS_OUTPUT_STREAM_ARGUMENTS *pOutputArguments,
+            UINT NumInputStreams,
+            _In_reads_(NumInputStreams)  const D3D12_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS2 *pInputArguments) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct ID3D12VideoProcessCommandList3DLUTVtbl
+    {
+        BEGIN_INTERFACE
+        
+        DECLSPEC_XFGVIRT(IUnknown, QueryInterface)
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            ID3D12VideoProcessCommandList3DLUT * This,
+            REFIID riid,
+            _COM_Outptr_  void **ppvObject);
+        
+        DECLSPEC_XFGVIRT(IUnknown, AddRef)
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            ID3D12VideoProcessCommandList3DLUT * This);
+        
+        DECLSPEC_XFGVIRT(IUnknown, Release)
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            ID3D12VideoProcessCommandList3DLUT * This);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoProcessCommandList3DLUT, ProcessFrames2)
+        void ( STDMETHODCALLTYPE *ProcessFrames2 )( 
+            ID3D12VideoProcessCommandList3DLUT * This,
+            _In_  ID3D12VideoProcessor3DLUT *pVideoProcessor,
+            _In_  const D3D12_VIDEO_PROCESS_OUTPUT_STREAM_ARGUMENTS *pOutputArguments,
+            UINT NumInputStreams,
+            _In_reads_(NumInputStreams)  const D3D12_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS2 *pInputArguments);
+        
+        END_INTERFACE
+    } ID3D12VideoProcessCommandList3DLUTVtbl;
+
+    interface ID3D12VideoProcessCommandList3DLUT
+    {
+        CONST_VTBL struct ID3D12VideoProcessCommandList3DLUTVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define ID3D12VideoProcessCommandList3DLUT_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define ID3D12VideoProcessCommandList3DLUT_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define ID3D12VideoProcessCommandList3DLUT_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define ID3D12VideoProcessCommandList3DLUT_ProcessFrames2(This,pVideoProcessor,pOutputArguments,NumInputStreams,pInputArguments)	\
+    ( (This)->lpVtbl -> ProcessFrames2(This,pVideoProcessor,pOutputArguments,NumInputStreams,pInputArguments) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __ID3D12VideoProcessCommandList3DLUT_INTERFACE_DEFINED__ */
+
+
+/* interface __MIDL_itf_d3d12video_0000_0035 */
+/* [local] */ 
+
+typedef struct D3D12_FEATURE_DATA_VIDEO_PROCESS_SUPPORT1
+    {
+    UINT NodeIndex;
+    D3D12_VIDEO_SAMPLE InputSample;
+    D3D12_VIDEO_FIELD_TYPE InputFieldType;
+    D3D12_VIDEO_FRAME_STEREO_FORMAT InputStereoFormat;
+    DXGI_RATIONAL InputFrameRate;
+    D3D12_VIDEO_FORMAT OutputFormat;
+    D3D12_VIDEO_FRAME_STEREO_FORMAT OutputStereoFormat;
+    DXGI_RATIONAL OutputFrameRate;
+    D3D12_VIDEO_PROCESS_SUPPORT_FLAGS SupportFlags;
+    D3D12_VIDEO_SCALE_SUPPORT ScaleSupport;
+    D3D12_VIDEO_PROCESS_FEATURE_FLAGS FeatureSupport;
+    D3D12_VIDEO_PROCESS_DEINTERLACE_FLAGS DeinterlaceSupport;
+    D3D12_VIDEO_PROCESS_AUTO_PROCESSING_FLAGS AutoProcessingSupport;
+    D3D12_VIDEO_PROCESS_FILTER_FLAGS FilterSupport;
+    D3D12_VIDEO_PROCESS_FILTER_RANGE FilterRangeSupport[ 32 ];
+    D3D12_VIDEO_PROCESS_LUT_SUPPORT SupportLUT;
+    } 	D3D12_FEATURE_DATA_VIDEO_PROCESS_SUPPORT1;
+
+typedef struct D3D12_FEATURE_DATA_VIDEO_PROCESSOR_SIZE2
+    {
+    UINT NodeMask;
+    const D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC *pOutputStreamDesc;
+    UINT NumInputStreamDescs;
+    const D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC1 *pInputStreamDescs;
+    BOOL Protected;
+    UINT64 MemoryPoolL0Size;
+    UINT64 MemoryPoolL1Size;
+    } 	D3D12_FEATURE_DATA_VIDEO_PROCESSOR_SIZE2;
+
+
+
+extern RPC_IF_HANDLE __MIDL_itf_d3d12video_0000_0035_v0_0_c_ifspec;
+extern RPC_IF_HANDLE __MIDL_itf_d3d12video_0000_0035_v0_0_s_ifspec;
+
+#ifndef __ID3D12VideoDevice3DLUT_INTERFACE_DEFINED__
+#define __ID3D12VideoDevice3DLUT_INTERFACE_DEFINED__
+
+/* interface ID3D12VideoDevice3DLUT */
+/* [unique][local][object][uuid] */ 
+
+
+EXTERN_C const IID IID_ID3D12VideoDevice3DLUT;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("4694a08b-63c8-45e2-88c8-4986acb13d64")
+    ID3D12VideoDevice3DLUT : public ID3D12VideoDevice4
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE CreateVideoProcessor2( 
+            UINT NodeMask,
+            _In_  const D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC *pOutputStreamDesc,
+            UINT NumInputStreamDescs,
+            _In_reads_(NumInputStreamDescs)  const D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC1 *pInputStreamDescs,
+            _In_opt_  ID3D12ProtectedResourceSession *pProtectedResourceSession,
+            _In_  REFIID riid,
+            _COM_Outptr_  void **ppVideoProcessor) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct ID3D12VideoDevice3DLUTVtbl
+    {
+        BEGIN_INTERFACE
+        
+        DECLSPEC_XFGVIRT(IUnknown, QueryInterface)
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            ID3D12VideoDevice3DLUT * This,
+            REFIID riid,
+            _COM_Outptr_  void **ppvObject);
+        
+        DECLSPEC_XFGVIRT(IUnknown, AddRef)
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            ID3D12VideoDevice3DLUT * This);
+        
+        DECLSPEC_XFGVIRT(IUnknown, Release)
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            ID3D12VideoDevice3DLUT * This);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice, CheckFeatureSupport)
+        HRESULT ( STDMETHODCALLTYPE *CheckFeatureSupport )( 
+            ID3D12VideoDevice3DLUT * This,
+            D3D12_FEATURE_VIDEO FeatureVideo,
+            _Inout_updates_bytes_(FeatureSupportDataSize)  void *pFeatureSupportData,
+            UINT FeatureSupportDataSize);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice, CreateVideoDecoder)
+        HRESULT ( STDMETHODCALLTYPE *CreateVideoDecoder )( 
+            ID3D12VideoDevice3DLUT * This,
+            _In_  const D3D12_VIDEO_DECODER_DESC *pDesc,
+            _In_  REFIID riid,
+            _COM_Outptr_  void **ppVideoDecoder);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice, CreateVideoDecoderHeap)
+        HRESULT ( STDMETHODCALLTYPE *CreateVideoDecoderHeap )( 
+            ID3D12VideoDevice3DLUT * This,
+            _In_  const D3D12_VIDEO_DECODER_HEAP_DESC *pVideoDecoderHeapDesc,
+            _In_  REFIID riid,
+            _COM_Outptr_  void **ppVideoDecoderHeap);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice, CreateVideoProcessor)
+        HRESULT ( STDMETHODCALLTYPE *CreateVideoProcessor )( 
+            ID3D12VideoDevice3DLUT * This,
+            UINT NodeMask,
+            _In_  const D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC *pOutputStreamDesc,
+            UINT NumInputStreamDescs,
+            _In_reads_(NumInputStreamDescs)  const D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC *pInputStreamDescs,
+            _In_  REFIID riid,
+            _COM_Outptr_  void **ppVideoProcessor);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice1, CreateVideoMotionEstimator)
+        HRESULT ( STDMETHODCALLTYPE *CreateVideoMotionEstimator )( 
+            ID3D12VideoDevice3DLUT * This,
+            _In_  const D3D12_VIDEO_MOTION_ESTIMATOR_DESC *pDesc,
+            _In_opt_  ID3D12ProtectedResourceSession *pProtectedResourceSession,
+            _In_  REFIID riid,
+            _COM_Outptr_  void **ppVideoMotionEstimator);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice1, CreateVideoMotionVectorHeap)
+        HRESULT ( STDMETHODCALLTYPE *CreateVideoMotionVectorHeap )( 
+            ID3D12VideoDevice3DLUT * This,
+            _In_  const D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC *pDesc,
+            _In_opt_  ID3D12ProtectedResourceSession *pProtectedResourceSession,
+            _In_  REFIID riid,
+            _COM_Outptr_  void **ppVideoMotionVectorHeap);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice2, CreateVideoDecoder1)
+        HRESULT ( STDMETHODCALLTYPE *CreateVideoDecoder1 )( 
+            ID3D12VideoDevice3DLUT * This,
+            _In_  const D3D12_VIDEO_DECODER_DESC *pDesc,
+            _In_opt_  ID3D12ProtectedResourceSession *pProtectedResourceSession,
+            _In_  REFIID riid,
+            _COM_Outptr_  void **ppVideoDecoder);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice2, CreateVideoDecoderHeap1)
+        HRESULT ( STDMETHODCALLTYPE *CreateVideoDecoderHeap1 )( 
+            ID3D12VideoDevice3DLUT * This,
+            _In_  const D3D12_VIDEO_DECODER_HEAP_DESC *pVideoDecoderHeapDesc,
+            _In_opt_  ID3D12ProtectedResourceSession *pProtectedResourceSession,
+            _In_  REFIID riid,
+            _COM_Outptr_  void **ppVideoDecoderHeap);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice2, CreateVideoProcessor1)
+        HRESULT ( STDMETHODCALLTYPE *CreateVideoProcessor1 )( 
+            ID3D12VideoDevice3DLUT * This,
+            UINT NodeMask,
+            _In_  const D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC *pOutputStreamDesc,
+            UINT NumInputStreamDescs,
+            _In_reads_(NumInputStreamDescs)  const D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC *pInputStreamDescs,
+            _In_opt_  ID3D12ProtectedResourceSession *pProtectedResourceSession,
+            _In_  REFIID riid,
+            _COM_Outptr_  void **ppVideoProcessor);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice2, CreateVideoExtensionCommand)
+        HRESULT ( STDMETHODCALLTYPE *CreateVideoExtensionCommand )( 
+            ID3D12VideoDevice3DLUT * This,
+            _In_  const D3D12_VIDEO_EXTENSION_COMMAND_DESC *pDesc,
+            _In_reads_bytes_(CreationParametersDataSizeInBytes)  const void *pCreationParameters,
+            SIZE_T CreationParametersDataSizeInBytes,
+            _In_opt_  ID3D12ProtectedResourceSession *pProtectedResourceSession,
+            _In_  REFIID riid,
+            _COM_Outptr_  void **ppVideoExtensionCommand);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice2, ExecuteExtensionCommand)
+        HRESULT ( STDMETHODCALLTYPE *ExecuteExtensionCommand )( 
+            ID3D12VideoDevice3DLUT * This,
+            _In_  ID3D12VideoExtensionCommand *pExtensionCommand,
+            _In_reads_bytes_(ExecutionParametersSizeInBytes)  const void *pExecutionParameters,
+            SIZE_T ExecutionParametersSizeInBytes,
+            _Out_writes_bytes_(OutputDataSizeInBytes)  void *pOutputData,
+            SIZE_T OutputDataSizeInBytes);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice3, CreateVideoEncoder)
+        HRESULT ( STDMETHODCALLTYPE *CreateVideoEncoder )( 
+            ID3D12VideoDevice3DLUT * This,
+            _In_  const D3D12_VIDEO_ENCODER_DESC *pDesc,
+            _In_  REFIID riid,
+            _COM_Outptr_  void **ppVideoEncoder);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice3, CreateVideoEncoderHeap)
+        HRESULT ( STDMETHODCALLTYPE *CreateVideoEncoderHeap )( 
+            ID3D12VideoDevice3DLUT * This,
+            _In_  const D3D12_VIDEO_ENCODER_HEAP_DESC *pDesc,
+            _In_  REFIID riid,
+            _COM_Outptr_  void **ppVideoEncoderHeap);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice4, CreateVideoEncoderHeap1)
+        HRESULT ( STDMETHODCALLTYPE *CreateVideoEncoderHeap1 )( 
+            ID3D12VideoDevice3DLUT * This,
+            _In_  const D3D12_VIDEO_ENCODER_HEAP_DESC1 *pDesc,
+            _In_  REFIID riid,
+            _COM_Outptr_  void **ppVideoEncoderHeap);
+        
+        DECLSPEC_XFGVIRT(ID3D12VideoDevice3DLUT, CreateVideoProcessor2)
+        HRESULT ( STDMETHODCALLTYPE *CreateVideoProcessor2 )( 
+            ID3D12VideoDevice3DLUT * This,
+            UINT NodeMask,
+            _In_  const D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC *pOutputStreamDesc,
+            UINT NumInputStreamDescs,
+            _In_reads_(NumInputStreamDescs)  const D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC1 *pInputStreamDescs,
+            _In_opt_  ID3D12ProtectedResourceSession *pProtectedResourceSession,
+            _In_  REFIID riid,
+            _COM_Outptr_  void **ppVideoProcessor);
+        
+        END_INTERFACE
+    } ID3D12VideoDevice3DLUTVtbl;
+
+    interface ID3D12VideoDevice3DLUT
+    {
+        CONST_VTBL struct ID3D12VideoDevice3DLUTVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define ID3D12VideoDevice3DLUT_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define ID3D12VideoDevice3DLUT_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define ID3D12VideoDevice3DLUT_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define ID3D12VideoDevice3DLUT_CheckFeatureSupport(This,FeatureVideo,pFeatureSupportData,FeatureSupportDataSize)	\
+    ( (This)->lpVtbl -> CheckFeatureSupport(This,FeatureVideo,pFeatureSupportData,FeatureSupportDataSize) ) 
+
+#define ID3D12VideoDevice3DLUT_CreateVideoDecoder(This,pDesc,riid,ppVideoDecoder)	\
+    ( (This)->lpVtbl -> CreateVideoDecoder(This,pDesc,riid,ppVideoDecoder) ) 
+
+#define ID3D12VideoDevice3DLUT_CreateVideoDecoderHeap(This,pVideoDecoderHeapDesc,riid,ppVideoDecoderHeap)	\
+    ( (This)->lpVtbl -> CreateVideoDecoderHeap(This,pVideoDecoderHeapDesc,riid,ppVideoDecoderHeap) ) 
+
+#define ID3D12VideoDevice3DLUT_CreateVideoProcessor(This,NodeMask,pOutputStreamDesc,NumInputStreamDescs,pInputStreamDescs,riid,ppVideoProcessor)	\
+    ( (This)->lpVtbl -> CreateVideoProcessor(This,NodeMask,pOutputStreamDesc,NumInputStreamDescs,pInputStreamDescs,riid,ppVideoProcessor) ) 
+
+
+#define ID3D12VideoDevice3DLUT_CreateVideoMotionEstimator(This,pDesc,pProtectedResourceSession,riid,ppVideoMotionEstimator)	\
+    ( (This)->lpVtbl -> CreateVideoMotionEstimator(This,pDesc,pProtectedResourceSession,riid,ppVideoMotionEstimator) ) 
+
+#define ID3D12VideoDevice3DLUT_CreateVideoMotionVectorHeap(This,pDesc,pProtectedResourceSession,riid,ppVideoMotionVectorHeap)	\
+    ( (This)->lpVtbl -> CreateVideoMotionVectorHeap(This,pDesc,pProtectedResourceSession,riid,ppVideoMotionVectorHeap) ) 
+
+
+#define ID3D12VideoDevice3DLUT_CreateVideoDecoder1(This,pDesc,pProtectedResourceSession,riid,ppVideoDecoder)	\
+    ( (This)->lpVtbl -> CreateVideoDecoder1(This,pDesc,pProtectedResourceSession,riid,ppVideoDecoder) ) 
+
+#define ID3D12VideoDevice3DLUT_CreateVideoDecoderHeap1(This,pVideoDecoderHeapDesc,pProtectedResourceSession,riid,ppVideoDecoderHeap)	\
+    ( (This)->lpVtbl -> CreateVideoDecoderHeap1(This,pVideoDecoderHeapDesc,pProtectedResourceSession,riid,ppVideoDecoderHeap) ) 
+
+#define ID3D12VideoDevice3DLUT_CreateVideoProcessor1(This,NodeMask,pOutputStreamDesc,NumInputStreamDescs,pInputStreamDescs,pProtectedResourceSession,riid,ppVideoProcessor)	\
+    ( (This)->lpVtbl -> CreateVideoProcessor1(This,NodeMask,pOutputStreamDesc,NumInputStreamDescs,pInputStreamDescs,pProtectedResourceSession,riid,ppVideoProcessor) ) 
+
+#define ID3D12VideoDevice3DLUT_CreateVideoExtensionCommand(This,pDesc,pCreationParameters,CreationParametersDataSizeInBytes,pProtectedResourceSession,riid,ppVideoExtensionCommand)	\
+    ( (This)->lpVtbl -> CreateVideoExtensionCommand(This,pDesc,pCreationParameters,CreationParametersDataSizeInBytes,pProtectedResourceSession,riid,ppVideoExtensionCommand) ) 
+
+#define ID3D12VideoDevice3DLUT_ExecuteExtensionCommand(This,pExtensionCommand,pExecutionParameters,ExecutionParametersSizeInBytes,pOutputData,OutputDataSizeInBytes)	\
+    ( (This)->lpVtbl -> ExecuteExtensionCommand(This,pExtensionCommand,pExecutionParameters,ExecutionParametersSizeInBytes,pOutputData,OutputDataSizeInBytes) ) 
+
+
+#define ID3D12VideoDevice3DLUT_CreateVideoEncoder(This,pDesc,riid,ppVideoEncoder)	\
+    ( (This)->lpVtbl -> CreateVideoEncoder(This,pDesc,riid,ppVideoEncoder) ) 
+
+#define ID3D12VideoDevice3DLUT_CreateVideoEncoderHeap(This,pDesc,riid,ppVideoEncoderHeap)	\
+    ( (This)->lpVtbl -> CreateVideoEncoderHeap(This,pDesc,riid,ppVideoEncoderHeap) ) 
+
+
+#define ID3D12VideoDevice3DLUT_CreateVideoEncoderHeap1(This,pDesc,riid,ppVideoEncoderHeap)	\
+    ( (This)->lpVtbl -> CreateVideoEncoderHeap1(This,pDesc,riid,ppVideoEncoderHeap) ) 
+
+
+#define ID3D12VideoDevice3DLUT_CreateVideoProcessor2(This,NodeMask,pOutputStreamDesc,NumInputStreamDescs,pInputStreamDescs,pProtectedResourceSession,riid,ppVideoProcessor)	\
+    ( (This)->lpVtbl -> CreateVideoProcessor2(This,NodeMask,pOutputStreamDesc,NumInputStreamDescs,pInputStreamDescs,pProtectedResourceSession,riid,ppVideoProcessor) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __ID3D12VideoDevice3DLUT_INTERFACE_DEFINED__ */
+
+
+/* interface __MIDL_itf_d3d12video_0000_0036 */
+/* [local] */ 
+
 #endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP | WINAPI_PARTITION_GAMES) */
 #pragma endregion
 DEFINE_GUID(IID_ID3D12VideoDecoderHeap,0x0946B7C9,0xEBF6,0x4047,0xBB,0x73,0x86,0x83,0xE2,0x7D,0xBB,0x1F);
@@ -11708,10 +12453,13 @@ DEFINE_GUID(IID_ID3D12VideoEncoderHeap1,0xea8f1968,0x4aa0,0x43a4,0x9d,0x30,0xba,
 DEFINE_GUID(IID_ID3D12VideoDevice4,0xe59ad09e,0xf1ae,0x42bb,0x89,0x83,0x9f,0x6e,0x55,0x86,0xc4,0xeb);
 DEFINE_GUID(IID_ID3D12VideoEncodeCommandList4,0x69aeb5b7,0x55f2,0x4012,0x8b,0x73,0x3a,0x88,0xd6,0x5a,0x20,0x4c);
 DEFINE_GUID(IID_ID3D12VideoEncodeCommandListPreview,0xe4da2a33,0x2e43,0x43e7,0x8d,0xd0,0x31,0x33,0xad,0x41,0xc1,0x3d);
+DEFINE_GUID(IID_ID3D12VideoProcessor3DLUT,0xe8f885e6,0x0e57,0x4954,0x84,0xd7,0x38,0xcf,0xb1,0xbc,0x56,0x84);
+DEFINE_GUID(IID_ID3D12VideoProcessCommandList3DLUT,0x0b725df5,0xdd55,0x42ad,0xbb,0x7b,0x3a,0x85,0x52,0x19,0x4a,0xe9);
+DEFINE_GUID(IID_ID3D12VideoDevice3DLUT,0x4694a08b,0x63c8,0x45e2,0x88,0xc8,0x49,0x86,0xac,0xb1,0x3d,0x64);
 
 
-extern RPC_IF_HANDLE __MIDL_itf_d3d12video_0000_0033_v0_0_c_ifspec;
-extern RPC_IF_HANDLE __MIDL_itf_d3d12video_0000_0033_v0_0_s_ifspec;
+extern RPC_IF_HANDLE __MIDL_itf_d3d12video_0000_0036_v0_0_c_ifspec;
+extern RPC_IF_HANDLE __MIDL_itf_d3d12video_0000_0036_v0_0_s_ifspec;
 
 /* Additional Prototypes for ALL interfaces */
 

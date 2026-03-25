@@ -10,7 +10,10 @@
                 "buffer": {
                     "fileName": "..\\..\\UnitTests\\Data\\cube_uv.ply",
                     "type": "Float3",
-                    "BLASOpaque": true
+                    "BLASOpaque": true,
+                    "PLYSettings": {
+                        "flatten": true
+                    }
                 }
             }
         ],

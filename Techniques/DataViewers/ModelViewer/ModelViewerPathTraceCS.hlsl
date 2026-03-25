@@ -170,6 +170,14 @@ RayHit RayVsScene(float3 rayPos, float3 rayDir)
                     VertexBuffer[rayQuery.CommittedPrimitiveIndex() * 3 + 1].UV3,
                     VertexBuffer[rayQuery.CommittedPrimitiveIndex() * 3 + 2].UV3);
 
+    if (/*$(Variable:FlipUVY)*/)
+    {
+        uv0.y = 1.0f - uv0.y;
+        uv1.y = 1.0f - uv1.y;
+        uv2.y = 1.0f - uv2.y;
+        uv3.y = 1.0f - uv3.y;
+    }
+
     float3 matNormal = float3(0.0f, 0.0f, 0.0f);
     float matOcclusion = 0.0f;
 

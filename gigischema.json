@@ -711,6 +711,20 @@
                       "type": "number"
                     }
                   },
+                  "PLYSettings": {
+                    "description": "ply specific settings",
+                    "type": "object",
+                    "properties": {
+                      "flatten": {
+                        "description": "If true, when there is an element named face, with a single list property, then the element named vertex will be duplicated to flatten the vertixes into a deindexed list.",
+                        "type": "boolean"
+                      },
+                      "element": {
+                        "description": "The name of the element to load. If none specified and there is only one element, that element will be loaded.",
+                        "type": "string"
+                      }
+                    }
+                  },
                   "cvData": {
                     "description": "Data needed for cooperative vectors support for imported buffer resources",
                     "type": "object",
@@ -896,7 +910,7 @@
                   "format": {
                     "description": "A specific format can be specified",
                     "type": "string",
-                    "enum": ["Any", "R8_Unorm", "RG8_Unorm", "RGBA8_Unorm", "RGBA8_Unorm_sRGB", "BGRA8_Unorm", "R8_Snorm", "RG8_Snorm", "RGBA8_Snorm", "R8_Uint", "RG8_Uint", "RGBA8_Uint", "R8_Sint", "RG8_Sint", "RGBA8_Sint", "R16_Float", "RG16_Float", "RGBA16_Float", "RGBA16_Unorm", "RGBA16_Snorm", "RG16_Uint", "R32_Float", "RG32_Float", "RGBA32_Float", "R32_Uint", "RG32_Uint", "RGBA32_Uint", "R11G11B10_Float", "D32_Float", "D16_Unorm", "D32_Float_S8", "D24_Unorm_S8", "BC1_Unorm", "BC4_Unorm", "BC4_Snorm", "BC5_Unorm", "BC5_Snorm", "BC7_Unorm", "BC7_Unorm_sRGB", "BC6_UF16", "BC6_SF16"]
+                    "enum": ["Any", "R8_Unorm", "RG8_Unorm", "RGBA8_Unorm", "RGBA8_Unorm_sRGB", "BGRA8_Unorm", "R8_Snorm", "RG8_Snorm", "RGBA8_Snorm", "R8_Uint", "RG8_Uint", "RGBA8_Uint", "R8_Sint", "RG8_Sint", "RGBA8_Sint", "R16_Float", "RG16_Float", "RGBA16_Float", "RGBA16_Unorm", "RGBA16_Snorm", "RG16_Uint", "R32_Float", "RG32_Float", "RGBA32_Float", "R32_Uint", "RG32_Uint", "RGBA32_Uint", "R11G11B10_Float", "D32_Float", "D16_Unorm", "D32_Float_S8", "D24_Unorm_S8", "BC1_Unorm", "BC3_Unorm", "BC4_Unorm", "BC4_Snorm", "BC5_Unorm", "BC5_Snorm", "BC7_Unorm", "BC7_Unorm_sRGB", "BC6_UF16", "BC6_SF16"]
                   },
                   "variable": {
                     "description": "The variable that holds the texture format. Assumed to be a uint32.",
@@ -1028,7 +1042,7 @@
                   "format": {
                     "description": "The format of the texture to create",
                     "type": "string",
-                    "enum": ["Any", "R8_Unorm", "RG8_Unorm", "RGBA8_Unorm", "RGBA8_Unorm_sRGB", "BGRA8_Unorm", "R8_Snorm", "RG8_Snorm", "RGBA8_Snorm", "R8_Uint", "RG8_Uint", "RGBA8_Uint", "R8_Sint", "RG8_Sint", "RGBA8_Sint", "R16_Float", "RG16_Float", "RGBA16_Float", "RGBA16_Unorm", "RGBA16_Snorm", "RG16_Uint", "R32_Float", "RG32_Float", "RGBA32_Float", "R32_Uint", "RG32_Uint", "RGBA32_Uint", "R11G11B10_Float", "D32_Float", "D16_Unorm", "D32_Float_S8", "D24_Unorm_S8", "BC1_Unorm", "BC4_Unorm", "BC4_Snorm", "BC5_Unorm", "BC5_Snorm", "BC7_Unorm", "BC7_Unorm_sRGB", "BC6_UF16", "BC6_SF16"]
+                    "enum": ["Any", "R8_Unorm", "RG8_Unorm", "RGBA8_Unorm", "RGBA8_Unorm_sRGB", "BGRA8_Unorm", "R8_Snorm", "RG8_Snorm", "RGBA8_Snorm", "R8_Uint", "RG8_Uint", "RGBA8_Uint", "R8_Sint", "RG8_Sint", "RGBA8_Sint", "R16_Float", "RG16_Float", "RGBA16_Float", "RGBA16_Unorm", "RGBA16_Snorm", "RG16_Uint", "R32_Float", "RG32_Float", "RGBA32_Float", "R32_Uint", "RG32_Uint", "RGBA32_Uint", "R11G11B10_Float", "D32_Float", "D16_Unorm", "D32_Float_S8", "D24_Unorm_S8", "BC1_Unorm", "BC3_Unorm", "BC4_Unorm", "BC4_Snorm", "BC5_Unorm", "BC5_Snorm", "BC7_Unorm", "BC7_Unorm_sRGB", "BC6_UF16", "BC6_SF16"]
                   },
                   "binaryDims": {
                     "description": "The size of the image in the binary file",
@@ -1042,7 +1056,7 @@
                   "binaryFormat": {
                     "description": "The format of the binary file",
                     "type": "string",
-                    "enum": ["Any", "R8_Unorm", "RG8_Unorm", "RGBA8_Unorm", "RGBA8_Unorm_sRGB", "BGRA8_Unorm", "R8_Snorm", "RG8_Snorm", "RGBA8_Snorm", "R8_Uint", "RG8_Uint", "RGBA8_Uint", "R8_Sint", "RG8_Sint", "RGBA8_Sint", "R16_Float", "RG16_Float", "RGBA16_Float", "RGBA16_Unorm", "RGBA16_Snorm", "RG16_Uint", "R32_Float", "RG32_Float", "RGBA32_Float", "R32_Uint", "RG32_Uint", "RGBA32_Uint", "R11G11B10_Float", "D32_Float", "D16_Unorm", "D32_Float_S8", "D24_Unorm_S8", "BC1_Unorm", "BC4_Unorm", "BC4_Snorm", "BC5_Unorm", "BC5_Snorm", "BC7_Unorm", "BC7_Unorm_sRGB", "BC6_UF16", "BC6_SF16"]
+                    "enum": ["Any", "R8_Unorm", "RG8_Unorm", "RGBA8_Unorm", "RGBA8_Unorm_sRGB", "BGRA8_Unorm", "R8_Snorm", "RG8_Snorm", "RGBA8_Snorm", "R8_Uint", "RG8_Uint", "RGBA8_Uint", "R8_Sint", "RG8_Sint", "RGBA8_Sint", "R16_Float", "RG16_Float", "RGBA16_Float", "RGBA16_Unorm", "RGBA16_Snorm", "RG16_Uint", "R32_Float", "RG32_Float", "RGBA32_Float", "R32_Uint", "RG32_Uint", "RGBA32_Uint", "R11G11B10_Float", "D32_Float", "D16_Unorm", "D32_Float_S8", "D24_Unorm_S8", "BC1_Unorm", "BC3_Unorm", "BC4_Unorm", "BC4_Snorm", "BC5_Unorm", "BC5_Snorm", "BC7_Unorm", "BC7_Unorm_sRGB", "BC6_UF16", "BC6_SF16"]
                   }
                 }
               }

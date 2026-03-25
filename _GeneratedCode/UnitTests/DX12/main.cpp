@@ -41,7 +41,7 @@ static const unsigned int c_renderSize[2] = { 1024, 768 };
 #endif
 
 // Gigi Modification Begin
-extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 616; }
+extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 619; }
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\AgilitySDK\\bin\\"; }
 
 #include "DX12Utils/FileCache.h"

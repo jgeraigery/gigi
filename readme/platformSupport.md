@@ -13,10 +13,10 @@ Below are the details of what is supported on each platform, based on the unit t
 
 | Platform | Supported Tests | Unsupported Tests | Support Rate |
 |----------|----------------|-------------------|--------------|
-| Viewer | 97/97 | 0/97 | 100.0% |
-| DX12 | 68/97 | 29/97 | 70.1% |
-| WebGPU | 50/97 | 47/97 | 51.5% |
-| UE 5.3 | 20/97 | 77/97 | 20.6% |
+| Viewer | 99/99 | 0/99 | 100.0% |
+| DX12 | 68/99 | 31/99 | 68.7% |
+| WebGPU | 50/99 | 49/99 | 50.5% |
+| UE 5.3 | 20/99 | 79/99 | 20.2% |
 
 ## Detailed Test Support by Platform
 
@@ -47,7 +47,9 @@ Below are the details of what is supported on each platform, based on the unit t
 | `CopyResource\CopyResourceTest_FB` | ✅ | ✅ | ❌ | ✅ |
 | `Data\binaryTexF32` | ✅ | ❌ | ❌ | ❌ |
 | `Data\binaryTexU8` | ✅ | ❌ | ❌ | ❌ |
+| `Data\ply_cube_binary_nonFlattened` | ✅ | ❌ | ❌ | ❌ |
 | `Data\ply_cube_binary_type` | ✅ | ❌ | ❌ | ❌ |
+| `Data\ply_cube_text_nonFlattened` | ✅ | ❌ | ❌ | ❌ |
 | `Data\ply_cube_uv_struct` | ✅ | ❌ | ❌ | ❌ |
 | `HLSLTime\HLSLTime` | ✅ | ❌ | ❌ | ❌ |
 | `MeshShaders\Mesh` | ✅ | ✅ | ❌ | ❌ |

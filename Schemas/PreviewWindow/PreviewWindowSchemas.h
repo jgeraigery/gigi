@@ -162,6 +162,7 @@ STRUCT_BEGIN(GGUserFile_ImportedBuffer, "The details of an imported buffer")
 
     STRUCT_STATIC_ARRAY(float, GeometryTransform, 16, { 1.0f COMMA 0.0f COMMA 0.0f COMMA 0.0f COMMA 0.0f COMMA 1.0f COMMA 0.0f COMMA 0.0f COMMA 0.0f COMMA 0.0f COMMA 1.0f COMMA 0.0f COMMA 0.0f COMMA 0.0f COMMA 0.0f COMMA 1.0f }, "A 4x4 matrix to transform pos, normal, tangent.", SCHEMA_FLAG_UI_ARRAY_HIDE_INDEX)
 
+    STRUCT_FIELD(LoadPLYSettings, PLYSettings, {}, "ply specific settings", 0)
 	STRUCT_FIELD(CooperativeVectorData, cvData, {}, "Data needed for cooperative vectors support for imported buffer resources", 0)
 STRUCT_END()
 

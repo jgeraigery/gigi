@@ -55,6 +55,7 @@ public:
 	virtual void WaitOnGPU() = 0;
 	virtual void Pause(bool pause) = 0;
 	virtual void PixCaptureNextFrames(const char* fileName, int frameCount) = 0;
+    virtual void GetImportedBufferBounds(const char* bufferName, float& minx, float& miny, float& minz, float& maxx, float& maxy, float& maxz) = 0;
 	virtual void SetImportedBufferCSVHeaderRow(const char* bufferName, bool CSVHeaderRow) = 0;
 	virtual void SetImportedBufferCount(const char* bufferName, int count) = 0;
 	virtual void SetImportedBufferFile(const char* bufferName, const char* fileName) = 0;

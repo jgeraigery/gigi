@@ -62,6 +62,8 @@ unsupportedTests = [
     "Python\\GPUWrite",
     "Data\\ply_cube_uv_struct",
     "Data\\ply_cube_binary_type",
+    "Data\\ply_cube_binary_nonFlattened",
+    "Data\\ply_cube_text_nonFlattened",
     "Data\\binaryTexU8",
     "Data\\binaryTexF32",
     "ShaderAssert\\assertsTest",

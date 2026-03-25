@@ -62,16 +62,19 @@ void RuntimeTypes::RenderGraphNode_Base::HandleViewableResource(GigiInterpreterP
     res.m_bufferViewCount = bufferViewCount;
 
 	// downsize the resource based on mip index
-	int resourceSize[3] = { _resourceSize[0], _resourceSize[1], _resourceSize[2] };
-	for (int i = 0; i < res.m_mipIndex; ++i)
-	{
-		resourceSize[0] = max(resourceSize[0] / 2, 1);
-		resourceSize[1] = max(resourceSize[1] / 2, 1);
+    int resourceSize[3] = { _resourceSize[0], _resourceSize[1], _resourceSize[2] };
+    {
+        int actualNumMips = min(res.m_numMips, numMips);
+        for (int i = 0; i < min(res.m_mipIndex, actualNumMips - 1); ++i)
+        {
+            resourceSize[0] = max(resourceSize[0] / 2, 1);
+            resourceSize[1] = max(resourceSize[1] / 2, 1);
 
-		// 3d textures also get shrank on z axis.
-		if (type == ViewableResource::Type::Texture3D)
-			resourceSize[2] = max(resourceSize[2] / 2, 1);
-	}
+            // 3d textures also get shrank on z axis.
+            if (type == ViewableResource::Type::Texture3D)
+                resourceSize[2] = max(resourceSize[2] / 2, 1);
+        }
+    }
 
 	// If it doesn't want to be viewed, we don't care about it, nothing to do
 	if (res.m_wantsToBeViewed)
@@ -174,6 +177,7 @@ void RuntimeTypes::RenderGraphNode_Base::HandleViewableResource(GigiInterpreterP
 			}
 
 			// Do copy for viewing
+            if (res.m_resource)
 			{
                 char profilerLabel[1024];
                 sprintf_s(profilerLabel, "Copy For Viewing: %s", displayName);
@@ -251,7 +255,7 @@ void RuntimeTypes::RenderGraphNode_Base::HandleViewableResource(GigiInterpreterP
 			}
 
 			// do copy for readback
-			if (res.m_wantsToBeReadBack)
+			if (res.m_wantsToBeReadBack && res.m_resourceReadback)
 			{
                 char profilerLabel[1024];
                 sprintf_s(profilerLabel, "Copy For Readback: %s", displayName);

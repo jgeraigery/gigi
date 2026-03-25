@@ -550,6 +550,28 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
     return UIOverrideResult::Continue;
 }
 
+inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS, bool& dirtyFlag, const char* label, const char* tooltip, GGUserFile_ImportedBuffer& value, TypePathEntry path, ShowUIOverrideContext showUIOverrideContext)
+{
+    if (showUIOverrideContext == ShowUIOverrideContext::Field)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{ 1.0f, 1.0f, 0.0f, 1.0f });
+        ImGui::TextWrapped("These are the viewer's defaults. Delete the .gguser file or click \"Reset\" to reload them.");
+        ImGui::PopStyleColor();
+    }
+    return UIOverrideResult::Continue;
+}
+
+inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS, bool& dirtyFlag, const char* label, const char* tooltip, GGUserFile_ImportedTexture& value, TypePathEntry path, ShowUIOverrideContext showUIOverrideContext)
+{
+    if (showUIOverrideContext == ShowUIOverrideContext::Field)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{ 1.0f, 1.0f, 0.0f, 1.0f });
+        ImGui::TextWrapped("These are the viewer's defaults. Delete the .gguser file or click \"Reset\" to reload them.");
+        ImGui::PopStyleColor();
+    }
+    return UIOverrideResult::Continue;
+}
+
 inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS, bool& dirtyFlag, const char* label, const char* tooltip, NodePinReference& value, TypePathEntry path, ShowUIOverrideContext showUIOverrideContext)
 {
     ImGui::Text(label);
@@ -760,53 +782,58 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
             ImGui::SetItemDefaultFocus();
     };
 
+    std::vector<std::string> labels;
+
+    for (const RenderGraphNode& nodeBase : renderGraph.nodes)
+    {
+        switch (nodeBase._index)
+        {
+            // Show textures
+            case RenderGraphNode::c_index_resourceTexture:
+            {
+                const RenderGraphNode_Resource_Texture& node = nodeBase.resourceTexture;
+                labels.push_back(node.name);
+                break;
+            }
+            // Show resources exported from subgraph nodes.
+            // We should limit to textures if we can.
+            case RenderGraphNode::c_index_actionSubGraph:
+            {
+                const RenderGraphNode_Action_SubGraph& node = nodeBase.actionSubGraph;
+
+                if (node.loopCount > 1)
+                {
+                    for (int loopIndex = 0; loopIndex < node.loopCount; ++loopIndex)
+                    {
+                        for (const std::string& exportedResource : node.subGraphData.exportedResources)
+                        {
+                            char buffer[1024];
+                            sprintf_s(buffer, "%s_Iteration_%i.%s", node.name.c_str(), loopIndex, exportedResource.c_str());
+                            labels.push_back(buffer);
+                        }
+                    }
+                }
+                else
+                {
+                    for (const std::string& exportedResource : node.subGraphData.exportedResources)
+                        labels.push_back(node.name + "." + exportedResource);
+                }
+
+                break;
+            }
+        }
+    }
+
+    std::sort(labels.begin(), labels.end());
+
+    float itemWidth = 0.0f;
+    for (const std::string& s : labels)
+        itemWidth = std::max(itemWidth, ImGui::CalcTextSize(s.c_str()).x + ImGui::GetStyle().FramePadding.x * 2.0f);
+    ImGui::SetNextItemWidth(itemWidth + ImGui::GetTextLineHeightWithSpacing() + 10);
+
     // Texture nodes drop down
     if (BeginSearchableCombo(label, value.name.c_str()))
     {
-        std::vector<std::string> labels;
-
-        for (const RenderGraphNode& nodeBase : renderGraph.nodes)
-        {
-            switch (nodeBase._index)
-            {
-                // Show textures
-                case RenderGraphNode::c_index_resourceTexture:
-                {
-                    const RenderGraphNode_Resource_Texture& node = nodeBase.resourceTexture;
-                    labels.push_back(node.name);
-                    break;
-                }
-                // Show resources exported from subgraph nodes.
-                // We should limit to textures if we can.
-                case RenderGraphNode::c_index_actionSubGraph:
-                {
-                    const RenderGraphNode_Action_SubGraph& node = nodeBase.actionSubGraph;
-
-                    if (node.loopCount > 1)
-                    {
-                        for (int loopIndex = 0; loopIndex < node.loopCount; ++loopIndex)
-                        {
-                            for (const std::string& exportedResource : node.subGraphData.exportedResources)
-                            {
-                                char buffer[1024];
-                                sprintf_s(buffer, "%s_Iteration_%i.%s", node.name.c_str(), loopIndex, exportedResource.c_str());
-                                labels.push_back(buffer);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (const std::string& exportedResource : node.subGraphData.exportedResources)
-                            labels.push_back(node.name + "." + exportedResource);
-                    }
-
-                    break;
-                }
-            }
-        }
-
-        std::sort(labels.begin(), labels.end());
-
         ProcessLabel(" ");
         for (const std::string& label : labels)
         {
@@ -855,15 +882,26 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
 
 inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS, bool& dirtyFlag, const char* label, const char* tooltip, TextureOrBufferNodeReference& value, TypePathEntry path, ShowUIOverrideContext showUIOverrideContext)
 {
+    float itemWidth = 0.0f;
+    std::vector<std::string> labels;
+    for (int index = 0; index < renderGraph.nodes.size() + 1; ++index)
+    {
+        if (index > 0 && renderGraph.nodes[index - 1]._index != RenderGraphNode::c_index_resourceTexture && renderGraph.nodes[index - 1]._index != RenderGraphNode::c_index_resourceBuffer)
+            continue;
+
+        std::string label = (index == 0) ? " " : GetNodeName(renderGraph.nodes[index - 1]).c_str();
+        labels.push_back(label);
+        itemWidth = std::max(itemWidth, ImGui::CalcTextSize(label.c_str()).x + ImGui::GetStyle().FramePadding.x * 2.0f);
+    }
+    std::sort(labels.begin() + 1, labels.end());
+
     // Texture and buffer nodes drop down
+    ImGui::SetNextItemWidth(itemWidth + ImGui::GetTextLineHeightWithSpacing() + 10);
     if (BeginSearchableCombo(label, value.name.c_str()))
     {
-        for (int index = 0; index < renderGraph.nodes.size() + 1; ++index)
+        for (int index = 0; index < labels.size(); ++index)
         {
-            if (index > 0 && renderGraph.nodes[index - 1]._index != RenderGraphNode::c_index_resourceTexture && renderGraph.nodes[index - 1]._index != RenderGraphNode::c_index_resourceBuffer)
-                continue;
-
-            std::string label = (index == 0) ? " " : GetNodeName(renderGraph.nodes[index - 1]).c_str();
+            std::string& label = labels[index];
 
             if (!SearchableComboFilter(label.c_str()))
                 continue;
@@ -890,15 +928,26 @@ inline UIOverrideResult ShowShaderReferenceUIOverride(RenderGraph& renderGraph, 
 {
     ImGui::PushID(label);
 
+    float itemWidth = 0.0f;
+    std::vector<std::string> labels;
+    for (int index = 0; index < renderGraph.shaders.size() + 1; ++index)
+    {
+        if (index > 0 && renderGraph.shaders[index - 1].type != TYPE)
+            continue;
+
+        std::string label = (index == 0) ? " " : renderGraph.shaders[index - 1].name.c_str();
+        labels.push_back(label);
+        itemWidth = std::max(itemWidth, ImGui::CalcTextSize(label.c_str()).x + ImGui::GetStyle().FramePadding.x * 2.0f);
+    }
+    std::sort(labels.begin() + 1, labels.end());
+
     // Compute shader drop down
+    ImGui::SetNextItemWidth(itemWidth + ImGui::GetTextLineHeightWithSpacing() + 10);
     if (BeginSearchableCombo(label, value.name.c_str()))
     {
-        for (int index = 0; index < renderGraph.shaders.size() + 1; ++index)
+        for (int index = 0; index < labels.size(); ++index)
         {
-            if (index > 0 && renderGraph.shaders[index - 1].type != TYPE)
-                continue;
-
-            std::string label = (index == 0) ? " " : renderGraph.shaders[index - 1].name.c_str();
+            std::string& label = labels[index];
 
             if (!SearchableComboFilter(label.c_str()))
                 continue;
@@ -1158,6 +1207,11 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
 {
     ImGui::PushID(label);
 
+    float itemWidth = 0.0f;
+    for (const Struct& s : renderGraph.structs)
+        itemWidth = std::max(itemWidth, ImGui::CalcTextSize(s.name.c_str()).x + ImGui::GetStyle().FramePadding.x * 2.0f);
+    ImGui::SetNextItemWidth(itemWidth + ImGui::GetTextLineHeightWithSpacing() + 10);
+
     if (BeginSearchableCombo(label, value.name.c_str()))
     {
         for (int index = 0; index < renderGraph.structs.size() + 1; ++index)
@@ -1228,6 +1282,11 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
         }
     }
 
+    float itemWidth = 0.0f;
+    for (const AllowedTypes& s : allowedTypes)
+        itemWidth = std::max(itemWidth, ImGui::CalcTextSize(s.label).x + ImGui::GetStyle().FramePadding.x * 2.0f);
+    ImGui::SetNextItemWidth(itemWidth + ImGui::GetTextLineHeightWithSpacing() + 10);
+
     if (ImGui::BeginCombo(label, allowedTypes[allowedTypeIndex].label))
     {
         for (int index = 0; index < _countof(allowedTypes); ++index)
@@ -1257,16 +1316,31 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
     if (labelNameOuter == "Count")
         labelNameOuter = "<None>";
 
+    std::vector<std::string> labels;
+    std::vector<ShaderResourceType> types;
+
+    float itemWidth = 0.0f;
+    for (int i = 0; i <= (int)ShaderResourceType::Count; ++i)
+    {
+        if (i == (int)ShaderResourceType::ConstantBuffer)
+            continue;
+
+        std::string labelName = EnumToString((ShaderResourceType)i);
+        if (labelName == "Count")
+            labelName = "<None>";
+
+        labels.push_back(labelName);
+        types.push_back((ShaderResourceType)i);
+
+        itemWidth = std::max(itemWidth, ImGui::CalcTextSize(labelName.c_str()).x + ImGui::GetStyle().FramePadding.x * 2.0f);
+    }
+
+    ImGui::SetNextItemWidth(itemWidth + ImGui::GetTextLineHeightWithSpacing() + 10);
     if (BeginSearchableCombo(label, labelNameOuter.c_str()))
     {
-        for (int i = 0; i <= (int)ShaderResourceType::Count; ++i)
+        for (int index = 0; index < labels.size(); ++index)
         {
-            if (i == (int)ShaderResourceType::ConstantBuffer)
-                continue;
-
-            std::string labelName = EnumToString((ShaderResourceType)i);
-            if (labelName == "Count")
-                labelName = "<None>";
+            std::string& labelName = labels[index];
 
             if (!SearchableComboFilter(labelName.c_str()))
                 continue;
@@ -1274,7 +1348,7 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
             bool is_selected = (std::string(labelName) == EnumToString(value));
             if (ImGui::Selectable(labelName.c_str(), is_selected))
             {
-                value = (ShaderResourceType)i;
+                value = types[index];
                 dirtyFlag = true;
             }
             if (is_selected)
@@ -1425,16 +1499,22 @@ inline UIOverrideResult ShowUIOverride(RenderGraph& renderGraph, uint64_t _FLAGS
         case TypePaths::Get(TypePaths::cEmpty, TypePaths::RenderGraph::cStruct, TypePaths::RenderGraph::c_nodes, TypePaths::RenderGraphNode::cVariant, TypePaths::RenderGraphNode::c_actionExternal, TypePaths::RenderGraphNode_Action_External::cStruct, TypePaths::RenderGraphNode_ActionBase::cStruct, TypePaths::RenderGraphNode_ActionBase::c_condition, TypePaths::Condition::cStruct, TypePaths::Condition::c_variable1)() :
         case TypePaths::Get(TypePaths::cEmpty, TypePaths::RenderGraph::cStruct, TypePaths::RenderGraph::c_nodes, TypePaths::RenderGraphNode::cVariant, TypePaths::RenderGraphNode::c_actionExternal, TypePaths::RenderGraphNode_Action_External::cStruct, TypePaths::RenderGraphNode_ActionBase::cStruct, TypePaths::RenderGraphNode_ActionBase::c_condition, TypePaths::Condition::cStruct, TypePaths::Condition::c_variable2)() :
         {
+            // Sort the list of variables
+            std::vector<std::string> vars;
+            float itemWidth = 0.0f;
+            for (const Variable& var : renderGraph.variables)
+            {
+                vars.push_back(var.name);
+                itemWidth = std::max(itemWidth, ImGui::CalcTextSize(var.name.c_str()).x + ImGui::GetStyle().FramePadding.x * 2.0f);
+            }
+            CaseInsensitiveSort(vars);
+            ImGui::SetNextItemWidth(itemWidth + ImGui::GetTextLineHeightWithSpacing() + 10);
+
+            // add a blank to the beginning
+            vars.insert(vars.begin(), " ");
+
             if (BeginSearchableCombo(label, value.c_str()))
             {
-                // Sort the list of variables
-                std::vector<std::string> vars;
-                for (const Variable& var : renderGraph.variables)
-                    vars.push_back(var.name);
-                CaseInsensitiveSort(vars);
-
-                // add a blank to the beginning
-                vars.insert(vars.begin(), " ");
 
                 // Show a drop down
                 for (const std::string& label : vars)
@@ -1649,6 +1729,7 @@ struct ShaderTypeCodeGenerator
             "VSOutput %s(VSInput input)\n"
             "{\n"
             "\tVSOutput ret = (VSOutput)0;\n"
+            "\tret.position = mul(float4(input.position, 1.0f), /*$(Variable:ViewProjMtx)*/);\n"
             "\t// TODO: fill this out\n"
             "\treturn ret;\n"
             "}\n",

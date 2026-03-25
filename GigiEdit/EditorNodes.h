@@ -272,6 +272,16 @@ inline int GetEnumIndexByName(const RenderGraph& renderGraph, const char* name)
     return -1;
 }
 
+inline int GetStructIndexByName(const RenderGraph& renderGraph, const char* name)
+{
+    for (int i = 0; i < (int)renderGraph.structs.size(); ++i)
+    {
+        if (!_stricmp(name, renderGraph.structs[i].name.c_str()))
+            return i;
+    }
+    return -1;
+}
+
 inline int GetShaderIndexByName(const RenderGraph& renderGraph, ShaderType shaderType, const char* name)
 {
     // Get the shader the shader reference
@@ -341,6 +351,24 @@ inline std::string GetUniqueEnumName(const RenderGraph& renderGraph, const char*
         resourceNameIndex++;
         sprintf_s(resourceName, "%s_%i", baseName, resourceNameIndex);
     } while (GetEnumIndexByName(renderGraph, resourceName) != -1);
+
+    return resourceName;
+}
+
+// This function will return the base name if that name is not already taken.
+// Otherwise, it will append _%i, with an ever increasing integer value for i, until it is unique, and will return that.
+inline std::string GetUniqueStructName(const RenderGraph& renderGraph, const char* baseName)
+{
+    if (GetStructIndexByName(renderGraph, baseName) == -1)
+        return baseName;
+
+    int resourceNameIndex = -1;
+    char resourceName[1024];
+    do
+    {
+        resourceNameIndex++;
+        sprintf_s(resourceName, "%s_%i", baseName, resourceNameIndex);
+    } while (GetStructIndexByName(renderGraph, resourceName) != -1);
 
     return resourceName;
 }

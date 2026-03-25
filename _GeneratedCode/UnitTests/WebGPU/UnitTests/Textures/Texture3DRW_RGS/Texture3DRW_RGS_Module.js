@@ -79,7 +79,7 @@ texture_RW_importedTexture_ReadOnly_size = [0, 0, 0];
 texture_RW_importedTexture_ReadOnly_format = "";
 texture_RW_importedTexture_ReadOnly_usageFlags = GPUTextureUsage.COPY_DST | GPUTextureUsage.COPY_SRC | GPUTextureUsage.STORAGE_BINDING;
 
-// Texture _loadedTexture_0
+// Texture _loadedTexture_0 : Loaded from: imageb%i.png
 texture__loadedTexture_0 = null;
 texture__loadedTexture_0_size = [0, 0, 0];
 texture__loadedTexture_0_format = "";

@@ -295,6 +295,20 @@ bool ImGui_File(const char* label, std::string& inOutName, const char* filterLis
 	return ret;
 }
 
+bool ImGui_String(const char* label, std::string& value)
+{
+    char buffer[4096];
+    strcpy_s(buffer, value.c_str());
+
+    if (ImGui::InputText(label, buffer, sizeof(buffer)))
+    {
+        value = buffer;
+        return true;
+    }
+
+    return false;
+}
+
 bool ImGuiIconButton(const char* label, const char* icon)
 {
     // classic BeginMenu in comparison
