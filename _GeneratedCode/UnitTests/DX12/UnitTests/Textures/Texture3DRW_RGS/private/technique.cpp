@@ -835,6 +835,7 @@ namespace Texture3DRW_RGS
             m_output.texture_NodeTexture = nullptr;
         }
 
+        // Loaded from: imageb%i.png
         if(m_internal.texture__loadedTexture_0)
         {
             s_delayedRelease.Add(m_internal.texture__loadedTexture_0);
@@ -1090,6 +1091,7 @@ namespace Texture3DRW_RGS
         }
 
         // _loadedTexture_0
+        // Loaded from: imageb%i.png
         {
             if (!m_internal.texture__loadedTexture_0)
             {

@@ -327,7 +327,7 @@ void AddTechnique(FRDGBuilder& GraphBuilder, const FViewInfo& View, FTechniquePa
         );
     }
 
-    // Loaded texture _loadedTexture_0
+    // Loaded texture _loadedTexture_0 - Loaded from: cabinsmall.png
     FRDGTextureRef Texture__loadedTexture_0 = RegisterExternalTexture(GraphBuilder, LoadedTexture__loadedTexture_0, TEXT("Stencil._loadedTexture_0"));
 
     // Run Draw Call "Draw_2"

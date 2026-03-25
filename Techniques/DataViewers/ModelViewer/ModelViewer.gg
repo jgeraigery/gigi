@@ -110,6 +110,16 @@
             "visibility": "User"
         },
         {
+            "name": "FlipUVY",
+            "comment": "If true, uv.y is set to 1.0 - uv.y. Convention whether this is needed or not.",
+            "type": "Bool",
+            "dflt": "0",
+            "visibility": "User",
+            "onUserChange": {
+                "name": "ResetPT"
+            }
+        },
+        {
             "name": "ViewProjMtx",
             "type": "Float4x4",
             "dflt": "1.0f, 0.0f, 0.0f, 0.0f,   0.0f, 1.0f, 0.0f, 0.0f,   0.0f, 0.0f, 1.0f, 0.0f,   0.0f, 0.0f, 0.0f, 1.0f",
@@ -977,8 +987,8 @@
             "resourceBuffer": {
                 "name": "VertexBuffer",
                 "editorPos": [
-                    55.0,
-                    -126.0
+                    -368.0,
+                    66.0
                 ],
                 "visibility": "Imported"
             }
@@ -1159,8 +1169,8 @@
                 ],
                 "frontIsCounterClockwise": false,
                 "vertexBuffer": {
-                    "node": "VertexBuffer",
-                    "pin": "resource"
+                    "node": "Node 1",
+                    "pin": "Pin"
                 },
                 "colorTargets": [
                     {
@@ -1266,16 +1276,6 @@
             }
         },
         {
-            "resourceBuffer": {
-                "name": "BVH",
-                "editorPos": [
-                    547.0,
-                    -350.0
-                ],
-                "visibility": "Imported"
-            }
-        },
-        {
             "actionComputeShader": {
                 "name": "PathTrace",
                 "editorPos": [
@@ -1299,8 +1299,8 @@
                 "connections": [
                     {
                         "srcPin": "Scene",
-                        "dstNode": "BVH",
-                        "dstPin": "resource"
+                        "dstNode": "Node 2",
+                        "dstPin": "Pin"
                     },
                     {
                         "srcPin": "AccumPT",
@@ -1613,6 +1613,84 @@
                 "loopCountVariable": {
                     "name": "SpecularBakeLevelCount"
                 }
+            }
+        },
+        {
+            "resourceBuffer": {
+                "name": "VertexBuffer2",
+                "editorPos": [
+                    -368.0,
+                    130.0
+                ],
+                "format": {
+                    "node": {
+                        "name": "VertexBuffer"
+                    }
+                },
+                "count": {
+                    "node": {
+                        "name": "VertexBuffer"
+                    }
+                }
+            }
+        },
+        {
+            "actionCopyResource": {
+                "name": "CopyVB",
+                "editorPos": [
+                    -187.0,
+                    82.0
+                ],
+                "linkProperties": [
+                    {},
+                    {}
+                ],
+                "source": {
+                    "node": "VertexBuffer",
+                    "pin": "resource"
+                },
+                "dest": {
+                    "node": "VertexBuffer2",
+                    "pin": "resource"
+                }
+            }
+        },
+        {
+            "reroute": {
+                "name": "Node 1",
+                "editorPos": [
+                    -27.0,
+                    -107.0
+                ],
+                "linkProperties": [
+                    {}
+                ],
+                "connections": [
+                    {
+                        "srcPin": "Pin",
+                        "dstNode": "CopyVB",
+                        "dstPin": "dest"
+                    }
+                ]
+            }
+        },
+        {
+            "reroute": {
+                "name": "Node 2",
+                "editorPos": [
+                    597.0,
+                    101.0
+                ],
+                "linkProperties": [
+                    {}
+                ],
+                "connections": [
+                    {
+                        "srcPin": "Pin",
+                        "dstNode": "CopyVB",
+                        "dstPin": "source"
+                    }
+                ]
             }
         }
     ],

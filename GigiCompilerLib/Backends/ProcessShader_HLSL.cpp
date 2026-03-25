@@ -457,23 +457,37 @@ bool ProcessShaderToMemory_HLSL(const Shader& shader, const char* entryPoint, Sh
     for (const CustomGigiToken& token : renderGraph.customTokens)
         shaderSpecificStringReplacementMap[std::string("/*$(") + token.key + std::string(")*/")] << token.value;
 
+    // Cache off the line breaks
+    shaderCode = (char*)shaderFile.data();
+    std::vector<uint32_t> lineStartOffsets;
+    if (options.m_writeOriginalLineNumbers)
+    {
+        lineStartOffsets.push_back(0);
+        for (const char* c = shaderCode.c_str(); *c != 0; ++c)
+        {
+            if (*c == '\n')
+                lineStartOffsets.push_back(uint32_t(c - shaderCode.c_str() + 1));
+        }
+    }
+
     // Handle shader markup
     shaderSpecificStringReplacementMap["/*$(RayTraceFn)*/"] << options.m_rayTraceFnName;
-    shaderCode = (char*)shaderFile.data();
     ForEachToken(shaderCode.c_str(),
         [&](const std::string& token, const char* stringStart, const char* cursor)
         {
-            size_t lineNumber = CountLineNumber(stringStart, cursor);
             std::string declareLineNumber;
             if (options.m_writeOriginalLineNumbers)
             {
+                // Get the line number
+                auto it = std::upper_bound(lineStartOffsets.begin(), lineStartOffsets.end(), cursor - stringStart);
+                size_t lineNumber = (it == lineStartOffsets.end()) ? lineStartOffsets.size() : it - lineStartOffsets.begin();
                 std::ostringstream stream;
                 stream << "#line " << lineNumber << "\n";
                 declareLineNumber = stream.str();
             }
 
             // Give token over-riding first wack at it.
-            if (options.m_handleShaderToken(options, shaderSpecificStringReplacementMap[token], token, lineNumber, renderGraph, declareLineNumber))
+            if (options.m_handleShaderToken(options, shaderSpecificStringReplacementMap[token], token, renderGraph, declareLineNumber))
                 return;
 
             // Otherwise, do common functionality

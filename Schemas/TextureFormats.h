@@ -56,6 +56,7 @@ ENUM_BEGIN(TextureFormat, "")
 
     // Block compressed formats
     ENUM_ITEM(BC1_Unorm, "RGB 5:6:5 unorm, 1 bit alpha. block compressed.")
+    ENUM_ITEM(BC3_Unorm, "RGB 5:6:5 unorm, 1 byte alpha. block compressed.")
 
     ENUM_ITEM(BC4_Unorm, "R 8 bit unorm. block compressed.")
     ENUM_ITEM(BC4_Snorm, "R 8 bit snorm. block compressed.")

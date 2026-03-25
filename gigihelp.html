@@ -308,6 +308,7 @@ table, th, td, tr
 <tr><td>D32_Float_S8</td><td>32 bit depth, 8 bit stencil, and 24 more bits unused</td></tr>
 <tr><td>D24_Unorm_S8</td><td>24 bit depth, 8 bit stencil</td></tr>
 <tr><td>BC1_Unorm</td><td>RGB 5:6:5 unorm, 1 bit alpha. block compressed.</td></tr>
+<tr><td>BC3_Unorm</td><td>RGB 5:6:5 unorm, 1 byte alpha. block compressed.</td></tr>
 <tr><td>BC4_Unorm</td><td>R 8 bit unorm. block compressed.</td></tr>
 <tr><td>BC4_Snorm</td><td>R 8 bit snorm. block compressed.</td></tr>
 <tr><td>BC5_Unorm</td><td>RG 8 bit unorm. block compressed.</td></tr>
@@ -743,6 +744,14 @@ Italicized fields are not serialized, and are just used for runtime storage.<br/
 <tr><td>CooperativeVectorBufferLayout srcLayout</td><td>CooperativeVectorBufferLayout::RowMajor</td><td>The layout of the source data.</td></tr>
 <tr><td>CooperativeVectorDataType destType</td><td>CooperativeVectorDataType::_float16</td><td>The data type you want it to be converted to.</td></tr>
 <tr><td>CooperativeVectorBufferLayout destLayout</td><td>CooperativeVectorBufferLayout::RowMajor</td><td>The layout you want it to be converted to.</td></tr>
+</table>
+<br/>
+
+<b>LoadPLYSettings : Settings for loading ply files</b><br/><br/>
+<table>
+<tr><th colspan=3>LoadPLYSettings</th></tr>
+<tr><td>bool flatten</td><td>false</td><td>If true, when there is an element named face, with a single list property, then the element named vertex will be duplicated to flatten the vertixes into a deindexed list.</td></tr>
+<tr><td>std::string element</td><td>""</td><td>The name of the element to load. If none specified and there is only one element, that element will be loaded.</td></tr>
 </table>
 <br/>
 
@@ -1233,6 +1242,7 @@ Italicized fields are not serialized, and are just used for runtime storage.<br/
 <tr><td>GGUserFile_BLASCullMode BLASCullMode</td><td>GGUserFile_BLASCullMode::CullNone</td><td>BLAS triangle culling settings</td></tr>
 <tr><td>bool IsAABBs</td><td>false</td><td>Set to true if ray tracing AABBs with intersection shaders. Format is Min XYZ, Max XYZ.</td></tr>
 <tr><td>float GeometryTransform[16]</td><td>{ 1.0f , 0.0f , 0.0f , 0.0f , 0.0f , 1.0f , 0.0f , 0.0f , 0.0f , 0.0f , 1.0f , 0.0f , 0.0f , 0.0f , 0.0f , 1.0f }</td><td>A 4x4 matrix to transform pos, normal, tangent.</td></tr>
+<tr><td>LoadPLYSettings PLYSettings</td><td>{}</td><td>ply specific settings</td></tr>
 <tr><td>CooperativeVectorData cvData</td><td>{}</td><td>Data needed for cooperative vectors support for imported buffer resources</td></tr>
 </table>
 <br/>

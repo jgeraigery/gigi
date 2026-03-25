@@ -1524,7 +1524,7 @@ static void CopyShaderFile(Shader& shader, const std::unordered_map<std::string,
     options.m_writeOriginalLineNumbers = false;
 
     options.m_handleShaderToken =
-        [](ProcessShaderOptions_HLSL& options, std::ostringstream& stream, const std::string& token, size_t lineNumber, const RenderGraph& renderGraph, const std::string& declareLineNumber)
+        [](ProcessShaderOptions_HLSL& options, std::ostringstream& stream, const std::string& token, const RenderGraph& renderGraph, const std::string& declareLineNumber)
         {
             std::string param;
             if (GetTokenParameter(token.c_str(), "_raygeneration", param))

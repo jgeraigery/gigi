@@ -1,4 +1,5 @@
 {
+    "version": "2.0",
     "systemVars": {
         "camera": {
             "startingCameraPos": [
@@ -12,23 +13,37 @@
             ]
         }
     },
-    "resourceViewNodeIndex": 1,
-    "resourceViewResourceIndex": 4,
-    "importedResources": [
-        {
-            "nodeName": "VB",
-            "isATexture": false,
-            "buffer": {
-                "fileName": "cube_binary.ply",
-                "type": "Float3",
-                "BLASOpaque": true
+    "snapshot": {
+        "resourceViewNodeIndex": 1,
+        "resourceViewResourceIndex": 4,
+        "cameraPos": [
+            1.7660102844238282,
+            1.1320840120315552,
+            -1.996144413948059
+        ],
+        "cameraAltitudeAzimuth": [
+            -0.2775888442993164,
+            0.4477624297142029
+        ],
+        "importedResources": [
+            {
+                "nodeName": "VB",
+                "isATexture": false,
+                "buffer": {
+                    "fileName": "cube_binary.ply",
+                    "type": "Float3",
+                    "BLASOpaque": true,
+                    "PLYSettings": {
+                        "flatten": true
+                    }
+                }
             }
-        }
-    ],
-    "savedVariables": [
-        {
-            "name": "RenderSize",
-            "value": "256,256"
-        }
-    ]
+        ],
+        "savedVariables": [
+            {
+                "name": "RenderSize",
+                "value": "256,256"
+            }
+        ]
+    }
 }

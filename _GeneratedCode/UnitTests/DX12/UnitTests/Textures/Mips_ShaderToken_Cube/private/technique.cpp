@@ -708,6 +708,7 @@ namespace Mips_ShaderToken_Cube
             m_internal.texture_Output = nullptr;
         }
 
+        // Loaded from: ..\skyboxes\test_%s.png
         if(m_internal.texture__loadedTexture_0)
         {
             s_delayedRelease.Add(m_internal.texture__loadedTexture_0);
@@ -853,6 +854,7 @@ namespace Mips_ShaderToken_Cube
         }
 
         // _loadedTexture_0
+        // Loaded from: ..\skyboxes\test_%s.png
         {
             if (!m_internal.texture__loadedTexture_0)
             {

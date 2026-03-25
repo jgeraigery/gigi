@@ -4,7 +4,7 @@ import sys
 import os
 import numpy
 
-RGResourceName = "VertexBuffer.resource"
+BoundsBuffer = "VertexBuffer"
 
 #Host.Print("Argc: " + str(len(sys.argv)))
 #Host.Print("Argv: " + str(sys.argv))
@@ -15,35 +15,21 @@ fileName = sys.argv[0]
 Host.SetImportedBufferFile("VertexBuffer", fileName)
 Host.SetImportedBufferFile("LightBuffer", fileName)
 Host.SetImportedBufferFile("MaterialBuffer", fileName)
-Host.SetImportedBufferFile("BVH", fileName)
 Host.SetImportedBufferMaterialShaderFile("MaterialBuffer", "_material.hlsli")
 
 Host.SetCameraPos(0,0,0)
 Host.SetCameraAltitudeAzimuth(0, 3.14)
-Host.SetWantReadback(RGResourceName)
 Host.RunTechnique(2)
 Host.WaitOnGPU()
 
-lastReadback, success = Host.Readback(RGResourceName)
-lastReadbackNP = numpy.array(lastReadback)
+bounds = Host.GetImportedBufferBounds(BoundsBuffer)
 
-vertexCount = lastReadbackNP.shape[0]
-minX = lastReadbackNP[0][0]
-maxX = lastReadbackNP[0][0]
-minY = lastReadbackNP[0][1]
-maxY = lastReadbackNP[0][1]
-minZ = lastReadbackNP[0][2]
-maxZ = lastReadbackNP[0][2]
-for index in range(vertexCount):
-	minX = min(minX, lastReadbackNP[index][0])
-	maxX = max(maxX, lastReadbackNP[index][0])
-	minY = min(minY, lastReadbackNP[index][1])
-	maxY = max(maxY, lastReadbackNP[index][1])
-	minZ = min(minZ, lastReadbackNP[index][2])
-	maxZ = max(maxZ, lastReadbackNP[index][2])
-
-#Host.Print(str(minZ))
-#Host.Print(str(maxZ))
+minX = bounds[0]
+minY = bounds[1]
+minZ = bounds[2]
+maxX = bounds[3]
+maxY = bounds[4]
+maxZ = bounds[5]
 
 Host.SetCameraPos((minX + maxX) / 2, (minY + maxY) / 2, maxZ * 5)
 

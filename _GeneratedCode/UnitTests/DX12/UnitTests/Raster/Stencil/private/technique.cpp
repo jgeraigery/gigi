@@ -680,6 +680,7 @@ namespace Stencil
             m_internal.drawCall_Draw_1_rootSig = nullptr;
         }
 
+        // Loaded from: cabinsmall.png
         if(m_internal.texture__loadedTexture_0)
         {
             s_delayedRelease.Add(m_internal.texture__loadedTexture_0);
@@ -1039,6 +1040,7 @@ namespace Stencil
         }
 
         // _loadedTexture_0
+        // Loaded from: cabinsmall.png
         {
             if (!m_internal.texture__loadedTexture_0)
             {

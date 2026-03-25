@@ -1,0 +1,22 @@
+{
+    "version": "2.0",
+    "snapshot": {
+        "resourceViewType": 6,
+        "resourceViewNodeIndex": 0,
+        "resourceViewResourceIndex": 0,
+        "importedResources": [
+            {
+                "nodeName": "Buffer",
+                "isATexture": false,
+                "buffer": {
+                    "fileName": "cube_binary.ply",
+                    "structIndex": 0,
+                    "BLASOpaque": true,
+                    "PLYSettings": {
+                        "element": "vertex"
+                    }
+                }
+            }
+        ]
+    }
+}

@@ -68,8 +68,8 @@ struct ProcessShaderOptions_HLSL
 	void (*m_writeConstantBufferDefinition)(const ProcessShaderOptions_HLSL& options, std::ostringstream& stream, const RenderGraph& renderGraph, const ShaderResource& resource) = WriteConstantBufferDefinition_ConstantBuffer;
 
 	// How to handle shader tokens
-	static bool HandleShaderToken_Noop(ProcessShaderOptions_HLSL& options, std::ostringstream& stream, const std::string& token, size_t lineNumber, const RenderGraph& renderGraph, const std::string& declareLineNumber) { return false; }
-	bool (*m_handleShaderToken)(ProcessShaderOptions_HLSL& options, std::ostringstream& stream, const std::string& token, size_t lineNumber, const RenderGraph& renderGraph, const std::string& declareLineNumber) = HandleShaderToken_Noop;
+	static bool HandleShaderToken_Noop(ProcessShaderOptions_HLSL& options, std::ostringstream& stream, const std::string& token, const RenderGraph& renderGraph, const std::string& declareLineNumber) { return false; }
+	bool (*m_handleShaderToken)(ProcessShaderOptions_HLSL& options, std::ostringstream& stream, const std::string& token, const RenderGraph& renderGraph, const std::string& declareLineNumber) = HandleShaderToken_Noop;
 
 	// Any free form string replacement
 	using THandleGeneralStringReplacement = std::function<void(std::string& shaderCode, std::unordered_map<std::string, std::ostringstream>& shaderSpecificStringReplacementMap, const ProcessShaderOptions_HLSL& options, const RenderGraph& renderGraph)>;

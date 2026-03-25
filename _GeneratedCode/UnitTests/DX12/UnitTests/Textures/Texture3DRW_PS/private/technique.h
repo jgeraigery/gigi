@@ -28,6 +28,7 @@ namespace Texture3DRW_PS
 
         static ID3D12CommandSignature* s_commandSignatureDispatch;
 
+        // Loaded from: imageb%i.png
         ID3D12Resource* texture__loadedTexture_0 = nullptr;
         unsigned int texture__loadedTexture_0_size[3] = { 0, 0, 0 };
         unsigned int texture__loadedTexture_0_numMips = 0;

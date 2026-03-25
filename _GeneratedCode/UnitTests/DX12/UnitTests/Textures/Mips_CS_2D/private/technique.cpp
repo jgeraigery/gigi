@@ -873,6 +873,7 @@ namespace Mips_CS_2D
             m_output.texture_Output = nullptr;
         }
 
+        // Loaded from: ..\cabinsmall.png
         if(m_internal.texture__loadedTexture_0)
         {
             s_delayedRelease.Add(m_internal.texture__loadedTexture_0);
@@ -1165,6 +1166,7 @@ namespace Mips_CS_2D
         }
 
         // _loadedTexture_0
+        // Loaded from: ..\cabinsmall.png
         {
             if (!m_internal.texture__loadedTexture_0)
             {

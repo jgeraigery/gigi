@@ -432,7 +432,7 @@ texture_Mip3_Output_ReadOnly_size = [0, 0, 0];
 texture_Mip3_Output_ReadOnly_format = "";
 texture_Mip3_Output_ReadOnly_usageFlags = GPUTextureUsage.COPY_DST | GPUTextureUsage.COPY_SRC | GPUTextureUsage.STORAGE_BINDING;
 
-// Texture _loadedTexture_0
+// Texture _loadedTexture_0 : Loaded from: ..\cabinsmall.png
 texture__loadedTexture_0 = null;
 texture__loadedTexture_0_size = [0, 0, 0];
 texture__loadedTexture_0_format = "";

@@ -15,7 +15,7 @@
         "ProjMtx_textureName": "ColorF32"
     },
     "snapshot": {
-        "resourceViewNodeIndex": 12,
+        "resourceViewNodeIndex": 11,
         "resourceViewResourceIndex": 10,
         "cameraPos": [
             1.5724594593048096,
@@ -27,15 +27,6 @@
             2.6631546020507814
         ],
         "importedResources": [
-            {
-                "nodeName": "BVH",
-                "isATexture": false,
-                "buffer": {
-                    "fileName": "..\\..\\UnitTests\\ObjAssets\\bunny.obj",
-                    "type": "Float3",
-                    "BLASOpaque": true
-                }
-            },
             {
                 "nodeName": "LightBuffer",
                 "isATexture": false,

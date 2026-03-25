@@ -708,6 +708,7 @@ namespace Mips_ShaderToken_2DArray
             m_internal.texture_Output = nullptr;
         }
 
+        // Loaded from: imageb%i.png
         if(m_internal.texture__loadedTexture_0)
         {
             s_delayedRelease.Add(m_internal.texture__loadedTexture_0);
@@ -853,6 +854,7 @@ namespace Mips_ShaderToken_2DArray
         }
 
         // _loadedTexture_0
+        // Loaded from: imageb%i.png
         {
             if (!m_internal.texture__loadedTexture_0)
             {

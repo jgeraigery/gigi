@@ -269,6 +269,9 @@ bool ConvertPixelData(TextureCache::Texture& texture, DXGI_FORMAT newFormat)
         if (fmtA == DXGI_FORMAT_BC1_UNORM && fmtB == DXGI_FORMAT_BC1_UNORM_SRGB)
             return true;
 
+        if (fmtA == DXGI_FORMAT_BC3_UNORM && fmtB == DXGI_FORMAT_BC3_UNORM_SRGB)
+            return true;
+
 		if (fmtA == DXGI_FORMAT_BC7_UNORM && fmtB == DXGI_FORMAT_BC7_UNORM_SRGB)
 			return true;
 

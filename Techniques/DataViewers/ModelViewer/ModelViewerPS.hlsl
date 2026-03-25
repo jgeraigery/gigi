@@ -9,21 +9,21 @@
 
 struct PSInput // AKA VSOutput
 {
-	float4 Position   : SV_POSITION;
-	float4 Color      : TEXCOORD0;
-	float3 Normal     : NORMAL;
-	float3 WorldPos   : POSITION;
-	int MaterialID    : TEXCOORD1;
-	float2 UV0	      : TEXCOORD2;
-    float2 UV1	      : TEXCOORD3;
-    float2 UV2	      : TEXCOORD4;
-    float2 UV3	      : TEXCOORD5;
+    float4 Position   : SV_POSITION;
+    float4 Color      : TEXCOORD0;
+    float3 Normal     : NORMAL;
+    float3 WorldPos   : POSITION;
+    int MaterialID    : TEXCOORD1;
+    float2 UV0        : TEXCOORD2;
+    float2 UV1        : TEXCOORD3;
+    float2 UV2        : TEXCOORD4;
+    float2 UV3        : TEXCOORD5;
 };
 
 struct PSOutput
 {
-	float4 colorTargetF32 : SV_Target0;
-	float4 colorTargetU8sRGB : SV_Target1;
+    float4 colorTargetF32 : SV_Target0;
+    float4 colorTargetU8sRGB : SV_Target1;
 };
 
 float3 ApplyDisplayTransform(float3 color)
@@ -94,18 +94,18 @@ PSOutput psmain(PSInput input)
     else if (/*$(Variable:ViewMode)*/ == ViewModes::MaterialNormal)
     {
         ret.colorTargetF32 = float4(/*$(Variable:RemapRanges)*/ ? (matNormal + 1.0f) / 2.0f : matNormal, 1.0f);
-		ret.colorTargetU8sRGB = float4(/*$(Variable:RemapRanges)*/ ? (matNormal + 1.0f) / 2.0f : matNormal, 1.0f);
+        ret.colorTargetU8sRGB = float4(/*$(Variable:RemapRanges)*/ ? (matNormal + 1.0f) / 2.0f : matNormal, 1.0f);
     }
     else if (/*$(Variable:ViewMode)*/ == ViewModes::Shaded)
-	{
-		float3 cameraPosition = /*$(Variable:CameraPos)*/;
-		float3 viewDirection = normalize(cameraPosition - input.WorldPos);
+    {
+        float3 cameraPosition = /*$(Variable:CameraPos)*/;
+        float3 viewDirection = normalize(cameraPosition - input.WorldPos);
 
         float3 basecolor = material.baseColor.rgb * input.Color.rgb;
-		float roughness = clamp(material.roughness, 0.04f, 1.0f);
-		float specularlevel = 0.5f;
-		float3 normal = normalize(input.Normal);
-		float metalic = material.metallic;
+        float roughness = clamp(material.roughness, 0.04f, 1.0f);
+        float specularlevel = 0.5f;
+        float3 normal = normalize(input.Normal);
+        float metalic = material.metallic;
 
         float3 radiance = float3(0.0f, 0.0f, 0.0f);
 
@@ -176,7 +176,7 @@ PSOutput psmain(PSInput input)
                 float3 brdf = MicrofacetBRDF(lightDirection, viewDirection, input.Normal, metalic, roughness, basecolor, specularlevel);
                 radiance += irradiance * brdf * /*$(Variable:DirectLightingMultiplier)*/;
             }
-		}
+        }
 
         // Ambient and emissive lighting
         radiance *= matOcclusion;
@@ -186,11 +186,11 @@ PSOutput psmain(PSInput input)
 
         ret.colorTargetF32 = float4(radiance,1.0f);
         ret.colorTargetU8sRGB = float4(displayColor, 1.0f);
-	}
-	else
-	{
-		ret.colorTargetF32 = input.Color;
-		ret.colorTargetU8sRGB = input.Color;
-	}
-	return ret;
+    }
+    else
+    {
+        ret.colorTargetF32 = input.Color;
+        ret.colorTargetU8sRGB = input.Color;
+    }
+    return ret;
 }

@@ -850,6 +850,7 @@ namespace TextureCubeRW_RGS
             m_output.texture_NodeTexture = nullptr;
         }
 
+        // Loaded from: cube%s.png
         if(m_internal.texture__loadedTexture_0)
         {
             s_delayedRelease.Add(m_internal.texture__loadedTexture_0);
@@ -1105,6 +1106,7 @@ namespace TextureCubeRW_RGS
         }
 
         // _loadedTexture_0
+        // Loaded from: cube%s.png
         {
             if (!m_internal.texture__loadedTexture_0)
             {

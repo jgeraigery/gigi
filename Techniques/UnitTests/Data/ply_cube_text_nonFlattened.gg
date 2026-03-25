@@ -1,0 +1,35 @@
+{
+    "$schema": "gigischema.json",
+    "version": "1.01",
+    "structs": [
+        {
+            "name": "Vertex",
+            "fields": [
+                {
+                    "name": "x",
+                    "type": "Float"
+                },
+                {
+                    "name": "y",
+                    "type": "Float"
+                },
+                {
+                    "name": "z",
+                    "type": "Float"
+                }
+            ]
+        }
+    ],
+    "nodes": [
+        {
+            "resourceBuffer": {
+                "name": "Buffer",
+                "editorPos": [
+                    7.0,
+                    -3.0
+                ],
+                "visibility": "Imported"
+            }
+        }
+    ]
+}

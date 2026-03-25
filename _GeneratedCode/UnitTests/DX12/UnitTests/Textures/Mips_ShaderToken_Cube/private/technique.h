@@ -35,6 +35,7 @@ namespace Mips_ShaderToken_Cube
         static const D3D12_RESOURCE_FLAGS texture_Output_flags =  D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
         const D3D12_RESOURCE_STATES c_texture_Output_endingState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
+        // Loaded from: ..\skyboxes\test_%s.png
         ID3D12Resource* texture__loadedTexture_0 = nullptr;
         unsigned int texture__loadedTexture_0_size[3] = { 0, 0, 0 };
         unsigned int texture__loadedTexture_0_numMips = 0;

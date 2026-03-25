@@ -1987,6 +1987,7 @@ struct Example :
                     Example::s_thisExample->EnsureSystemVariableExists("CameraFarPlane", VariableVisibility::Host, DataFieldType::Float, "0.0f");
                     Example::s_thisExample->EnsureSystemVariableExists("ShadingRateImageTileSize", VariableVisibility::Host, DataFieldType::Uint, "16");
                     Example::s_thisExample->EnsureSystemVariableExists("WindowSize", VariableVisibility::Host, DataFieldType::Float2, "1.0f, 1.0f");
+                    g_renderGraphDirty = true;
                 }
 
                 ShowUIToolTip("Add all the system variables that the viewer can use.");
@@ -2007,9 +2008,153 @@ struct Example :
 
     void ShowStructsWindow()
     {
+        // A button for adding the system variables
+        auto AddStructsButton = []()
+            {
+                // show build menu
+                std::vector<const char*> labels;
+                labels.push_back("Vertex");
+                labels.push_back("Material");
+                labels.push_back("Light");
+
+                static int s_makeStructType = 0;
+
+                std::string buildName = "Make Struct: ";
+                if ((int)s_makeStructType < labels.size())
+                {
+                    buildName += "\"";
+                    buildName += labels[(int)s_makeStructType];
+                    buildName += "\" ";
+                }
+
+                {
+                    ImGui::SameLine();
+                    ImGuiStyle& style = ImGui::GetStyle();
+					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(style.FramePadding.x, 0.0f));
+                    if (ImGui::Button(buildName.c_str()))
+                    {
+                        g_renderGraphDirty = true;
+
+                        switch (s_makeStructType)
+                        {
+                            case 0:
+                            {
+                                Struct newStruct;
+                                newStruct.name = GetUniqueStructName(g_renderGraph, "Vertex");
+                                newStruct.fields.resize(10);
+                                newStruct.fields[0].name = "Position";
+                                newStruct.fields[0].type = DataFieldType::Float3;
+                                newStruct.fields[0].semantic = StructFieldSemantic::Position;
+                                newStruct.fields[1].name = "Color";
+                                newStruct.fields[1].type = DataFieldType::Float4;
+                                newStruct.fields[1].semantic = StructFieldSemantic::Color;
+                                newStruct.fields[2].name = "Normal";
+                                newStruct.fields[2].type = DataFieldType::Float3;
+                                newStruct.fields[2].semantic = StructFieldSemantic::Normal;
+                                newStruct.fields[3].name = "Tangent";
+                                newStruct.fields[3].type = DataFieldType::Float4;
+                                newStruct.fields[3].semantic = StructFieldSemantic::Tangent;
+                                newStruct.fields[4].name = "UV0";
+                                newStruct.fields[4].type = DataFieldType::Float4;
+                                newStruct.fields[4].semantic = StructFieldSemantic::UV;
+                                newStruct.fields[4].semanticIndex = 0;
+                                newStruct.fields[5].name = "UV1";
+                                newStruct.fields[5].type = DataFieldType::Float4;
+                                newStruct.fields[5].semantic = StructFieldSemantic::UV;
+                                newStruct.fields[5].semanticIndex = 1;
+                                newStruct.fields[6].name = "UV2";
+                                newStruct.fields[6].type = DataFieldType::Float4;
+                                newStruct.fields[6].semantic = StructFieldSemantic::UV;
+                                newStruct.fields[6].semanticIndex = 2;
+                                newStruct.fields[7].name = "UV3";
+                                newStruct.fields[7].type = DataFieldType::Float4;
+                                newStruct.fields[7].semantic = StructFieldSemantic::UV;
+                                newStruct.fields[7].semanticIndex = 3;
+                                newStruct.fields[8].name = "MaterialID";
+                                newStruct.fields[8].type = DataFieldType::Int;
+                                newStruct.fields[8].semantic = StructFieldSemantic::MaterialID;
+                                newStruct.fields[9].name = "ShapeID";
+                                newStruct.fields[9].type = DataFieldType::Int;
+                                newStruct.fields[9].semantic = StructFieldSemantic::ShapeID;
+                                g_renderGraph.structs.push_back(newStruct);
+                                break;
+                            }
+                            case 1:
+                            {
+                                Struct newStruct;
+                                newStruct.name = GetUniqueStructName(g_renderGraph, "Material");
+                                newStruct.fields.resize(7);
+                                newStruct.fields[0].name = "BaseColor";
+                                newStruct.fields[0].type = DataFieldType::Float4;
+                                newStruct.fields[0].semantic = StructFieldSemantic::Material_BaseColor;
+                                newStruct.fields[1].name = "Emissive";
+                                newStruct.fields[1].type = DataFieldType::Float3;
+                                newStruct.fields[1].semantic = StructFieldSemantic::Material_Emissive;
+                                newStruct.fields[2].name = "Metallic";
+                                newStruct.fields[2].type = DataFieldType::Float;
+                                newStruct.fields[2].semantic = StructFieldSemantic::Material_Metallic;
+                                newStruct.fields[3].name = "Roughness";
+                                newStruct.fields[3].type = DataFieldType::Float;
+                                newStruct.fields[3].semantic = StructFieldSemantic::Material_Roughness;
+                                newStruct.fields[4].name = "AlphaMode";
+                                newStruct.fields[4].type = DataFieldType::Int;
+                                newStruct.fields[4].semantic = StructFieldSemantic::Material_AlphaMode;
+                                newStruct.fields[5].name = "AlphaCutoff";
+                                newStruct.fields[5].type = DataFieldType::Float;
+                                newStruct.fields[5].semantic = StructFieldSemantic::Material_AlphaCutoff;
+                                newStruct.fields[6].name = "DoubleSided";
+                                newStruct.fields[6].type = DataFieldType::Int;
+                                newStruct.fields[6].semantic = StructFieldSemantic::Material_DoubleSided;
+                                g_renderGraph.structs.push_back(newStruct);
+                                break;
+                            }
+                            case 2:
+                            {
+                                Struct newStruct;
+                                newStruct.name = GetUniqueStructName(g_renderGraph, "Light");
+                                newStruct.fields.resize(4);
+                                newStruct.fields[0].name = "PosDir";
+                                newStruct.fields[0].type = DataFieldType::Float4;
+                                newStruct.fields[0].semantic = StructFieldSemantic::Light_PosDir;
+                                newStruct.fields[1].name = "ColorIntensity";
+                                newStruct.fields[1].type = DataFieldType::Float4;
+                                newStruct.fields[1].semantic = StructFieldSemantic::Light_ColorIntensity;
+                                newStruct.fields[2].name = "Range";
+                                newStruct.fields[2].type = DataFieldType::Float;
+                                newStruct.fields[2].semantic = StructFieldSemantic::Light_Range;
+                                newStruct.fields[3].name = "SpotInnerOuterRad";
+                                newStruct.fields[3].type = DataFieldType::Float2;
+                                newStruct.fields[3].semantic = StructFieldSemantic::Light_SpotInnerOuterRad;
+                                g_renderGraph.structs.push_back(newStruct);
+                                break;
+                            }
+                        }
+                    }
+
+                    ImGui::SameLine();
+                    if (ImGui::ArrowButton("##ChooseBackend", ImGuiDir_Down))
+                        ImGui::OpenPopup("PopupBuildBackend");
+					ImGui::PopStyleVar(1);
+                }
+
+				if (ImGui::BeginPopupContextItem("PopupBuildBackend"))
+				{
+                    for (size_t labelIndex = 0; labelIndex < labels.size(); ++labelIndex)
+                    {
+                        bool checked = (int)s_makeStructType == labelIndex;
+                        ImGuiMenuItem(labels[labelIndex], 0, nullptr, &checked);
+                        if (checked)
+                            s_makeStructType = (int)labelIndex;
+                    }
+
+					ImGui::EndPopup();
+                }
+            }
+        ;
+
         Struct newItem;
         newItem.name = "NewStruct";
-        ShowDataWindow("Structs", g_renderGraph.structs, g_showWindows.Structs, TypePaths::Make(TypePaths::cEmpty, TypePaths::RenderGraph::cStruct, TypePaths::RenderGraph::c_structs), newItem, [](size_t index, const Struct& item) { return item.name; });
+        ShowDataWindow("Structs", g_renderGraph.structs, g_showWindows.Structs, TypePaths::Make(TypePaths::cEmpty, TypePaths::RenderGraph::cStruct, TypePaths::RenderGraph::c_structs), newItem, [](size_t index, const Struct& item) { return item.name; }, AddStructsButton);
     }
 
     void ShowFileCopiesWindow()

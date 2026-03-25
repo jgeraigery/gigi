@@ -3244,9 +3244,9 @@ struct ShaderDataVisitor
 
                     SamplerFilter samplerFilter = SamplerFilter(
                             int(SamplerFilter::MinMagMipPoint) +
-                            ((min == SamplerFilterComponent::Linear) ? 1 : 0) +
+                            ((min == SamplerFilterComponent::Linear) ? 4 : 0) +
                             ((mag == SamplerFilterComponent::Linear) ? 2 : 0) +
-                            ((mip == SamplerFilterComponent::Linear) ? 4 : 0));
+                            ((mip == SamplerFilterComponent::Linear) ? 1 : 0));
 
                     // see if a suitable sampler already exists that we can re-use
                     bool samplerExists = false;
@@ -3475,6 +3475,7 @@ struct ShaderDataVisitor
                             newTextureNode.resourceTexture.name = textureLoadNodeName;
                             newTextureNode.resourceTexture.originalName = newTextureNode.resourceTexture.name;
                             newTextureNode.resourceTexture.transient = false;
+                            newTextureNode.resourceTexture.comment = std::string("Loaded from: ") + imageFileName;
                             renderGraph.nodes.push_back(newTextureNode);
                         }
 

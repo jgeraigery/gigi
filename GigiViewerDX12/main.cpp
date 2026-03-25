@@ -89,8 +89,8 @@ bool g_nvInitialized = false;
 
 #define BREAK_ON_GIGI_ASSERTS() false
 
-static const UINT D3D12SDKVersion_Preview = 717;
-static const UINT D3D12SDKVersion_Retail = 616;
+static const UINT D3D12SDKVersion_Preview = 719;
+static const UINT D3D12SDKVersion_Retail = 619;
 
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = D3D12SDKVersion_Retail; }
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\external\\AgilitySDK\\Retail\\bin\\"; }
@@ -101,7 +101,6 @@ static const UUID ExperimentalFeaturesEnabled[] =
 {
     D3D12ExperimentalShaderModels,
     D3D12CooperativeVectorExperiment,
-    D3D12ExperimentalShaderModels,
     D3D12StateObjectsExperiment,
 };
 
@@ -887,6 +886,7 @@ GigiInterpreterPreviewWindowDX12::ImportedResourceDesc GGUserFile_ImportedResour
         outDesc.buffer.BLASCullMode = inDesc.buffer.BLASCullMode;
         outDesc.buffer.IsAABBs = inDesc.buffer.IsAABBs;
         outDesc.buffer.cvData = inDesc.buffer.cvData;
+        outDesc.buffer.PLYSettings = inDesc.buffer.PLYSettings;
         memcpy(outDesc.buffer.GeometryTransform, inDesc.buffer.GeometryTransform.data(), sizeof(float) * 16);
     }
 
@@ -944,6 +944,7 @@ GGUserFile_ImportedResource ImportedResourceDesc_To_GGUserFile_ImportedResource(
         outDesc.buffer.BLASCullMode = inDesc.buffer.BLASCullMode;
         outDesc.buffer.IsAABBs = inDesc.buffer.IsAABBs;
         outDesc.buffer.cvData = inDesc.buffer.cvData;
+        outDesc.buffer.PLYSettings = inDesc.buffer.PLYSettings;
         memcpy(outDesc.buffer.GeometryTransform.data(), inDesc.buffer.GeometryTransform, sizeof(float) * 16);
     }
 
@@ -3598,9 +3599,6 @@ struct ShaderTableEntry
         const ShaderTableEntry* a = (const ShaderTableEntry*)lhs;
         const ShaderTableEntry* b = (const ShaderTableEntry*)rhs;
 
-        const char* aTypeStr = "FileCopy";
-        const char* bTypeStr = "FileCopy";
-
         for (int n = 0; n < s_current_sort_specs->SpecsCount; n++)
         {
             // Here we identify columns using the ColumnUserID value that we ourselves passed to TableSetupColumn()
@@ -3809,6 +3807,31 @@ void ShowImportedResources()
         return;
     }
 
+    if (ImGui::Button("Reset"))
+    {
+        for (auto& pair : g_interpreter.m_importedResources)
+        {
+            // Convert to the gg user file version
+            std::filesystem::path renderGraphDir = std::filesystem::path(g_renderGraphFileName).remove_filename();
+            GGUserFile_ImportedResource desc = ImportedResourceDesc_To_GGUserFile_ImportedResource(pair.first, pair.second, renderGraphDir);
+
+            // Set the data
+            const RenderGraphNode& nodeBase = g_interpreter.GetRenderGraph().nodes[pair.second.nodeIndex];
+            if (pair.second.isATexture && nodeBase._index == RenderGraphNode::c_index_resourceTexture)
+                desc.texture = nodeBase.resourceTexture.importedResourceSettings;
+            else if (!pair.second.isATexture && nodeBase._index == RenderGraphNode::c_index_resourceBuffer)
+                desc.buffer = nodeBase.resourceBuffer.importedResourceSettings;
+
+            // Convert back to runtime version
+            GigiInterpreterPreviewWindowDX12::ImportedResourceDesc outDesc = GGUserFile_ImportedResource_To_ImportedResourceDesc(desc, renderGraphDir);
+            outDesc.nodeIndex = pair.second.nodeIndex;
+            outDesc.resourceIndex = pair.second.resourceIndex;
+            outDesc.state = GigiInterpreterPreviewWindowDX12::ImportedResourceState::dirty;
+            pair.second = outDesc;
+        }
+    }
+    ShowToolTip("Reset imported resources to the values specified in the editor.");
+
     // Put the imported resources into alphabetical order
     struct ImportedResourceInfo
     {
@@ -3985,7 +4008,8 @@ void ShowImportedResources()
                 //ShowImageThumbnail(texInfo.m_resourceInitialState, texInfo.m_format, texInfo.m_size, pair.second.nodeIndex, pair.second.resourceIndex, pair.first.c_str(), desc.texture.textureType);
             }
 
-            if (ImGui::Button(importedResourceInfo.originalName.c_str()))
+            std::string buttonLabel = std::string("View \"") + importedResourceInfo.originalName + "\"";
+            if (ImGui::Button(buttonLabel.c_str()))
                 g_resourceView.Buffer(desc.nodeIndex, desc.resourceIndex);
         }
         // Else this is a buffer, not a texture
@@ -4183,6 +4207,47 @@ void ShowImportedResources()
                 }
             }
 
+            // PLY file
+            {
+                if (ImGui::CollapsingHeader("PLY Settings"))
+                {
+                    if (ImGui::Checkbox("Flatten", &desc.buffer.PLYSettings.flatten))
+                        desc.state = GigiInterpreterPreviewWindowDX12::ImportedResourceState::dirty;
+
+                    if (ImGui_String("Element Name", desc.buffer.PLYSettings.element))
+                        desc.state = GigiInterpreterPreviewWindowDX12::ImportedResourceState::dirty;
+                }
+
+                const PLYCache::PLYData* plyData = g_interpreter.getPLYCache().GetOrFail(desc.buffer.fileName.c_str());
+                if (plyData && ImGui::Button("PLY File Layout"))
+                {
+                    ImGui::OpenPopup("PLY File Layout Popup");
+                }
+
+                if (plyData && ImGui::BeginPopup("PLY File Layout Popup", 0))
+                {
+                    ImGui::Text("Element Groups:");
+
+                    for (const PLYCache::ElementGroup& elementGroup : plyData->elementGroups)
+                    {
+                        ImGui::Text("%s (%u elements)", elementGroup.name.c_str(), elementGroup.count);
+
+                        for (const PLYCache::Property& property : elementGroup.properties)
+                        {
+                            if (property.isList)
+                                ImGui::Text("    %s list %s [%s count]", PLYCache::FieldTypeToString(property.type), property.name.c_str(), PLYCache::FieldTypeToString(property.listSizeType));
+                            else
+                                ImGui::Text("    %s %s", PLYCache::FieldTypeToString(property.type), property.name.c_str());
+                        }
+                    }
+
+                    if (ImGui::Button("OK"))
+                        ImGui::CloseCurrentPopup();
+
+                    ImGui::EndPopup();
+                }
+            }
+
             // Cooperative Vector
             if (g_agilitySDKChoice == AgilitySDKChoice::Preview)
             {
@@ -4227,7 +4292,8 @@ void ShowImportedResources()
                 ImGui::Unindent();
             }
 
-            if (ImGui::Button(importedResourceInfo.originalName.c_str()))
+            std::string buttonLabel = std::string("View \"") + importedResourceInfo.originalName + "\"";
+            if (ImGui::Button(buttonLabel.c_str()))
                 g_resourceView.Buffer(desc.nodeIndex, desc.resourceIndex);
         }
 
@@ -7405,28 +7471,48 @@ void ShowProfilerWindow()
         }
     }
 
-    if (ImGui::BeginTable("Memory", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+    static bool s_showImportedResources = true;
+    ImGui::Checkbox("Show Imported Resources", &s_showImportedResources);
+    ShowToolTip("Show resources which are imported from the outside, or are loaded from disk.");
+
+    static bool s_showInternalResources = true;
+    ImGui::SameLine();
+    ImGui::Checkbox("Show Internal Resources", &s_showInternalResources);
+    ShowToolTip("Show resources that are allocated and managed by the technique internally.");
+
+    if (ImGui::BeginTable("Memory", 2,
+        ImGuiTableFlags_Resizable |
+        ImGuiTableFlags_SizingFixedFit |
+        ImGuiTableFlags_BordersOuter |
+        ImGuiTableFlags_Reorderable |
+        ImGuiTableFlags_Sortable |
+        ImGuiTableFlags_RowBg))
     {
-        ImGui::TableSetupColumn("Resource", ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("Bytes", ImGuiTableColumnFlags_WidthFixed);
-        ImGui::TableHeadersRow();
+        struct MemoryEntry
+        {
+            std::string label;
+            std::string comment;
+            size_t bytes;
+        };
+        std::vector<MemoryEntry> tableData;
 
         size_t totalBytes = 0;
-
         for (const RenderGraphNode& nodeBase : g_interpreter.GetRenderGraph().nodes)
         {
             if (!GetNodeIsResourceNode(nodeBase))
                 continue;
 
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
+            MemoryEntry newEntry;
 
-			ExecuteOnNode(nodeBase,
-				[](const auto& node)
-				{
-					ImGui::Text("%s: %s", node.c_shorterTypeName.c_str(), node.name.c_str());
-				}
-			);
+            ExecuteOnNode(nodeBase,
+                [&newEntry](const auto& node)
+                {
+                    newEntry.label = node.c_shorterTypeName + ": " + node.name;
+                    newEntry.comment = node.comment;
+                }
+            );
+
+            bool isImported = false;
 
             size_t bytes = 0;
             switch (nodeBase._index)
@@ -7441,6 +7527,7 @@ void ShowProfilerWindow()
                         D3D12_RESOURCE_ALLOCATION_INFO allocInfo = g_pd3dDevice->GetResourceAllocationInfo(0, 1, &desc);
                         bytes = allocInfo.SizeInBytes;
                     }
+                    isImported = nodeBase.resourceBuffer.visibility == ResourceVisibility::Imported;
                     break;
                 }
                 case RenderGraphNode::c_index_resourceTexture:
@@ -7453,6 +7540,7 @@ void ShowProfilerWindow()
                         D3D12_RESOURCE_ALLOCATION_INFO allocInfo = g_pd3dDevice->GetResourceAllocationInfo(0, 1, &desc);
                         bytes = allocInfo.SizeInBytes;
                     }
+                    isImported = (nodeBase.resourceTexture.visibility == ResourceVisibility::Imported || !nodeBase.resourceTexture.loadFileName.empty());
                     break;
                 }
                 case RenderGraphNode::c_index_resourceShaderConstants:
@@ -7461,14 +7549,64 @@ void ShowProfilerWindow()
                     const RuntimeTypes::RenderGraphNode_Resource_ShaderConstants& info = g_interpreter.GetRuntimeNodeData_RenderGraphNode_Resource_ShaderConstants(nodeBase.resourceShaderConstants.name.c_str(), exists);
                     if (exists)
                         bytes = info.m_cpuData.size();
+                    isImported = false;
                     break;
                 }
             }
+            newEntry.bytes = bytes;
+
+            if (isImported && !s_showImportedResources)
+                continue;
+            else if (!isImported && !s_showInternalResources)
+                continue;
+
+            tableData.push_back(newEntry);
+            totalBytes += newEntry.bytes;
+        }
+
+        ImGui::TableSetupColumn("Resource", ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("Bytes", ImGuiTableColumnFlags_WidthFixed);
+        ImGui::TableHeadersRow();
+
+        // Sort the data if we should
+        {
+            ImGuiTableSortSpecs* sortSpecs = ImGui::TableGetSortSpecs();
+            if (sortSpecs && sortSpecs->SpecsCount > 0 && !tableData.empty())
+            {
+                std::sort(tableData.begin(), tableData.end(),
+                    [sortSpecs](const MemoryEntry& a, const MemoryEntry& b)
+                    {
+                        const ImGuiTableColumnSortSpecs* sortSpec = &sortSpecs->Specs[0];
+
+                        const MemoryEntry* pa = &a;
+                        const MemoryEntry* pb = &b;
+
+                        if (sortSpec->SortDirection != ImGuiSortDirection_Ascending)
+                            std::swap(pa, pb);
+
+                        switch (sortSpec->ColumnIndex)
+                        {
+                            case 0: return _stricmp(pa->label.c_str(), pb->label.c_str()) < 0;
+                            case 1: return pa->bytes < pb->bytes;
+                        }
+
+                        return pa < pb;
+                    }
+                );
+            }
+        }
+
+        for (const MemoryEntry& entry : tableData)
+        {
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+
+            ImGui::TextUnformatted(entry.label.c_str());
+            ShowToolTip(entry.comment.c_str());
 
             ImGui::TableNextColumn();
-            ImGui::TextUnformatted(BytesToString(bytes));
-
-            totalBytes += bytes;
+            ImGui::TextUnformatted(BytesToString(entry.bytes));
         }
 
         ImGui::TableNextRow();
@@ -8173,6 +8311,28 @@ public:
         char currentDirectory[4096];
         GetCurrentDirectoryA(4096, currentDirectory);
         Log(LogLevel::Info, "Python triggered pix capture saved to %s (%i frames)", (std::filesystem::path(currentDirectory) / fileName).string().c_str(), frameCount);
+    }
+
+    void GetImportedBufferBounds(const char* bufferName, float& minx, float& miny, float& minz, float& maxx, float& maxy, float& maxz) override final
+    {
+        if (g_interpreter.m_importedResources.count(bufferName) == 0)
+        {
+            Log(LogLevel::Error, "Python: GetImportedBufferBounds could not find imported buffer %s", bufferName);
+            return;
+        }
+        GigiInterpreterPreviewWindowDX12::ImportedResourceDesc& desc = g_interpreter.m_importedResources[bufferName];
+        if (desc.isATexture)
+        {
+            Log(LogLevel::Error, "Python: GetImportedBufferBounds called for %s which is not a buffer", bufferName);
+            return;
+        }
+
+        minx = desc.buffer.boundsMin[0];
+        miny = desc.buffer.boundsMin[1];
+        minz = desc.buffer.boundsMin[2];
+        maxx = desc.buffer.boundsMax[0];
+        maxy = desc.buffer.boundsMax[1];
+        maxz = desc.buffer.boundsMax[2];
     }
 
     void SetImportedBufferCSVHeaderRow(const char* bufferName, bool CSVHeaderRow) override final

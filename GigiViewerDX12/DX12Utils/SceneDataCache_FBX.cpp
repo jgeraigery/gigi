@@ -35,8 +35,8 @@ bool SceneDataCache::LoadFBX(FileCache::File& fileData, SceneData& sceneData)
 		//		ofbx::LoadFlags::IGNORE_GEOMETRY |
 		ofbx::LoadFlags::IGNORE_BLEND_SHAPES |
 		ofbx::LoadFlags::IGNORE_CAMERAS |
-		ofbx::LoadFlags::IGNORE_LIGHTS |
-		ofbx::LoadFlags::IGNORE_TEXTURES |
+		// ofbx::LoadFlags::IGNORE_LIGHTS |
+		// ofbx::LoadFlags::IGNORE_TEXTURES |
 		ofbx::LoadFlags::IGNORE_SKIN |
 		ofbx::LoadFlags::IGNORE_BONES |
 		ofbx::LoadFlags::IGNORE_PIVOTS |

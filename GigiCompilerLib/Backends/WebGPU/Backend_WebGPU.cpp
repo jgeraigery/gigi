@@ -228,7 +228,8 @@ struct BackendWebGPU : public BackendBase
             case TextureFormat::D32_Float_S8: return "depth32float-stencil8";
             case TextureFormat::D24_Unorm_S8: return "depth24plus-stencil8";
 
-            case TextureFormat::BC1_Unorm: return "bc1-rgb-unorm";
+            case TextureFormat::BC1_Unorm: return "bc1-rgba-unorm";
+            case TextureFormat::BC3_Unorm: return "bc3-rgba-unorm";
 
             case TextureFormat::BC4_Unorm: return "bc4-r-unorm";
             case TextureFormat::BC4_Snorm: return "bc4-r-snorm";
@@ -1881,7 +1882,7 @@ static void ProcessShaderFile(const std::string& nodeName, const Shader& shader,
         ;
 
         options.m_handleShaderToken =
-            [](ProcessShaderOptions_HLSL& options, std::ostringstream& stream, const std::string& token, size_t lineNumber, const RenderGraph& renderGraph, const std::string& declareLineNumber)
+            [](ProcessShaderOptions_HLSL& options, std::ostringstream& stream, const std::string& token, const RenderGraph& renderGraph, const std::string& declareLineNumber)
             {
                 // Only rw texture READS need to be updated. Writes have the same resource name so can go through the default behavior.
                 std::string param;

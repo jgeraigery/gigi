@@ -573,6 +573,23 @@ static PyObject* Python_SetImportedBufferCount(PyObject* self, PyObject* args)
     return Py_None;
 }
 
+static PyObject* Python_GetImportedBufferBounds(PyObject* self, PyObject* args)
+{
+    const char* bufferName = nullptr;
+    if (!PyArg_ParseTuple(args, "s:Python_GetImportedBufferBounds", &bufferName))
+        return PyErr_Format(PyExc_TypeError, "type error in " __FUNCTION__ "()");
+
+    float minx = 0.0f;
+    float miny = 0.0f;
+    float minz = 0.0f;
+    float maxx = 0.0f;
+    float maxy = 0.0f;
+    float maxz = 0.0f;
+    g_interface->GetImportedBufferBounds(bufferName, minx, miny, minz, maxx, maxy, maxz);
+
+    return Py_BuildValue("ffffff", minx, miny, minz, maxx, maxy, maxz);
+}
+
 static PyObject* Python_SetImportedBufferCSVHeaderRow(PyObject* self, PyObject* args)
 {
     const char* bufferName = nullptr;
@@ -1255,6 +1272,7 @@ void PythonInit(PythonInterface* interface)
         {"SetImportedBufferStruct", Python_SetImportedBufferStruct, METH_VARARGS, "Set the struct type of an imported buffer"},
         {"SetImportedBufferType", Python_SetImportedBufferType, METH_VARARGS, "Set the type of an imported buffer"},
         {"SetImportedBufferCount", Python_SetImportedBufferCount, METH_VARARGS, "Set the count of an imported buffer"},
+        {"GetImportedBufferBounds", Python_GetImportedBufferBounds, METH_VARARGS, "Get [minx, miny, minz, maxx, maxy, maxz] of an imported buffer that has a position semantic."},
         {"SetImportedBufferCSVHeaderRow", Python_SetImportedBufferCSVHeaderRow, METH_VARARGS, "Set whether or not teh csv file has a header row"},
         {"SetImportedTextureFile", Python_SetImportedTextureFile, METH_VARARGS, "Set the file name of an imported texture"},
         {"SetImportedTextureSourceIsSRGB", Python_SetImportedTextureSourceIsSRGB, METH_VARARGS, "Set whether or not the file on disk is sRGB."},
