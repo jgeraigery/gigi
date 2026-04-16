@@ -1059,8 +1059,8 @@ bool GigiInterpreterPreviewWindowDX12::CreateAndUploadTextures(const RenderGraph
 	runtimeData.m_resource = CreateTexture(m_device, size, runtimeData.m_numMips, runtimeData.m_format, sampleCount, resourceFlags, D3D12_RESOURCE_STATE_COPY_DEST, TextureDimensionTypeToResourceType(node.dimension), node.name.c_str());
 
 	// track the new resources for state transitions
-	m_transitions.Track(TRANSITION_DEBUG_INFO(runtimeData.m_resourceInitialState, D3D12_RESOURCE_STATE_COPY_DEST));
-	m_transitions.Track(TRANSITION_DEBUG_INFO(runtimeData.m_resource, D3D12_RESOURCE_STATE_COPY_DEST));
+	m_transitions.Track(TRANSITION_DEBUG_INFO_NAMED(runtimeData.m_resourceInitialState, D3D12_RESOURCE_STATE_COPY_DEST, node.name.c_str()));
+	m_transitions.Track(TRANSITION_DEBUG_INFO_NAMED(runtimeData.m_resource, D3D12_RESOURCE_STATE_COPY_DEST, node.name.c_str()));
 
     if (!runtimeData.m_resource)
         return false;

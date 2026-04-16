@@ -835,7 +835,7 @@ namespace Stencil
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_output.texture_Color, context->m_output.texture_Color_format, D3D12_RTV_DIMENSION_TEXTURE2D, 0, 0, "Stencil.Color"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_output.texture_Color, context->m_output.texture_Color_format, D3D12_RTV_DIMENSION_TEXTURE2D, 0, 0, "Stencil.Color")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);
@@ -898,7 +898,7 @@ namespace Stencil
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_output.texture_Color, context->m_output.texture_Color_format, D3D12_RTV_DIMENSION_TEXTURE2D, 0, 0, "Stencil.Color"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_output.texture_Color, context->m_output.texture_Color_format, D3D12_RTV_DIMENSION_TEXTURE2D, 0, 0, "Stencil.Color")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);
@@ -1074,7 +1074,7 @@ namespace Stencil
                 m_internal.texture__loadedTexture_0_size[2] = size[2];
                 m_internal.texture__loadedTexture_0_numMips = desiredNumMips;
                 m_internal.texture__loadedTexture_0_format = DXGI_FORMAT_R8G8B8A8_UNORM;
-                m_internal.texture__loadedTexture_0 = DX12Utils::CreateTexture(device, size, desiredNumMips, DXGI_FORMAT_R8G8B8A8_UNORM, m_internal.texture__loadedTexture_0_flags, D3D12_RESOURCE_STATE_COPY_DEST, DX12Utils::ResourceType::Texture2D, (c_debugNames ? L"_loadedTexture_0" : nullptr), Context::LogFn);
+                m_internal.texture__loadedTexture_0 = DX12Utils::CreateTexture(device, size, desiredNumMips, m_internal.texture__loadedTexture_0_format, m_internal.texture__loadedTexture_0_flags, D3D12_RESOURCE_STATE_COPY_DEST, DX12Utils::ResourceType::Texture2D, (c_debugNames ? L"_loadedTexture_0" : nullptr), Context::LogFn);
 
 
                 std::vector<unsigned char> pixels;

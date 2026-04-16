@@ -995,7 +995,7 @@ namespace Mips_DrawCall
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 0, "Mips_DrawCall.Color_Buffer"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 0, "Mips_DrawCall.Color_Buffer")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);
@@ -1085,7 +1085,7 @@ namespace Mips_DrawCall
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 1, "Mips_DrawCall.Color_Buffer"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 1, "Mips_DrawCall.Color_Buffer")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);
@@ -1175,7 +1175,7 @@ namespace Mips_DrawCall
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 2, "Mips_DrawCall.Color_Buffer"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 2, "Mips_DrawCall.Color_Buffer")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);
@@ -1265,7 +1265,7 @@ namespace Mips_DrawCall
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 3, "Mips_DrawCall.Color_Buffer"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 3, "Mips_DrawCall.Color_Buffer")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);
@@ -1355,7 +1355,7 @@ namespace Mips_DrawCall
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 4, "Mips_DrawCall.Color_Buffer"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 4, "Mips_DrawCall.Color_Buffer")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);
@@ -1445,7 +1445,7 @@ namespace Mips_DrawCall
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 5, "Mips_DrawCall.Color_Buffer"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 5, "Mips_DrawCall.Color_Buffer")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);
@@ -1535,7 +1535,7 @@ namespace Mips_DrawCall
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 6, "Mips_DrawCall.Color_Buffer"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 6, "Mips_DrawCall.Color_Buffer")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);
@@ -1625,7 +1625,7 @@ namespace Mips_DrawCall
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 7, "Mips_DrawCall.Color_Buffer"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 7, "Mips_DrawCall.Color_Buffer")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);
@@ -1715,7 +1715,7 @@ namespace Mips_DrawCall
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 8, "Mips_DrawCall.Color_Buffer"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Color_Buffer, context->m_internal.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2DARRAY, 0, 8, "Mips_DrawCall.Color_Buffer")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);
@@ -1839,7 +1839,7 @@ namespace Mips_DrawCall
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_output.texture_Final_Color_Buffer, context->m_output.texture_Final_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2D, 0, 0, "Mips_DrawCall.Final_Color_Buffer"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_output.texture_Final_Color_Buffer, context->m_output.texture_Final_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2D, 0, 0, "Mips_DrawCall.Final_Color_Buffer")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);

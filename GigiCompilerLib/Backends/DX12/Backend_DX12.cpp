@@ -604,7 +604,7 @@ struct BackendDX12 : public BackendBase
                             "                        g_pd3dCommandList,\n"
                             "                        m_" << renderGraph.name << "->m_input.c_buffer_" << nodeName << "_flags,\n"
                             "                        (void*)initialData, initialDataSize,\n"
-                            "                        L\"" << renderGraph.name << "." << nodeName << "\"\n"
+                            "                        L\"" << renderGraph.name << "." << nodeName << "\",\n"
                             "                        m_" << renderGraph.name << "->m_input.buffer_" << nodeName << "_state\n"
                             "                    );\n"
                             "                    */\n"
@@ -951,6 +951,33 @@ struct BackendDX12 : public BackendBase
 
                         break;
                     }
+					case DataFieldType::Int2:
+					{
+						stringReplacementMap["/*$(IMGUI)*/"] <<
+							"\n        {"
+							"\n            float width = ImGui::GetContentRegionAvail().x / 4.0f;"
+							"\n            ImGui::PushID(\"" << variable.name << "\");"
+							"\n            ImGui::PushItemWidth(width);"
+							"\n            ImGui::InputInt(\"##X\", &" << VariableToString(variable, renderGraph) << "[0], 0);"
+							"\n            ImGui::SameLine();"
+							"\n            ImGui::InputInt(\"##Y\", &" << VariableToString(variable, renderGraph) << "[1], 0);"
+							"\n            ImGui::SameLine();"
+							"\n            ImGui::Text(\"" << variable.name << "\");"
+							"\n            ImGui::PopItemWidth();"
+							"\n            ImGui::PopID();"
+							;
+
+						if (!variable.comment.empty())
+						{
+							stringReplacementMap["/*$(IMGUI)*/"] <<
+								"\n            ShowToolTip(\"" << variable.comment << "\");"
+								;
+						}
+
+						stringReplacementMap["/*$(IMGUI)*/"] <<
+							"\n        }";
+						break;
+					}
                     case DataFieldType::Uint:
                     {
                         stringReplacementMap["/*$(IMGUI)*/"] <<
@@ -1161,7 +1188,7 @@ struct BackendDX12 : public BackendBase
                     }
                     default:
                     {
-                        GigiAssert(false, "Unhandled Variable Type: %i", variable.type);
+                        GigiAssert(false, "Unhandled Variable Type: %s(%i)", EnumToString(variable.type), variable.type);
                         break;
                     }
                 }
@@ -1600,6 +1627,16 @@ struct BackendDX12 : public BackendBase
             stringReplacementMap["/*$(CreateShared)*/"] <<
                 "\n"
                 "\n        dxrDevice->Release();";
+        }
+
+        {
+            std::string old = stringReplacementMap["/*$(ContextInputTextureFormats)*/"].str();
+            if (!old.empty())
+            {
+                stringReplacementMap["/*$(ContextInputTextureFormats)*/"] = std::ostringstream();
+                stringReplacementMap["/*$(ContextInputTextureFormats)*/"] << "\n\n            // Texture formats for textures marked as 'auto'";
+                stringReplacementMap["/*$(ContextInputTextureFormats)*/"] << old;
+            }
         }
     }
 };

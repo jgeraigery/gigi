@@ -1963,7 +1963,7 @@ static void MakeStringReplacementForNode(std::unordered_map<std::string, std::os
             stringReplacementMap["/*$(Execute)*/"] <<
                 "\n                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->" << GetResourceNodePathInContext(GetNodeResourceVisibility(colorTargetNodeBase)) << "texture_" << colorTargetNode.name << ", "
                 "context->" << GetResourceNodePathInContext(GetNodeResourceVisibility(colorTargetNodeBase)) << "texture_" << colorTargetNode.name << "_format, " << TextureDimensionTypeToD3D12_RTV_DIMENSION(colorTargetNode.dimension) <<
-                ", " << ctSettings.arrayIndex << ", " << ctSettings.mipLevel << ", \"" << renderGraph.name << "." << colorTargetNode.name << "\"))"
+                ", " << ctSettings.arrayIndex << ", " << ctSettings.mipLevel << ", \"" << renderGraph.name << "." << colorTargetNode.name << "\")),"
                 ;
         }
         if (first)

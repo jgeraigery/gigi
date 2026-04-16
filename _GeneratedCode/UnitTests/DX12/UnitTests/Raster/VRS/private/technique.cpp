@@ -962,7 +962,7 @@ namespace VRS
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_output.texture_Color_Buffer, context->m_output.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2D, 0, 0, "VRS.Color_Buffer"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_output.texture_Color_Buffer, context->m_output.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2D, 0, 0, "VRS.Color_Buffer")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);
@@ -1075,7 +1075,7 @@ namespace VRS
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_output.texture_Color_Buffer, context->m_output.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2D, 0, 0, "VRS.Color_Buffer"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_output.texture_Color_Buffer, context->m_output.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2D, 0, 0, "VRS.Color_Buffer")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);
@@ -1188,7 +1188,7 @@ namespace VRS
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_output.texture_Color_Buffer, context->m_output.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2D, 0, 0, "VRS.Color_Buffer"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_output.texture_Color_Buffer, context->m_output.texture_Color_Buffer_format, D3D12_RTV_DIMENSION_TEXTURE2D, 0, 0, "VRS.Color_Buffer")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);

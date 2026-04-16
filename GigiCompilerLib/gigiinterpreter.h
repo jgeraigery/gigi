@@ -956,11 +956,13 @@ public:
 #define VARIANT_TYPE(_TYPE, _NAME, _DEFAULT, _DESCRIPTION)                                                            \
 	case RenderGraphNode::c_index_##_NAME:                                                                            \
 	{                                                                                                                 \
+        OnPreNodeExecute(node);                                                                                       \
         auto& runtimeData = m_##_TYPE##_RuntimeData.GetOrCreate(node.##_NAME.name);                                   \
         runtimeData.m_inErrorState = false;                                                                           \
         runtimeData.m_conditionIsTrue = true;                                                                         \
 		if (!OnNodeAction(node.##_NAME, runtimeData, NodeAction::Execute))                                            \
 			return false;                                                                                             \
+        OnPostNodeExecute(node);                                                                                      \
 		break;                                                                                                        \
 	}
 // clang-format off
@@ -985,6 +987,9 @@ public:
 	virtual void ShowUI() {}
 	virtual void OnPreCompile() {}
 	virtual void OnCompileOK() {}
+
+    virtual void OnPreNodeExecute(const RenderGraphNode& node) { }
+    virtual void OnPostNodeExecute(const RenderGraphNode& node) { }
 
 	void SetLogFn(LogFn logFn)
 	{

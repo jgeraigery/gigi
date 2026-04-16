@@ -130,7 +130,7 @@ void RuntimeTypes::RenderGraphNode_Base::HandleViewableResource(GigiInterpreterP
 
 							unsigned int sampleCount = 1;
 							res.m_resource = CreateTexture(interpreter.m_device, size, 1, res.m_format, sampleCount, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_DEST, ResourceType::Texture2D, (std::string(displayName) + " Copy").c_str());
-							interpreter.m_transitions.Track(TRANSITION_DEBUG_INFO(res.m_resource, D3D12_RESOURCE_STATE_COPY_DEST));
+							interpreter.m_transitions.Track(TRANSITION_DEBUG_INFO_NAMED(res.m_resource, D3D12_RESOURCE_STATE_COPY_DEST, "readback"));
 						}
 
 						// Make a readback buffer that can hold the entire source resource
@@ -145,27 +145,27 @@ void RuntimeTypes::RenderGraphNode_Base::HandleViewableResource(GigiInterpreterP
 							interpreter.m_device->GetCopyableFootprints(&resourceDesc, 0, numSubResources, 0, nullptr, nullptr, nullptr, &totalBytes);
 
 							res.m_resourceReadback = CreateBuffer(interpreter.m_device, (unsigned int)totalBytes, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_HEAP_TYPE_READBACK, (std::string(displayName) + " Readback").c_str());
-							interpreter.m_transitions.Track(TRANSITION_DEBUG_INFO(res.m_resourceReadback, D3D12_RESOURCE_STATE_COPY_DEST));
+							interpreter.m_transitions.Track(TRANSITION_DEBUG_INFO_NAMED(res.m_resourceReadback, D3D12_RESOURCE_STATE_COPY_DEST, "readback"));
 						}
 						break;
 					}
 					case RuntimeTypes::ViewableResource::Type::ConstantBuffer:
 					{
 						res.m_resource = CreateBuffer(interpreter.m_device, res.m_size[0], D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COMMON, D3D12_HEAP_TYPE_DEFAULT, (std::string(displayName) + " Copy").c_str());
-						interpreter.m_transitions.Track(TRANSITION_DEBUG_INFO(res.m_resource, D3D12_RESOURCE_STATE_COMMON));
+						interpreter.m_transitions.Track(TRANSITION_DEBUG_INFO_NAMED(res.m_resource, D3D12_RESOURCE_STATE_COMMON, "readback"));
 
 						res.m_resourceReadback = CreateBuffer(interpreter.m_device, res.m_size[0], D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_HEAP_TYPE_READBACK, (std::string(displayName) + " Readback").c_str());
-						interpreter.m_transitions.Track(TRANSITION_DEBUG_INFO(res.m_resourceReadback, D3D12_RESOURCE_STATE_COPY_DEST));
+						interpreter.m_transitions.Track(TRANSITION_DEBUG_INFO_NAMED(res.m_resourceReadback, D3D12_RESOURCE_STATE_COPY_DEST, "readback"));
 
 						break;
 					}
 					case RuntimeTypes::ViewableResource::Type::Buffer:
 					{
 						res.m_resource = CreateBuffer(interpreter.m_device, res.m_size[0], D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COMMON, D3D12_HEAP_TYPE_DEFAULT, (std::string(displayName) + " Copy").c_str());
-						interpreter.m_transitions.Track(TRANSITION_DEBUG_INFO(res.m_resource, D3D12_RESOURCE_STATE_COMMON));
+						interpreter.m_transitions.Track(TRANSITION_DEBUG_INFO_NAMED(res.m_resource, D3D12_RESOURCE_STATE_COMMON, "readback"));
 
 						res.m_resourceReadback = CreateBuffer(interpreter.m_device, res.m_size[0], D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_HEAP_TYPE_READBACK, (std::string(displayName) + " Readback").c_str());
-						interpreter.m_transitions.Track(TRANSITION_DEBUG_INFO(res.m_resourceReadback, D3D12_RESOURCE_STATE_COPY_DEST));
+						interpreter.m_transitions.Track(TRANSITION_DEBUG_INFO_NAMED(res.m_resourceReadback, D3D12_RESOURCE_STATE_COPY_DEST, "readback"));
 
 						break;
 					}

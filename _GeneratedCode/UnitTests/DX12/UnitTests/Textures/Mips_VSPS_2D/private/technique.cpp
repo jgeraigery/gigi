@@ -761,7 +761,7 @@ namespace Mips_VSPS_2D
 
             D3D12_CPU_DESCRIPTOR_HANDLE colorTargetHandles[] =
             {
-                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Output, context->m_internal.texture_Output_format, D3D12_RTV_DIMENSION_TEXTURE2D, 0, 0, "Mips_VSPS_2D.Output"))
+                s_heapAllocationTrackerRTV.GetCPUHandle(context->GetRTV(device, context->m_internal.texture_Output, context->m_internal.texture_Output_format, D3D12_RTV_DIMENSION_TEXTURE2D, 0, 0, "Mips_VSPS_2D.Output")),
             };
 
             int colorTargetHandleCount = _countof(colorTargetHandles);

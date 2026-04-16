@@ -139,8 +139,24 @@ static void MakeStringReplacementForNode(std::unordered_map<std::string, std::os
             // be given when declaring a loaded texture.
             if (node.dimension == TextureDimensionType::Texture2D)
             {
+                if (node.format.format == TextureFormat::Any)
+                {
+                    stringReplacementMap["/*$(ContextInputTextureFormats)*/"] << "\n            static const DXGI_FORMAT c_textureFormat_" << node.name << " = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB; // " << node.loadFileName;
+
+                    stringReplacementMap["/*$(EnsureResourcesCreated)*/"] <<
+                        "\n                DX12Utils::DXGI_FORMAT_Info formatInfo = DX12Utils::Get_DXGI_FORMAT_Info(ContextInput::c_textureFormat_" << node.name << ", Context::LogFn);"
+                        ;
+                }
+                else
+                {
+                    stringReplacementMap["/*$(EnsureResourcesCreated)*/"] <<
+                        "\n                DX12Utils::DXGI_FORMAT_Info formatInfo = DX12Utils::Get_DXGI_FORMAT_Info(" << TextureFormatToDXGIFormat(node.format.format) << ", Context::LogFn);"
+                        ;
+                }
+
+                // TODO: if they want auto format, make them fill it out! maybe a todo in the readme? kind of sucks because we have the ability to know, and materials have a lot of textures. maybe default to RGBA8 srgb, and let it be modified?
+
                 stringReplacementMap["/*$(EnsureResourcesCreated)*/"] <<
-                    "\n                DX12Utils::DXGI_FORMAT_Info formatInfo = DX12Utils::Get_DXGI_FORMAT_Info(" << TextureFormatToDXGIFormat(node.format.format) << ", Context::LogFn);"
                     "\n                DX12Utils::TextureCache::Type desiredType = DX12Utils::TextureCache::Type::U8;"
                     "\n                if (formatInfo.channelType == DX12Utils::DXGI_FORMAT_Info::ChannelType::_uint8_t)"
                     "\n                    desiredType = DX12Utils::TextureCache::Type::U8;"
@@ -162,8 +178,22 @@ static void MakeStringReplacementForNode(std::unordered_map<std::string, std::os
             }
             else
             {
+                if (node.format.format == TextureFormat::Any)
+                {
+                    stringReplacementMap["/*$(ContextInputTextureFormats)*/"] << "\n            static const DXGI_FORMAT c_textureFormat_" << node.name << " = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB; // " << node.loadFileName;
+
+                    stringReplacementMap["/*$(EnsureResourcesCreated)*/"] <<
+                        "\n                DX12Utils::DXGI_FORMAT_Info formatInfo = DX12Utils::Get_DXGI_FORMAT_Info(ContextInput::c_textureFormat_" << node.name << ", Context::LogFn);"
+                        ;
+                }
+                else
+                {
+                    stringReplacementMap["/*$(EnsureResourcesCreated)*/"] <<
+                        "\n                DX12Utils::DXGI_FORMAT_Info formatInfo = DX12Utils::Get_DXGI_FORMAT_Info(" << TextureFormatToDXGIFormat(node.format.format) << ", Context::LogFn);"
+                        ;
+                }
+
                 stringReplacementMap["/*$(EnsureResourcesCreated)*/"] <<
-                    "\n                DX12Utils::DXGI_FORMAT_Info formatInfo = DX12Utils::Get_DXGI_FORMAT_Info(" << TextureFormatToDXGIFormat(node.format.format) << ", Context::LogFn);"
                     "\n                DX12Utils::TextureCache::Type desiredType = DX12Utils::TextureCache::Type::U8;"
                     "\n                if (formatInfo.channelType == DX12Utils::DXGI_FORMAT_Info::ChannelType::_uint8_t)"
                     "\n                    desiredType = DX12Utils::TextureCache::Type::U8;"
@@ -258,8 +288,23 @@ static void MakeStringReplacementForNode(std::unordered_map<std::string, std::os
                 "\n                " << GetResourceNodePathInContext(node.visibility) << "texture_" << node.name << "_size[1] = size[1];"
                 "\n                " << GetResourceNodePathInContext(node.visibility) << "texture_" << node.name << "_size[2] = size[2];"
                 "\n                " << GetResourceNodePathInContext(node.visibility) << "texture_" << node.name << "_numMips = desiredNumMips;"
-                "\n                " << GetResourceNodePathInContext(node.visibility) << "texture_" << node.name << "_format = " << TextureFormatToDXGIFormat(node.format.format) << ";"
-                "\n                " << GetResourceNodePathInContext(node.visibility) << "texture_" << node.name << " = DX12Utils::CreateTexture(device, size, desiredNumMips, " << TextureFormatToDXGIFormat(node.format.format) << ", " << GetResourceNodePathInContext(node.visibility) << "texture_" << node.name << "_flags"
+                ;
+
+            if (node.format.format == TextureFormat::Any)
+            {
+                stringReplacementMap["/*$(EnsureResourcesCreated)*/"] <<
+                    "\n                " << GetResourceNodePathInContext(node.visibility) << "texture_" << node.name << "_format = ContextInput::c_textureFormat_" << node.name << ";"
+                    ;
+            }
+            else
+            {
+                stringReplacementMap["/*$(EnsureResourcesCreated)*/"] <<
+                    "\n                " << GetResourceNodePathInContext(node.visibility) << "texture_" << node.name << "_format = " << TextureFormatToDXGIFormat(node.format.format) << ";"
+                    ;
+            }
+
+            stringReplacementMap["/*$(EnsureResourcesCreated)*/"] <<
+                "\n                " << GetResourceNodePathInContext(node.visibility) << "texture_" << node.name << " = DX12Utils::CreateTexture(device, size, desiredNumMips, " << GetResourceNodePathInContext(node.visibility) << "texture_" << node.name << "_format, " << GetResourceNodePathInContext(node.visibility) << "texture_" << node.name << "_flags"
                 ", D3D12_RESOURCE_STATE_COPY_DEST, DX12Utils::ResourceType::" << EnumToString(node.dimension) << ", (c_debugNames ? L\"" << (node.name) << "\" : nullptr), Context::LogFn);"
                 "\n"
                 ;
