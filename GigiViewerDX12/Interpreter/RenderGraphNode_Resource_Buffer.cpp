@@ -626,7 +626,7 @@ bool GigiInterpreterPreviewWindowDX12::MakeAccelerationStructures(const RenderGr
 		D3D12_HEAP_TYPE_DEFAULT,
 		nodeNameTLAS.c_str()
 	);
-	m_transitions.Track(TRANSITION_DEBUG_INFO(runtimeData.m_tlas, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE));
+	m_transitions.Track(TRANSITION_DEBUG_INFO_NAMED(runtimeData.m_tlas, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, node.name.c_str()));
 
 	std::string nodeNameBLAS = node.name + " BLAS";
 	runtimeData.m_blasSize = (int)bottomLevelPrebuildInfo.ResultDataMaxSizeInBytes;
@@ -638,7 +638,7 @@ bool GigiInterpreterPreviewWindowDX12::MakeAccelerationStructures(const RenderGr
 		D3D12_HEAP_TYPE_DEFAULT,
 		nodeNameBLAS.c_str()
 	);
-	m_transitions.Track(TRANSITION_DEBUG_INFO(runtimeData.m_blas, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE));
+	m_transitions.Track(TRANSITION_DEBUG_INFO_NAMED(runtimeData.m_blas, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, node.name.c_str()));
 
 	// Create an upload buffer for the instance descs and put the data in there	
 	{
@@ -1895,8 +1895,8 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeActionImported(const RenderGraphNod
 			}
 
 			// track the new resources for state transitions
-			m_transitions.Track(TRANSITION_DEBUG_INFO(runtimeData.m_resourceInitialState, D3D12_RESOURCE_STATE_COMMON));
-			m_transitions.Track(TRANSITION_DEBUG_INFO(runtimeData.m_resource, D3D12_RESOURCE_STATE_COMMON));
+			m_transitions.Track(TRANSITION_DEBUG_INFO_NAMED(runtimeData.m_resourceInitialState, D3D12_RESOURCE_STATE_COMMON, node.name.c_str()));
+			m_transitions.Track(TRANSITION_DEBUG_INFO_NAMED(runtimeData.m_resource, D3D12_RESOURCE_STATE_COMMON, node.name.c_str()));
 
 			// Upload raw bytes into our initial state if we have raw bytes
 			if (!rawBytes.empty())
@@ -2020,8 +2020,8 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeActionNotImported(const RenderGraph
 				}
 
 				// track the new resources for state transitions
-				m_transitions.Track(TRANSITION_DEBUG_INFO(runtimeData.m_resourceInitialState, D3D12_RESOURCE_STATE_COMMON));
-				m_transitions.Track(TRANSITION_DEBUG_INFO(runtimeData.m_resource, D3D12_RESOURCE_STATE_COMMON));
+				m_transitions.Track(TRANSITION_DEBUG_INFO_NAMED(runtimeData.m_resourceInitialState, D3D12_RESOURCE_STATE_COMMON, node.name.c_str()));
+				m_transitions.Track(TRANSITION_DEBUG_INFO_NAMED(runtimeData.m_resource, D3D12_RESOURCE_STATE_COMMON, node.name.c_str()));
 
 				// Note that the resource wants to be reset to the initial state.
 				runtimeData.m_resourceWantsReset = true;

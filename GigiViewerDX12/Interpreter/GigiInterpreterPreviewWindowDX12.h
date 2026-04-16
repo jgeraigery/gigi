@@ -198,6 +198,24 @@ public:
 		return true;
 	}
 
+    void OnPreNodeExecute(const RenderGraphNode& node)
+    {
+        std::string label;
+        ExecuteOnNode(node,
+            [&label](auto& node)
+            {
+                label = std::string("[") + node.c_shorterTypeName + std::string(": ") + node.name + std::string("] ");
+            }
+        );
+
+        m_transitions.SetTransitionLogScope(label.c_str());
+    }
+
+    void OnPostNodeExecute(const RenderGraphNode& node)
+    {
+        m_transitions.SetTransitionLogScope(nullptr);
+    }
+
 	void WriteGPUResource(const char* viewableResourceName, int subresourceIndex, const char* data, size_t size)
 	{
 		std::vector<char> storedData(size);

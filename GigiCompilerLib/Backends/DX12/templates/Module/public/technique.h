@@ -34,7 +34,7 @@ namespace /*$(Name)*/
 
         // This is the input to the technique that you are expected to fill out
         struct ContextInput
-        {/*$(ContextInput)*/
+        {/*$(ContextInput)*//*$(ContextInputTextureFormats)*/
         };
         ContextInput m_input;
 

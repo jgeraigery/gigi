@@ -654,6 +654,7 @@ ImVec2 g_contentRegionSize = ImVec2(1.0f, 1.0f);
 
 bool g_showCapsWindow = false;
 bool g_showViewerSettings = false;
+bool g_showTransitionLog = false;
 
 // first half are this frame, second half are last frame
 uint8_t g_keyStates[512] = {};
@@ -724,6 +725,13 @@ struct LogEntry
     std::string msg;
 };
 std::vector<LogEntry> g_log;
+
+struct TransitionLogEntry
+{
+    bool actualTransition = false;
+    std::string message;
+};
+std::vector<TransitionLogEntry> g_transitionLog;
 
 void AddMultiLineLogEntry(LogLevel level, char* formattedMsg)
 {
@@ -984,6 +992,16 @@ void ScatterSnapshotData(const GGUserFileV2Snapshot& snapshot, bool switchingSna
             {
                 desc.nodeIndex = g_interpreter.m_importedResources[inDesc.nodeName].nodeIndex;
                 desc.resourceIndex = g_interpreter.m_importedResources[inDesc.nodeName].resourceIndex;
+            }
+
+            // This can come up if there's a failure to load a file, and some of the imported resource data gets reset during that error state.
+            if (desc.nodeIndex >= 0 && desc.nodeIndex < g_interpreter.GetRenderGraph().nodes.size())
+            {
+                const RenderGraphNode& node = g_interpreter.GetRenderGraph().nodes[desc.nodeIndex];
+                if (node._index == RenderGraphNode::c_index_resourceTexture)
+                    desc.isATexture = true;
+                else
+                    desc.isATexture = false;
             }
 
             g_interpreter.m_importedResources[inDesc.nodeName] = desc;
@@ -1686,6 +1704,7 @@ void HandleMainMenu()
             }
 
             ImGuiMenuItem("DX12 Capabilities", 0, "", &g_showCapsWindow);
+            ImGuiMenuItem("Resource Transitions", 0, "", &g_showTransitionLog);
 
             ImGui::Separator();
 
@@ -1711,6 +1730,7 @@ void HandleMainMenu()
                 g_resetLayout = true;
                 g_interpreter.m_showVariablesUI = true;
                 g_showCapsWindow = false;
+                g_showTransitionLog = false;
                 g_showViewerSettings = false;
                 g_showWindows = ShowWindowsState();
             }
@@ -1999,6 +2019,7 @@ void MakeInitialLayout(ImGuiID dockspace_id)
     ImGui::DockBuilderDockWindow("Shaders", dockspace_left_bottom);
     ImGui::DockBuilderDockWindow("Variables", dockspace_left);
     ImGui::DockBuilderDockWindow("Log", dockspace_bottom);
+    ImGui::DockBuilderDockWindow("Transitions", dockspace_right);
 
     ImGui::DockBuilderGetNode(dockspace_id)->LocalFlags |= ImGuiDockNodeFlags_NoWindowMenuButton | ImGuiDockNodeFlags_NoTabBar;
     ImGui::DockBuilderGetNode(dockspace_right)->LocalFlags |= ImGuiDockNodeFlags_NoWindowMenuButton;
@@ -4375,6 +4396,34 @@ void ShowImGuiWindows()
                 SaveViewerConfig();
         }
 
+        ImGui::End();
+    }
+
+    if (g_showTransitionLog)
+    {
+        if (ImGui::Begin("Transitions", &g_showTransitionLog, 0))
+        {
+            static bool s_requests = false;
+            static bool s_transitions = true;
+
+            static const ImVec4 colorRequest = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
+            static const ImVec4 colorTransition = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
+
+            ImGui::Checkbox("Requests", &s_requests);
+            ImGui::SameLine();
+            ImGui::Checkbox("Transitions", &s_transitions);
+
+            for (const TransitionLogEntry& entry : g_transitionLog)
+            {
+                if (!s_requests && entry.actualTransition == false)
+                    continue;
+
+                if (!s_transitions && entry.actualTransition == true)
+                    continue;
+
+                ImGui::TextColored(entry.actualTransition ? colorTransition : colorRequest, "%s", entry.message.c_str());
+            }
+        }
         ImGui::End();
     }
 
@@ -7636,10 +7685,13 @@ void ShowRenderGraphWindow()
     ImGui::TextUnformatted("Show:");
     ImGui::SameLine();
     ImGui::Checkbox("Resources", &g_showResourceNodes);
+    ShowToolTip("Show resource nodes");
     ImGui::SameLine();
-    ImGui::Checkbox("NonWrites", &g_showNonWrites);
+    ImGui::Checkbox("Read Only", &g_showNonWrites);
+    ShowToolTip("Show read only resource access");
     ImGui::SameLine();
     ImGui::Checkbox("hideInViewer", &g_showEvenHidden);
+    ShowToolTip("Show nodes marked as hidden in the viewer");
     ImGui::PopStyleVar();
 
     // loop through all the nodes in flattened render graph order
@@ -7647,18 +7699,9 @@ void ShowRenderGraphWindow()
     for (int nodeIndex: renderGraph.flattenedNodeList)
     {
         // skip resource nodes if we should
-        if (!g_showResourceNodes)
-        {
-            switch (renderGraph.nodes[nodeIndex]._index)
-            {
-                case RenderGraphNode::c_index_resourceBuffer:
-                case RenderGraphNode::c_index_resourceTexture:
-                case RenderGraphNode::c_index_resourceShaderConstants:
-                {
-                    continue;
-                }
-            }
-        }
+        bool isResourceNode = GetNodeIsResourceNode(renderGraph.nodes[nodeIndex]);
+        if (!g_showResourceNodes && isResourceNode)
+            continue;
 
         // Get information from the node and node runtime data
         std::string nodeTypeName;
@@ -7731,7 +7774,7 @@ void ShowRenderGraphWindow()
             {
                 textureIndex++;
 
-                if (!g_showNonWrites && !viewableResource.m_isResultOfWrite)
+                if (!g_showNonWrites && !viewableResource.m_isResultOfWrite && !isResourceNode)
                     continue;
 
                 if (viewableResource.m_hideFromUI || viewableResource.m_displayName.empty())
@@ -9328,6 +9371,7 @@ void RenderFrame(bool forceExecute)
     g_interpreter.Tick();
     if (g_executeTechnique || forceExecute)
     {
+        g_transitionLog.clear();
         g_interpreter.UploadDataToBuffer(g_pd3dCommandList, g_systemVariables.KeyState_bufferName.c_str(), g_keyStates);
         g_interpreter.Execute(g_pd3dCommandList);
         g_techniqueFrameIndex++;
@@ -9405,6 +9449,16 @@ void RenderFrame(bool forceExecute)
     frameCtx->FenceValue = fenceValue;
 
     TryEndRenderDocCapture();
+}
+
+static void TransitionLog(bool actualTransition, const char* format, ...)
+{
+    char buffer[4096];
+    va_list args;
+    va_start(args, format);
+    vsprintf_s(buffer, format, args);
+    va_end(args);
+    g_transitionLog.push_back({actualTransition, buffer});
 }
 
 // Main code
@@ -9572,6 +9626,8 @@ int main(int argc, char** argv)
             argIndex++;
         }
     }
+
+    g_interpreter.GetTransitionsNonConst().SetTransitionLog(TransitionLog);
 
     if (g_pixCaptureEnabled)
     {
