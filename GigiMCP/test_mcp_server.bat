@@ -1,0 +1,1 @@
+python test_mcp_server.py ../GigiMCP.exe

@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTex", "external\Dire
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GigiBrowser", "GigiBrowser\GigiBrowser.vcxproj", "{3E361C6C-FB88-40DD-B028-8BBFFD629308}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GigiMCP", "GigiMCP\GigiMCP.vcxproj", "{D0E666EC-691F-40C0-94D7-5EA916AFD74B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -53,6 +55,10 @@ Global
 		{3E361C6C-FB88-40DD-B028-8BBFFD629308}.Debug|x64.Build.0 = Debug|x64
 		{3E361C6C-FB88-40DD-B028-8BBFFD629308}.Release|x64.ActiveCfg = Release|x64
 		{3E361C6C-FB88-40DD-B028-8BBFFD629308}.Release|x64.Build.0 = Release|x64
+		{D0E666EC-691F-40C0-94D7-5EA916AFD74B}.Debug|x64.ActiveCfg = Debug|x64
+		{D0E666EC-691F-40C0-94D7-5EA916AFD74B}.Debug|x64.Build.0 = Debug|x64
+		{D0E666EC-691F-40C0-94D7-5EA916AFD74B}.Release|x64.ActiveCfg = Release|x64
+		{D0E666EC-691F-40C0-94D7-5EA916AFD74B}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

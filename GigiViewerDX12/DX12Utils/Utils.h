@@ -187,7 +187,7 @@ inline DXGI_FORMAT_Info Get_DXGI_FORMAT_Info(DXGI_FORMAT format)
 
 		default:
 		{
-            GigiAssert(false, "Unhandled DXGI_FORMAT");
+            GigiAssert(false, "Unhandled DXGI_FORMAT (%i)\n", format);
 			return DXGI_FORMAT_INFO(uint8_t, 0, false);
 		}
 	}

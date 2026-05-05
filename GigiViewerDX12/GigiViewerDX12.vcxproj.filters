@@ -133,6 +133,7 @@
       <Filter>DX12Utils</Filter>
     </ClCompile>
     <ClCompile Include="..\Shared\UI\WindowPersist.cpp" />
+    <ClCompile Include="ViewerServer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DX12Utils">
@@ -299,6 +300,7 @@
     </ClInclude>
     <ClInclude Include="..\Shared\UI\WindowPersist.h" />
     <ClInclude Include="FileDropTarget.h" />
+    <ClInclude Include="ViewerServer.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GigiViewerDX12.rc" />

@@ -25,6 +25,10 @@ win64_build_release:
       - GigiEdit.ico      
       - GigiCompiler.exe
       - GigiCompiler.pdb
+      - GigiMCP.exe
+      - GigiMCP.pdb
+      - .mcp.json
+      - ./claude
       - python310.dll
       - renderdoc.dll
       - libcurl-x64.dll

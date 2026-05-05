@@ -22,6 +22,7 @@
 #include <DirectXMathMatrix.inl>
 
 #include "PreviewClient.h"
+#include "ViewerServer.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
@@ -600,6 +601,9 @@ std::string g_editorIP = "";
 std::string g_editorPort = "";
 CPreviewClient g_previewClient;
 
+int g_viewerPort = 6161;
+CViewerServer g_viewerServer;
+
 std::string g_currentWindowTitle = "";
 std::string g_renderGraphFileName = "";
 bool g_saveGGUserFile = true;
@@ -645,6 +649,7 @@ struct ShowWindowsState
     bool AMDFrameInterpolation = false;
     bool Audio = false;
     bool WebCam = false;
+    bool PythonConsole = true;
 };
 ShowWindowsState g_showWindows;
 
@@ -1695,6 +1700,7 @@ void HandleMainMenu()
             ImGuiMenuItem("System Variables", 0, "", &g_showWindows.SystemVariables);
             ImGuiMenuItem("Interpreter State", 0, "", &g_showWindows.InternalVariables);
             ImGuiMenuItem("Log", 0, "", &g_showWindows.Log);
+            ImGuiMenuItem("Python Console", 0, "", &g_showWindows.PythonConsole);
             ImGuiMenuItem("Render Graph", 0, "", &g_showWindows.RenderGraph);
             ImGuiMenuItem("Profiler", 0, "", &g_showWindows.Profiler);
 
@@ -2018,6 +2024,7 @@ void MakeInitialLayout(ImGuiID dockspace_id)
     ImGui::DockBuilderDockWindow("Imported Resources", dockspace_left_bottom);
     ImGui::DockBuilderDockWindow("Shaders", dockspace_left_bottom);
     ImGui::DockBuilderDockWindow("Variables", dockspace_left);
+    ImGui::DockBuilderDockWindow("Python", dockspace_bottom);
     ImGui::DockBuilderDockWindow("Log", dockspace_bottom);
     ImGui::DockBuilderDockWindow("Transitions", dockspace_right);
 
@@ -4864,6 +4871,135 @@ void ShowLog()
     {
         if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C))
             CopyToClipboard(false, false);
+    }
+
+    ImGui::EndChild();
+
+    ImGui::End();
+}
+
+void ShowPythonConsole()
+{
+    if (!g_showWindows.PythonConsole || g_hideUI)
+        return;
+
+    if (!ImGui::Begin("Python", &g_showWindows.PythonConsole))
+    {
+        ImGui::End();
+        return;
+    }
+
+    static char inputBuffer[1024] = "";
+    static std::vector<std::string> outputHistory;
+    static std::vector<std::string> commandHistory;
+    static int historyIndex = -1;
+    static bool scrollToBottom = false;
+
+    bool processPython = false;
+
+    // Callback for handling command history navigation
+    auto inputTextCallback = [](ImGuiInputTextCallbackData* data) -> int
+    {
+        static std::vector<std::string>* pCommandHistory = nullptr;
+        static int* pHistoryIndex = nullptr;
+
+        if (data->EventFlag == ImGuiInputTextFlags_CallbackHistory)
+        {
+            // Get the static variables from user data on first call
+            if (data->UserData)
+            {
+                void** userData = (void**)data->UserData;
+                pCommandHistory = (std::vector<std::string>*)userData[0];
+                pHistoryIndex = (int*)userData[1];
+            }
+
+            if (!pCommandHistory || pCommandHistory->empty())
+                return 0;
+
+            const int prev_history_index = *pHistoryIndex;
+            if (data->EventKey == ImGuiKey_UpArrow)
+            {
+                if (*pHistoryIndex < (int)pCommandHistory->size() - 1)
+                    (*pHistoryIndex)++;
+            }
+            else if (data->EventKey == ImGuiKey_DownArrow)
+            {
+                if (*pHistoryIndex > -1)
+                    (*pHistoryIndex)--;
+            }
+
+            if (prev_history_index != *pHistoryIndex)
+            {
+                const char* history_str = (*pHistoryIndex >= 0) ? (*pCommandHistory)[pCommandHistory->size() - 1 - *pHistoryIndex].c_str() : "";
+                data->DeleteChars(0, data->BufTextLen);
+                data->InsertChars(0, history_str);
+            }
+        }
+        return 0;
+    };
+
+    // Pack user data for callback
+    void* userData[2] = { &commandHistory, &historyIndex };
+
+    processPython |= ImGui::InputText("##PythonInput", inputBuffer, sizeof(inputBuffer),
+        ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackHistory,
+        inputTextCallback, userData);
+
+    ImGui::SameLine();
+    processPython |= ((ImGui::Button("Execute") || ImGui::IsKeyPressed(ImGuiKey_Enter)));
+
+    if (processPython)
+    {
+        if (strlen(inputBuffer) > 0)
+        {
+            outputHistory.push_back(std::string("> ") + inputBuffer);
+
+            // Add to command history
+            commandHistory.push_back(inputBuffer);
+            historyIndex = -1;
+
+            std::vector<std::wstring> args;
+            bool success = PythonExecuteString((std::string("lastCommandResult = ") + inputBuffer).c_str(), args);
+
+            if (success)
+            {
+                const std::string& result = PythonGetLastResult();
+                if (!result.empty())
+                {
+                    outputHistory.push_back(result);
+                }
+            }
+            else
+            {
+                const std::string& error = PythonGetLastError();
+                if (!error.empty())
+                {
+                    outputHistory.push_back(error);
+                }
+            }
+
+            inputBuffer[0] = '\0';
+            scrollToBottom = true;
+        }
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Clear"))
+    {
+        outputHistory.clear();
+    }
+
+    ImGui::BeginChild("##PythonOutputScrollableRegion", ImVec2(0, 0), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+    for (const auto& line : outputHistory)
+    {
+        ImGui::TextUnformatted(line.c_str());
+    }
+
+    if (scrollToBottom)
+    {
+        ImGui::SetScrollHereY(1.0f);
+        scrollToBottom = false;
     }
 
     ImGui::EndChild();
@@ -7835,7 +7971,7 @@ class Python : public PythonInterface
 public:
     bool LoadGG(const char* fileName) override final
     {
-        ClearWantsReadback();
+        ClearWantsReadback(true);
         return LoadGGFile(fileName, false, false);
     }
 
@@ -7930,18 +8066,26 @@ public:
         }
     }
 
-    void SetWantReadback(const char* viewableResourceName, bool wantsReadback) override final
+    void SetWantReadback(const char* viewableResourceName, bool wantsReadback, bool autoClear) override final
     {
         if (wantsReadback)
-            m_wantsReadback.insert(viewableResourceName);
+        {
+            if (autoClear)
+                m_wantsReadbackTransient.insert(viewableResourceName);
+            else
+                m_wantsReadbackPersistent.insert(viewableResourceName);
+        }
         else
-            m_wantsReadback.erase(viewableResourceName);
+        {
+            m_wantsReadbackTransient.erase(viewableResourceName);
+            m_wantsReadbackPersistent.erase(viewableResourceName);
+        }
     }
 
     bool Readback(const char* viewableResourceName, int arrayIndex, int mipIndex, GigiArray& data) override final
     {
         // If they didn't say that it wants to be read back, we won't have read it back!
-        if (m_wantsReadback.count(viewableResourceName) == 0)
+        if (m_wantsReadbackTransient.count(viewableResourceName) == 0 && m_wantsReadbackPersistent.count(viewableResourceName) == 0)
         {
             Log(LogLevel::Error, "Python: Host.Readback() tried to read back resource \"%s\" without calling SetWantReadback() first.", viewableResourceName);
             return false;
@@ -8149,7 +8293,7 @@ public:
     RuntimeTypes::ViewableResource* PrepareSaveTexture(const char* viewableResourceName, const char* functionName)
     {
         // If they didn't say that it wants to be read back, we won't have read it back!
-        if (m_wantsReadback.count(viewableResourceName) == 0)
+        if (m_wantsReadbackTransient.count(viewableResourceName) == 0 && m_wantsReadbackPersistent.count(viewableResourceName) == 0)
         {
             Log(LogLevel::Error, "Python: %s tried to read back resource \"%s\" without calling SetWantReadback() first.", functionName, viewableResourceName);
             return nullptr;
@@ -8922,6 +9066,91 @@ public:
         return -1;
     }
 
+    const RenderGraph& GetRenderGraph() override final
+    {
+        return g_interpreter.GetRenderGraph();
+    }
+
+    RuntimeBufferInfo GetRuntimeBufferInfo(const char* bufferName) override final
+    {
+        RuntimeBufferInfo info;
+        bool exists = false;
+        const RuntimeTypes::RenderGraphNode_Resource_Buffer& runtimeData = g_interpreter.GetRuntimeNodeData_RenderGraphNode_Resource_Buffer(bufferName, exists);
+
+        info.exists = exists;
+        if (exists)
+        {
+            info.format = (runtimeData.m_format == DXGI_FORMAT_UNKNOWN) ? "Unknown" : Get_DXGI_FORMAT_Info(runtimeData.m_format).name;
+            info.formatCount = runtimeData.m_formatCount;
+            info.structIndex = runtimeData.m_structIndex;
+            info.stride = runtimeData.m_stride;
+            info.size = runtimeData.m_size;
+            info.count = runtimeData.m_count;
+        }
+        return info;
+    }
+
+    RuntimeTextureInfo GetRuntimeTextureInfo(const char* textureName) override final
+    {
+        RuntimeTextureInfo info;
+        bool exists = false;
+        const RuntimeTypes::RenderGraphNode_Resource_Texture& runtimeData = g_interpreter.GetRuntimeNodeData_RenderGraphNode_Resource_Texture(textureName, exists);
+
+        info.exists = exists;
+        if (exists)
+        {
+            info.format = (runtimeData.m_format == DXGI_FORMAT_UNKNOWN) ? "Unknown" : Get_DXGI_FORMAT_Info(runtimeData.m_format).name;
+            info.size[0] = runtimeData.m_size[0];
+            info.size[1] = runtimeData.m_size[1];
+            info.size[2] = runtimeData.m_size[2];
+            info.numMips = runtimeData.m_numMips;
+            info.sampleCount = runtimeData.sampleCount;
+        }
+        return info;
+    }
+
+    std::vector<ViewableResourceInfo> GetViewableResourceList() override final
+    {
+        std::vector<ViewableResourceInfo> result;
+        const RenderGraph& renderGraph = g_interpreter.GetRenderGraph();
+
+        for (const RenderGraphNode& node : renderGraph.nodes)
+        {
+            g_interpreter.RuntimeNodeDataLambda(
+                node,
+                [&result](auto node, auto* runtimeData)
+                {
+                    if (!runtimeData)
+                        return;
+
+                    for (const auto& viewableResource : runtimeData->m_viewableResources)
+                    {
+                        ViewableResourceInfo info;
+
+                        // Convert type to string
+                        switch (viewableResource.m_type)
+                        {
+                            case RuntimeTypes::ViewableResource::Type::Texture2D: info.type = "Texture2D"; break;
+                            case RuntimeTypes::ViewableResource::Type::Texture2DArray: info.type = "Texture2DArray"; break;
+                            case RuntimeTypes::ViewableResource::Type::Texture3D: info.type = "Texture3D"; break;
+                            case RuntimeTypes::ViewableResource::Type::TextureCube: info.type = "TextureCube"; break;
+                            case RuntimeTypes::ViewableResource::Type::ConstantBuffer: info.type = "ConstantBuffer"; break;
+                            case RuntimeTypes::ViewableResource::Type::Texture2DMS: info.type = "Texture2DMS"; break;
+                            case RuntimeTypes::ViewableResource::Type::Buffer: info.type = "Buffer"; break;
+                            default: info.type = "Unknown"; break;
+                        }
+
+                        info.displayName = viewableResource.m_displayName;
+
+                        result.push_back(info);
+                    }
+                }
+            );
+        }
+
+        return result;
+    }
+
     std::string GetGPUString() override final
     {
         char buffer[2048];
@@ -9046,7 +9275,7 @@ public:
                         }
 
                         // Else, only mark resources that have been explicitly asked for
-                        if (m_wantsReadback.count(viewableResource.m_displayName) == 0)
+                        if (m_wantsReadbackTransient.count(viewableResource.m_displayName) == 0 && m_wantsReadbackPersistent.count(viewableResource.m_displayName) == 0)
                             continue;
                         viewableResource.m_wantsToBeViewed = true;
                         viewableResource.m_wantsToBeReadBack = true;
@@ -9060,15 +9289,37 @@ public:
 
     void OnExecuteFinished() override final
     {
-        ClearWantsReadback();
+        ClearWantsReadback(false);
     }
 
-    void ClearWantsReadback()
+    std::string GetLog() override final
     {
-        m_wantsReadback.clear();
+        std::string result;
+        constexpr const char* msgType[3] = { "", "[Warning] ", "[Error] " };
+        for (const auto& entry : g_log)
+        {
+            result += msgType[(int)entry.level];
+            result += entry.msg;
+            result += "\n";
+        }
+        return result;
     }
 
-    std::unordered_set<std::string> m_wantsReadback;
+    void ClearLog() override final
+    {
+        g_log.clear();
+    }
+
+    void ClearWantsReadback(bool persistentToo)
+    {
+        m_wantsReadbackTransient.clear();
+
+        if (persistentToo)
+            m_wantsReadbackPersistent.clear();
+    }
+
+    std::unordered_set<std::string> m_wantsReadbackTransient;
+    std::unordered_set<std::string> m_wantsReadbackPersistent;
 };
 
 Python g_python;
@@ -9341,6 +9592,8 @@ void RenderFrame(bool forceExecute)
 
     g_interpreter.ShowUI(g_hideUI, g_techniquePaused);
 
+    ShowPythonConsole();
+
     ShowLog();
 
     ShowShaders();
@@ -9539,20 +9792,39 @@ int main(int argc, char** argv)
             g_GPUDeviceIndex = atoi(argv[argIndex + 1]);
             argIndex += 2;
         }
-        else if (!_stricmp(argv[argIndex], "-run"))
+        else if (!_stricmp(argv[argIndex], "-listenPort"))
         {
             if (argc <= argIndex + 1)
             {
-                printf("Not enough arguments given. Expected: -run <pyFileName>\n");
+                printf("Not enough arguments given. Expected: -listenPort <port>\n");
                 return 1;
             }
-            g_runPyFileName = argv[argIndex + 1];
+            g_viewerPort = atoi(argv[argIndex + 1]);
             argIndex += 2;
+        }
+        else if (!_stricmp(argv[argIndex], "-run") || !_stricmp(std::filesystem::path(argv[argIndex]).extension().string().c_str(), ".py"))
+        {
+            if (!_stricmp(argv[argIndex], "-run"))
+            {
+                if (argc <= argIndex + 1)
+                {
+                    printf("Not enough arguments given. Expected: -run <pyFileName> [argv]\n");
+                    return 1;
+                }
+                g_runPyFileName = argv[argIndex + 1];
+                argIndex += 2;
+            }
+            else
+            {
+                g_runPyFileName = argv[argIndex];
+                argIndex += 1;
+            }
 
             // NOTE: all arguments after -run are sent to the python script!
             g_runPyArgs.clear();
             for (int argumentIndex = argIndex; argumentIndex < argc; ++argumentIndex)
                 g_runPyArgs.push_back(ToWideString(argv[argumentIndex]));
+            argIndex = argc;
 
             break;
         }
@@ -9641,6 +9913,18 @@ int main(int argc, char** argv)
     }
 
     PythonInit(&g_python);
+
+    if (g_viewerPort >= 0)
+    {
+        if (!g_viewerServer.Start(g_viewerPort))
+            Log(LogLevel::Error, "Could not start viewer server");
+        else
+            Log(LogLevel::Info, "Listening for connections on port %i", g_viewerPort);
+    }
+    else
+    {
+        Log(LogLevel::Info, "Not listening for connections");
+    }
 
     if (g_isForEditor)
     {
@@ -9981,7 +10265,7 @@ int main(int argc, char** argv)
             if (g_runPyFileAddToRecentScripts)
                 g_recentPythonScripts.AddEntry(g_runPyFileName.c_str());
             Log(LogLevel::Info, "Executing python script \"%s\"", g_runPyFileName.c_str());
-            if (!PythonExecute(g_runPyFileName.c_str(), g_runPyArgs))
+            if (!PythonExecuteFile(g_runPyFileName.c_str(), g_runPyArgs))
                 Log(LogLevel::Error, "Could not execute python script \"%s\"", g_runPyFileName.c_str());
             else
                 Log(LogLevel::Info, "Python script finished", g_runPyFileName.c_str());
@@ -9989,6 +10273,10 @@ int main(int argc, char** argv)
             g_runPyArgs.clear();
             g_runPyFileAddToRecentScripts = true;
         }
+
+        // Process any python commands coming in through the listening port
+        if (g_viewerServer.IsConnected())
+            PythonExecuteNetwork(g_viewerServer);
     }
 
     WaitForLastSubmittedFrame();
