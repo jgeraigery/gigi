@@ -7,6 +7,8 @@
 #include <vector>
 #include "ViewerPython.h"
 #include <filesystem>
+#include "ViewerServer.h"
+#include "Schemas/Types.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -44,11 +46,128 @@
 void PyInit_GigiArray();
 struct _object* PyCreate_GigiArray(const GigiArray& array);
 
+// Forward declaration of python functions. Makes for better error messages when the implementation is missing
+#define FUNCTION_BEGIN(NAME, DESCRIPTION) static PyObject* Python_##NAME(PyObject* self, PyObject* args);
+#include "ViewerPythonFunctionList.h"
 
 static PythonInterface* g_interface = nullptr;
 
 static std::vector<std::wstring> g_argvText;
 static std::vector<wchar_t*> g_argv;
+
+static std::string g_lastCommandResult;
+static std::string g_lastCommandError;
+
+static std::string g_lastCommandErrorForPythonFn; // g_lastCommandError is stashed here, so a python function can return it
+
+// Persistent dictionary for PythonExecuteString (REPL mode)
+static PyObject* g_persistentDict = nullptr;
+
+static void Base64Decode(const char* inputString, std::vector<unsigned char>& outBytes)
+{
+    static const unsigned char base64_decode_table[256] = {
+        64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+        64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+        64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 62, 64, 64, 64, 63,
+        52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 64, 64, 64, 64, 64, 64,
+        64,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 64, 64, 64, 64, 64,
+        64, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 64, 64, 64, 64, 64,
+        64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+        64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+        64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+        64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+        64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+        64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+        64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+        64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64
+    };
+
+    outBytes.clear();
+
+    size_t inputLen = strlen(inputString);
+    size_t outputLen = (inputLen / 4) * 3;
+
+    // Adjust for padding
+    if (inputLen > 0 && inputString[inputLen - 1] == '=') outputLen--;
+    if (inputLen > 1 && inputString[inputLen - 2] == '=') outputLen--;
+
+    outBytes.reserve(outputLen);
+
+    for (size_t i = 0; i < inputLen; i += 4)
+    {
+        unsigned char a = base64_decode_table[(unsigned char)inputString[i]];
+        unsigned char b = (i + 1 < inputLen) ? base64_decode_table[(unsigned char)inputString[i + 1]] : 0;
+        unsigned char c = (i + 2 < inputLen) ? base64_decode_table[(unsigned char)inputString[i + 2]] : 0;
+        unsigned char d = (i + 3 < inputLen) ? base64_decode_table[(unsigned char)inputString[i + 3]] : 0;
+
+        outBytes.push_back((a << 2) | (b >> 4));
+        if (i + 2 < inputLen && inputString[i + 2] != '=')
+            outBytes.push_back((b << 4) | (c >> 2));
+        if (i + 3 < inputLen && inputString[i + 3] != '=')
+            outBytes.push_back((c << 6) | d);
+    }
+}
+
+static void Base64Encode(const unsigned char* inputBytes, size_t inputLen, std::string& outString)
+{
+    static const char base64_encode_table[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    outString.clear();
+
+    size_t outputLen = ((inputLen + 2) / 3) * 4;
+    outString.reserve(outputLen);
+
+    for (size_t i = 0; i < inputLen; i += 3)
+    {
+        unsigned char b0 = inputBytes[i];
+        unsigned char b1 = (i + 1 < inputLen) ? inputBytes[i + 1] : 0;
+        unsigned char b2 = (i + 2 < inputLen) ? inputBytes[i + 2] : 0;
+
+        outString.push_back(base64_encode_table[b0 >> 2]);
+        outString.push_back(base64_encode_table[((b0 & 0x03) << 4) | (b1 >> 4)]);
+        outString.push_back((i + 1 < inputLen) ? base64_encode_table[((b1 & 0x0F) << 2) | (b2 >> 6)] : '=');
+        outString.push_back((i + 2 < inputLen) ? base64_encode_table[b2 & 0x3F] : '=');
+    }
+}
+
+std::string PyObjectToJsonString(PyObject* obj) {
+    // Import json module
+    PyObject* jsonModule = PyImport_ImportModule("json");
+    if (!jsonModule) {
+        PyErr_Print();
+        return "";
+    }
+
+    // Get json.dumps function
+    PyObject* dumpsFunc = PyObject_GetAttrString(jsonModule, "dumps");
+    Py_DECREF(jsonModule);
+
+    if (!dumpsFunc || !PyCallable_Check(dumpsFunc)) {
+        Py_XDECREF(dumpsFunc);
+        return "";
+    }
+
+    // Call json.dumps(obj)
+    PyObject* jsonStr = PyObject_CallFunctionObjArgs(dumpsFunc, obj, NULL);
+    Py_DECREF(dumpsFunc);
+
+    if (!jsonStr) {
+        PyErr_Print();
+        return "";
+    }
+
+    // Convert to C++ string
+    const char* str = PyUnicode_AsUTF8(jsonStr);
+    std::string result;
+    if (str)
+        result = str;
+
+    Py_DECREF(jsonStr);
+    return result;
+}
 
 static bool FileExists(const char* fileName)
 {
@@ -59,6 +178,217 @@ static bool FileExists(const char* fileName)
 
     fclose(file);
     return true;
+}
+
+static PyObject* Python_GetViewableResourceList(PyObject* self, PyObject* args)
+{
+    std::vector<PythonInterface::ViewableResourceInfo> viewableResources = g_interface->GetViewableResourceList();
+
+    PyObject* ret = PyList_New(viewableResources.size());
+    for (size_t i = 0; i < viewableResources.size(); ++i)
+    {
+        const PythonInterface::ViewableResourceInfo& info = viewableResources[i];
+
+        PyObject* resourceDict = PyDict_New();
+        PyDict_SetItemString(resourceDict, "type", Py_BuildValue("s", info.type.c_str()));
+        PyDict_SetItemString(resourceDict, "viewableResourceName", Py_BuildValue("s", info.displayName.c_str()));
+
+        PyList_SetItem(ret, i, resourceDict);
+    }
+
+    return ret;
+}
+
+static PyObject* Python_GetVariableList(PyObject* self, PyObject* args)
+{
+    const RenderGraph& renderGraph = g_interface->GetRenderGraph();
+
+    PyObject* ret = PyList_New(renderGraph.variables.size());
+    for (size_t i = 0; i < renderGraph.variables.size(); ++i)
+    {
+        const Variable& var = renderGraph.variables[i];
+
+        PyObject* varDict = PyDict_New();
+        PyDict_SetItemString(varDict, "name", Py_BuildValue("s", var.name.c_str()));
+        PyDict_SetItemString(varDict, "comment", Py_BuildValue("s", var.comment.c_str()));
+        PyDict_SetItemString(varDict, "type", Py_BuildValue("s", EnumToString(var.type)));
+        PyDict_SetItemString(varDict, "visibility", Py_BuildValue("s", EnumToString(var.visibility)));
+        PyDict_SetItemString(varDict, "dflt", Py_BuildValue("s", var.dflt.c_str()));
+        PyDict_SetItemString(varDict, "Const", PyBool_FromLong(var.Const ? 1 : 0));
+        //PyDict_SetItemString(varDict, "Static", PyBool_FromLong(var.Static ? 1 : 0));
+        //PyDict_SetItemString(varDict, "transient", PyBool_FromLong(var.transient ? 1 : 0));
+        //PyDict_SetItemString(varDict, "system", PyBool_FromLong(var.system ? 1 : 0));
+        PyDict_SetItemString(varDict, "Enum", Py_BuildValue("s", var.Enum.c_str()));
+        //PyDict_SetItemString(varDict, "UIGroup", Py_BuildValue("s", var.UIGroup.c_str()));
+        //PyDict_SetItemString(varDict, "scope", Py_BuildValue("s", var.scope.c_str()));
+
+        std::string variableValue;
+        if (g_interface->GetVariable(var.name.c_str(), variableValue))
+            PyDict_SetItemString(varDict, "value", Py_BuildValue("s", variableValue.c_str()));
+
+        // Add UI settings
+        //PyObject* uiSettings = PyDict_New();
+        //PyDict_SetItemString(uiSettings, "UIHint", Py_BuildValue("s", EnumToString(var.UISettings.UIHint)));
+        //PyDict_SetItemString(uiSettings, "min", Py_BuildValue("s", var.UISettings.min.c_str()));
+        //PyDict_SetItemString(uiSettings, "max", Py_BuildValue("s", var.UISettings.max.c_str()));
+        //PyDict_SetItemString(uiSettings, "step", Py_BuildValue("s", var.UISettings.step.c_str()));
+        //PyDict_SetItemString(varDict, "UISettings", uiSettings);
+
+        PyList_SetItem(ret, i, varDict);
+    }
+
+    return ret;
+}
+
+static PyObject* Python_GetResourceList(PyObject* self, PyObject* args)
+{
+    const RenderGraph& renderGraph = g_interface->GetRenderGraph();
+
+    PyObject* ret = PyList_New(0);
+
+    for (const RenderGraphNode& node : renderGraph.nodes)
+    {
+        // Only include buffer and texture nodes
+        if (node._index != RenderGraphNode::c_index_resourceBuffer &&
+            node._index != RenderGraphNode::c_index_resourceTexture)
+            continue;
+
+        const RenderGraphNode_ResourceBase* resourceBase = nullptr;
+        if (node._index == RenderGraphNode::c_index_resourceBuffer)
+            resourceBase = &node.resourceBuffer;
+        else
+            resourceBase = &node.resourceTexture;
+
+        PyObject* resourceDict = PyDict_New();
+
+        // Common fields for all resources
+        PyDict_SetItemString(resourceDict, "name", Py_BuildValue("s", resourceBase->name.c_str()));
+        PyDict_SetItemString(resourceDict, "comment", Py_BuildValue("s", resourceBase->comment.c_str()));
+        PyDict_SetItemString(resourceDict, "transient", PyBool_FromLong(resourceBase->transient ? 1 : 0));
+
+        // Type-specific fields
+        if (node._index == RenderGraphNode::c_index_resourceBuffer)
+        {
+            PyDict_SetItemString(resourceDict, "type", Py_BuildValue("s", "Buffer"));
+            PyDict_SetItemString(resourceDict, "visibility", Py_BuildValue("s", EnumToString(node.resourceBuffer.visibility)));
+
+            // Get runtime information
+            RuntimeBufferInfo runtimeInfo = g_interface->GetRuntimeBufferInfo(resourceBase->name.c_str());
+            if (runtimeInfo.exists)
+            {
+                PyObject* runtimeDict = PyDict_New();
+
+                PyDict_SetItemString(runtimeDict, "format", Py_BuildValue("s", runtimeInfo.format.c_str()));
+                PyDict_SetItemString(runtimeDict, "formatCount", Py_BuildValue("i", runtimeInfo.formatCount));
+                PyDict_SetItemString(runtimeDict, "stride", Py_BuildValue("i", runtimeInfo.stride));
+                PyDict_SetItemString(runtimeDict, "size", Py_BuildValue("i", runtimeInfo.size));
+                PyDict_SetItemString(runtimeDict, "count", Py_BuildValue("i", runtimeInfo.count));
+
+                // Include struct name if it's a structured buffer
+                if (runtimeInfo.structIndex >= 0 && runtimeInfo.structIndex < (int)renderGraph.structs.size())
+                {
+                    PyDict_SetItemString(runtimeDict, "structType", Py_BuildValue("s", renderGraph.structs[runtimeInfo.structIndex].name.c_str()));
+                }
+
+                PyDict_SetItemString(resourceDict, "runtime", runtimeDict);
+            }
+        }
+        else if (node._index == RenderGraphNode::c_index_resourceTexture)
+        {
+            PyDict_SetItemString(resourceDict, "type", Py_BuildValue("s", "Texture"));
+            PyDict_SetItemString(resourceDict, "visibility", Py_BuildValue("s", EnumToString(node.resourceTexture.visibility)));
+            PyDict_SetItemString(resourceDict, "dimension", Py_BuildValue("s", EnumToString(node.resourceTexture.dimension)));
+
+            // Get runtime information
+            RuntimeTextureInfo runtimeInfo = g_interface->GetRuntimeTextureInfo(resourceBase->name.c_str());
+            if (runtimeInfo.exists)
+            {
+                PyObject* runtimeDict = PyDict_New();
+
+                PyDict_SetItemString(runtimeDict, "format", Py_BuildValue("s", runtimeInfo.format.c_str()));
+                PyDict_SetItemString(runtimeDict, "width", Py_BuildValue("i", runtimeInfo.size[0]));
+                PyDict_SetItemString(runtimeDict, "height", Py_BuildValue("i", runtimeInfo.size[1]));
+                PyDict_SetItemString(runtimeDict, "depth", Py_BuildValue("i", runtimeInfo.size[2]));
+                PyDict_SetItemString(runtimeDict, "numMips", Py_BuildValue("i", runtimeInfo.numMips));
+                PyDict_SetItemString(runtimeDict, "sampleCount", Py_BuildValue("I", runtimeInfo.sampleCount));
+
+                PyDict_SetItemString(resourceDict, "runtime", runtimeDict);
+            }
+        }
+
+        PyList_Append(ret, resourceDict);
+        Py_DECREF(resourceDict);
+    }
+
+    return ret;
+}
+
+static PyObject* Python_GetLog(PyObject* self, PyObject* args)
+{
+    std::string log = g_interface->GetLog();
+    return Py_BuildValue("s", log.c_str());
+}
+
+static PyObject* Python_ClearLog(PyObject* self, PyObject* args)
+{
+    g_interface->ClearLog();
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject* Python_RunPythonFile(PyObject* self, PyObject* args)
+{
+    const char* fileName = nullptr;
+    if (!PyArg_ParseTuple(args, "s:Python_RunPythonFile", &fileName))
+        return PyErr_Format(PyExc_TypeError, "type error in " __FUNCTION__ "()");
+
+    // Resolve relative paths relative to the current script location
+    std::filesystem::path fileNamePath = fileName;
+    if (fileNamePath.is_relative())
+        fileNamePath = std::filesystem::weakly_canonical(std::filesystem::path(g_interface->m_scriptLocation).remove_filename() / fileNamePath);
+
+    if (!FileExists(fileNamePath.string().c_str()))
+        return PyErr_Format(PyExc_FileNotFoundError, "File not found: %s", fileNamePath.string().c_str());
+
+    // Read the file
+    std::vector<char> fileData;
+    {
+        FILE* file = nullptr;
+        fopen_s(&file, fileNamePath.string().c_str(), "rb");
+        if (!file)
+            return PyErr_Format(PyExc_IOError, "Could not open file: %s", fileNamePath.string().c_str());
+
+        fseek(file, 0, SEEK_END);
+        fileData.resize(ftell(file) + 1);
+        fseek(file, 0, SEEK_SET);
+
+        fread(fileData.data(), 1, fileData.size() - 1, file);
+        fileData[fileData.size() - 1] = 0;
+        fclose(file);
+    }
+
+    // Save the current script location and temporarily update it
+    std::string previousScriptLocation = g_interface->m_scriptLocation;
+    g_interface->m_scriptLocation = fileNamePath.string();
+
+    // Execute the file using the persistent dictionary (so it shares the same namespace as the calling script)
+    PyObject* ret = PyRun_String(fileData.data(), Py_file_input, g_persistentDict, g_persistentDict);
+
+    // Restore the previous script location
+    g_interface->m_scriptLocation = previousScriptLocation;
+
+    // Check for errors and Let Python's error propagate naturally
+    if (ret == nullptr)
+        return nullptr;
+
+    Py_DECREF(ret);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject* Python_GetLastPythonError(PyObject* self, PyObject* args)
+{
+    return Py_BuildValue("s", g_lastCommandErrorForPythonFn.c_str());
 }
 
 static PyObject* Python_LoadGG(PyObject* self, PyObject* args)
@@ -218,10 +548,11 @@ static PyObject* Python_SetWantReadback(PyObject* self, PyObject* args)
 {
     const char* viewableResourceName = nullptr;
     int wantsReadback = 1;
-    if (!PyArg_ParseTuple(args, "s|p:Python_SetWantReadback", &viewableResourceName, &wantsReadback))
+    int autoClear = 1;
+    if (!PyArg_ParseTuple(args, "s|pp:Python_SetWantReadback", &viewableResourceName, &wantsReadback, &autoClear))
         return PyErr_Format(PyExc_TypeError, "type error in " __FUNCTION__ "()");
 
-    g_interface->SetWantReadback(viewableResourceName, wantsReadback != 0);
+    g_interface->SetWantReadback(viewableResourceName, wantsReadback != 0, autoClear != 0);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -243,6 +574,30 @@ static PyObject* Python_Readback(PyObject* self, PyObject* args)
     PyObject* ret = PyTuple_New(2);
     PyTuple_SetItem(ret, 0, PyCreate_GigiArray(data));
     PyTuple_SetItem(ret, 1, PyBool_FromLong(success ? 1 : 0));
+    Py_INCREF(ret);
+    return ret;
+}
+
+static PyObject* Python_ReadbackBase64(PyObject* self, PyObject* args)
+{
+    const char* viewableResourceName = nullptr;
+    int arrayIndex = 0;
+    int mipIndex = 0;
+    if (!PyArg_ParseTuple(args, "s|ii:Python_ReadbackBase64", &viewableResourceName, &arrayIndex, &mipIndex))
+        return PyErr_Format(PyExc_TypeError, "type error in " __FUNCTION__ "()");
+
+    // Get the data
+    GigiArray data;
+    bool success = g_interface->Readback(viewableResourceName, arrayIndex, mipIndex, data);
+
+    // base64 encode it
+    std::string dataBase64;
+    Base64Encode((const unsigned char*)data.data.data(), data.data.size(), dataBase64);
+
+    // return the result as a dictionary
+    PyObject* ret = PyDict_New();
+    PyDict_SetItemString(ret, "base64", Py_BuildValue("s", dataBase64.c_str()));
+    PyDict_SetItemString(ret, "success", PyBool_FromLong(success ? 1 : 0));
     Py_INCREF(ret);
     return ret;
 }
@@ -551,7 +906,7 @@ static PyObject* Python_SetImportedBufferType(PyObject* self, PyObject* args)
 {
     const char* bufferName = nullptr;
     int type = 0;
-    if (!PyArg_ParseTuple(args, "si:Python_SetImportedBufferStruct", &bufferName, &type))
+    if (!PyArg_ParseTuple(args, "si:Python_SetImportedBufferType", &bufferName, &type))
         return PyErr_Format(PyExc_TypeError, "type error in " __FUNCTION__ "()");
 
     g_interface->SetImportedBufferType(bufferName, (DataFieldType)type);
@@ -871,6 +1226,24 @@ static PyObject* Python_WriteGPUResource(PyObject* self, PyObject* args)
     return Py_None;
 }
 
+static PyObject* Python_WriteGPUResourceBase64(PyObject* self, PyObject* args)
+{
+    const char* viewableResourceName = nullptr;
+    const char* inputString = nullptr;
+    int resourceIndex = 0;
+    if (!PyArg_ParseTuple(args, "ss|i:Python_WriteGPUResourceBase64", &viewableResourceName, &inputString, &resourceIndex))
+        return PyErr_Format(PyExc_TypeError, "type error in " __FUNCTION__ "()");
+
+    std::vector<unsigned char> bytes;
+    Base64Decode(inputString, bytes);
+
+    g_interface->WriteGPUResource(viewableResourceName, resourceIndex, (const char*)bytes.data(), bytes.size());
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+
 static PyObject* Python_ForceEnableProfiling(PyObject* self, PyObject* args)
 {
     int forceEnableProfiling = 1;
@@ -1122,7 +1495,7 @@ static PyObject* Python_RestoreWindow(PyObject* self, PyObject* args)
         if (!PyArg_ParseTuple(args, "|s:" __FUNCTION__, &value)) \
             return PyErr_Format(PyExc_TypeError, "type error in " __FUNCTION__ "()"); \
 \
-        wantToSet = (value != nullptr); \
+        wantToSet = (value != nullptr && value[0] != 0); \
 \
         return Py_BuildValue("s", g_interface->##NAME(value, wantToSet).c_str()); \
     }
@@ -1229,80 +1602,15 @@ static void AddEnums(PyObject* module)
     // clang-format on
 }
 
-void PythonInit(PythonInterface* interface)
+void PythonInit(PythonInterface* interfacePtr)
 {
-    g_interface = interface;
+    g_interface = interfacePtr;
 
     static PyMethodDef pythonModuleMethods[] =
     {
-        {"LoadGG", Python_LoadGG, METH_VARARGS, "Loads a .gg file"},
-        {"Exit", Python_Exit, METH_VARARGS, "Closes the application"},
+        // These don't make sense to expose to MCP
         {"GetScriptPath", Python_GetScriptPath, METH_VARARGS, "Returns the path of the python script file ran, without a file name."},
         {"GetScriptFileName", Python_GetScriptFileName, METH_VARARGS, "Returns the file name of the python script file ran, without the path."},
-        {"SetHideUI", Python_SetHideUI, METH_VARARGS, "Sets the HideUI flag"},
-        {"SetVSync", Python_SetVSync, METH_VARARGS, "Sets the vsync flag"},
-        {"SetSyncInterval", Python_SetSyncInterval, METH_VARARGS, "IDXGISwapChain::Present() parameter: Synchronize presentation after the nth vertical blank."},
-        {"SetStablePowerState", Python_SetStablePowerState, METH_VARARGS, "Sets the stable power state flag"},
-        {"SetProfilingMode", Python_SetProfilingMode, METH_VARARGS, "Turns on or off profiling mode. The viewer does extra resource copies and readback as part of regular operation. Profiling mode reduces that."},
-        {"SetVariable", Python_SetVariable, METH_VARARGS, "Sets the value of a variable. String for variable name, string for variable value."},
-        {"GetVariable", Python_GetVariable, METH_VARARGS, "Gets the value of a variable. String for variable name, returns variable value as a string."},
-        {"DisableGGUserSave", Python_DisableGGUserSave, METH_VARARGS, "When the gg file is changed next or the application is closed, this will prevent the gguser file from being saved."},
-        {"SetWantReadback", Python_SetWantReadback, METH_VARARGS, "Declare that you want to read back a resource, or specify that you no longer want it."},
-        {"Readback", Python_Readback, METH_VARARGS, "Reads back a resource. Host.SetWantReadback must have been called prior."},
-        {"SaveAsPNG", Python_SaveAsPNG, METH_VARARGS, "Saves a texture. Host.SetWantReadback must have been called prior."},
-        {"SaveAsDDS_BC4", Python_SaveAsDDS_BC4, METH_VARARGS, "Saves a texture. Host.SetWantReadback must have been called prior."},
-        {"SaveAsDDS_BC5", Python_SaveAsDDS_BC5, METH_VARARGS, "Saves a texture. Host.SetWantReadback must have been called prior."},
-        {"SaveAsDDS_BC6", Python_SaveAsDDS_BC6, METH_VARARGS, "Saves a texture. Host.SetWantReadback must have been called prior."},
-        {"SaveAsDDS_BC7", Python_SaveAsDDS_BC7, METH_VARARGS, "Saves a texture. Host.SetWantReadback must have been called prior."},
-        {"SaveAsEXR", Python_SaveAsEXR, METH_VARARGS, "Saves a texture. Host.SetWantReadback must have been called prior."},
-        {"SaveAsHDR", Python_SaveAsHDR, METH_VARARGS, "Saves a texture. Host.SetWantReadback must have been called prior."},
-        {"SaveAsCSV", Python_SaveAsCSV, METH_VARARGS, "Saves a texture. Host.SetWantReadback must have been called prior."},
-        {"SaveAsBinary", Python_SaveAsBinary, METH_VARARGS, "Saves a texture. Host.SetWantReadback must have been called prior."},
-        {"RunTechnique", Python_RunTechnique, METH_VARARGS, "Runs the technique N times."},
-        {"Log", Python_Log, METH_VARARGS, "Writes a message to the log."},
-        {"Print", Python_Print, METH_VARARGS, "Writes a message to the log as INFO."},
-        {"Warn", Python_Warn, METH_VARARGS, "Writes a message to the log as WARN."},
-        {"Error", Python_Error, METH_VARARGS, "Writes a message to the log as ERROR."},
-        {"SetFrameIndex", Python_SetFrameIndex, METH_VARARGS, "Sets the frame index."},
-        {"WaitOnGPU", Python_WaitOnGPU, METH_VARARGS, "Waits until all GPU work is finished. Temporarily needed to make sure readback is done. Will improve readback interface later."},
-        {"Pause", Python_Pause, METH_VARARGS, "Can pause or unpause viewer execution. Does not affect RunTechnique(), but useful for pausing then exiting the script to return user control at a specific frame to investigate."},
-        {"PixCaptureNextFrames", Python_PixCaptureNextFrames, METH_VARARGS, "Do a pix capture for the next N frames rendered."},
-        {"SetImportedBufferFile", Python_SetImportedBufferFile, METH_VARARGS, "Set the file name of an imported buffer"},
-        {"SetImportedBufferMaterialShaderFile", Python_SetImportedBufferMaterialShaderFile, METH_VARARGS, "Set the file name of an imported buffer material shader file"},
-        {"SetImportedBufferStruct", Python_SetImportedBufferStruct, METH_VARARGS, "Set the struct type of an imported buffer"},
-        {"SetImportedBufferType", Python_SetImportedBufferType, METH_VARARGS, "Set the type of an imported buffer"},
-        {"SetImportedBufferCount", Python_SetImportedBufferCount, METH_VARARGS, "Set the count of an imported buffer"},
-        {"GetImportedBufferBounds", Python_GetImportedBufferBounds, METH_VARARGS, "Get [minx, miny, minz, maxx, maxy, maxz] of an imported buffer that has a position semantic."},
-        {"SetImportedBufferCSVHeaderRow", Python_SetImportedBufferCSVHeaderRow, METH_VARARGS, "Set whether or not teh csv file has a header row"},
-        {"SetImportedTextureFile", Python_SetImportedTextureFile, METH_VARARGS, "Set the file name of an imported texture"},
-        {"SetImportedTextureSourceIsSRGB", Python_SetImportedTextureSourceIsSRGB, METH_VARARGS, "Set whether or not the file on disk is sRGB."},
-        {"SetImportedTextureMakeMips", Python_SetImportedTextureMakeMips, METH_VARARGS, "Whether or not to make mips for the imported texture."},
-        {"SetImportedTextureFormat", Python_SetImportedTextureFormat, METH_VARARGS, "Set the texture format of an imported texture"},
-        {"SetImportedTextureColor", Python_SetImportedTextureColor, METH_VARARGS, "Set the color of an imported texture"},
-        {"SetImportedTextureSize", Python_SetImportedTextureSize, METH_VARARGS, "Set the x,y,z dimensions an imported texture"},
-        {"SetImportedTextureBinarySize", Python_SetImportedTextureBinarySize, METH_VARARGS, "Sets the x,y,z dimensions of a binary imported texture."},
-        {"SetImportedBufferDataStream", Python_SetImportedBufferDataStream, METH_VARARGS, "Set the data stream of an imported buffer"},
-        {"SetImportedTextureBinaryFormat", Python_SetImportedTextureBinaryFormat, METH_VARARGS, "Sets the format of the binary file."},
-        {"SetFrameDeltaTime", Python_SetFrameDeltaTime, METH_VARARGS, "Set the frame delta time, in seconds. Useful for recording videos by setting a fixed frame rate. Clear by setting to 0."},
-        {"SetCameraPos", Python_SetCameraPos, METH_VARARGS, "Set the camera position"},
-        {"SetCameraFOV", Python_SetCameraFOV, METH_VARARGS, "Set the camera field of view"},
-        {"SetCameraAltitudeAzimuth", Python_SetCameraAltitudeAzimuth, METH_VARARGS, "Set the camera altitude azimuth"},
-        {"SetCameraNearFarZ", Python_SetCameraNearFarZ, METH_VARARGS, "Set the near and far plane"},
-        {"SetCameraFlySpeed", Python_SetCameraFlySpeed, METH_VARARGS, "Set the fly speed of the camera"},
-        {"SetProjMtxTextureName", Python_SetProjMtxTextureName, METH_VARARGS, "Set the texture name used to compute projection matrix resolution"},
-        {"SetCameraReverseZInfiniteDepth", Python_SetCameraReverseZInfiniteDepth, METH_VARARGS, "Enable/disable reverseZInfiniteDepth camera option"},
-        {"SetCameraJitterLength", Python_SetCameraJitterLength, METH_VARARGS, "Set jitter sequence length for camera jitter"},        
-        {"GetCameraPos", Python_GetCameraPos, METH_VARARGS, "Get camera position"},
-        {"GetCameraAltitudeAzimuth", Python_GetCameraAltitudeAzimuth, METH_VARARGS, "Get the camera altitude azimuth"},
-        {"WriteGPUResource", Python_WriteGPUResource, METH_VARARGS, "Writes a gpu resource during the next RunTechnique"},
-        {"IsResourceCreated", Python_IsResourceCreated, METH_VARARGS, "Returns whether or not a resource is created."},
-        {"SetViewedResource", Python_SetViewedResource, METH_VARARGS, "Sets the resource being viewed"},
-        {"ForceEnableProfiling", Python_ForceEnableProfiling, METH_VARARGS, "If true, forces profiling on, even when the profiling window isn't being shown."},
-        {"GetProfilingData", Python_GetProfilingData, METH_VARARGS, "Gets the profiling data from the last technique execution. Python_ForceEnableProfiling needs to be enabled. Time is in milliseconds. CPU time is first, GPU time is second."},
-        {"GGEnumValue", Python_GGEnumValue, METH_VARARGS, "Gets the integer value of an enum defined in the loaded .gg file."},
-        {"GGEnumLabel", Python_GGEnumLabel, METH_VARARGS, "Gets the string label of an enum defined in the loaded .gg file."},
-        {"GGEnumCount", Python_GGEnumCount, METH_VARARGS, "Returns the number of enum values for an enum defined in the loaded .gg file."},
-        {"GetGPUString", Python_GetGPUString, METH_VARARGS, "Returns the name of the gpu and driver version."},
         {"SetShaderAssertsLogging", Python_SetShaderAssertsLogging, METH_VARARGS, "Toggles auto error logging of the collected shader asserts after a technique execution."},
         {"GetCollectedShaderAssertsCount", Python_GetCollectedShaderAssertsCount, METH_VARARGS, "Returns the number of collected shader asserts. Assert getters works with this collection."},
         {"GetShaderAssertFormatStrId", Python_GetShaderAssertFormatStrId, METH_VARARGS, "Returns the ID of format string of the specified shader assert."},
@@ -1310,27 +1618,13 @@ void PythonInit(PythonInterface* interface)
         {"GetShaderAssertDisplayName", Python_GetShaderAssertDisplayName, METH_VARARGS, "Returns the display name of the specified shader assert."},
         {"GetShaderAssertMsg", Python_GetShaderAssertMsg, METH_VARARGS, "Returns the message of the specified assert."},
         {"GetAppCommandLine", Python_GetAppCommandLine, METH_VARARGS, "Returns the command line arguments without the executable name."},
-        {"SetWindowSize", Python_SetWindowSize, METH_VARARGS, "Sets the window size of the viewer."},
-        {"MinimizeWindow", Python_MinimizeWindow, METH_VARARGS, "Minimizes the viewer window."},
-        {"MaximizeWindow", Python_MaximizeWindow, METH_VARARGS, "Maximizes the viewer window."},
-        {"RestoreWindow", Python_RestoreWindow, METH_VARARGS, "Restores the viewer window."},
-        {"AMDFrameGen_Enabled", Python_AMDFrameGen_Enabled, METH_VARARGS, ""},
-        {"AMDFrameGen_SleepMS", Python_AMDFrameGen_SleepMS, METH_VARARGS, ""},
-        {"AMDFrameGen_Depth", Python_AMDFrameGen_Depth, METH_VARARGS, ""},
-        {"AMDFrameGen_MotionVectors", Python_AMDFrameGen_MotionVectors, METH_VARARGS, ""},
-        {"AMDFrameGen_ENABLE_ASYNC_WORKLOAD_SUPPORT", Python_AMDFrameGen_ENABLE_ASYNC_WORKLOAD_SUPPORT, METH_VARARGS, ""},
-        {"AMDFrameGen_ENABLE_MOTION_VECTORS_JITTER_CANCELLATION", Python_AMDFrameGen_ENABLE_MOTION_VECTORS_JITTER_CANCELLATION, METH_VARARGS, ""},
-        {"AMDFrameGen_ENABLE_HIGH_DYNAMIC_RANGE", Python_AMDFrameGen_ENABLE_HIGH_DYNAMIC_RANGE, METH_VARARGS, ""},
-        {"AMDFrameGen_ENABLE_DEBUG_CHECKING", Python_AMDFrameGen_ENABLE_DEBUG_CHECKING, METH_VARARGS, ""},
-        {"AMDFrameGen_DRAW_DEBUG_TEAR_LINES", Python_AMDFrameGen_DRAW_DEBUG_TEAR_LINES, METH_VARARGS, ""},
-        {"AMDFrameGen_DRAW_DEBUG_RESET_INDICATORS", Python_AMDFrameGen_DRAW_DEBUG_RESET_INDICATORS, METH_VARARGS, ""},
-        {"AMDFrameGen_DRAW_DEBUG_VIEW", Python_AMDFrameGen_DRAW_DEBUG_VIEW, METH_VARARGS, ""},
-        {"AMDFrameGen_DRAW_DEBUG_PACING_LINES", Python_AMDFrameGen_DRAW_DEBUG_PACING_LINES, METH_VARARGS, ""},
-        {"AMDFrameGen_allowAsyncWorkloads", Python_AMDFrameGen_allowAsyncWorkloads, METH_VARARGS, ""},
-        {"AMDFrameGen_onlyPresentGenerated", Python_AMDFrameGen_onlyPresentGenerated, METH_VARARGS, ""},
-        {"AMDFrameGen_constrainToRectangle", Python_AMDFrameGen_constrainToRectangle, METH_VARARGS, ""},
-        {"AMDFrameGen_uiTexture", Python_AMDFrameGen_uiTexture, METH_VARARGS, ""},
-        {"AMDFrameGen_hudlessTexture", Python_AMDFrameGen_hudlessTexture, METH_VARARGS, ""},
+        {"WriteGPUResource", Python_WriteGPUResource, METH_VARARGS, "Writes a gpu resource the next time the technique runs."},
+        {"Readback", Python_Readback, METH_VARARGS, "Reads back a resource. Before you can call this, you must call SetWantReadback(), you must RunTechnique() at least once, then call WaitOnGPU(). After that, you can call this function to get the data."},
+
+        // It is prefered to define new python functions in ViewerPythonFunctionList.h, so that they are also exposed to telnet and MCP.
+        // You add it to the list, put the implementation here, and the rest should be automatic for most types of script functionality.
+        #define FUNCTION_BEGIN(NAME, DESCRIPTION) {#NAME, Python_##NAME, METH_VARARGS, DESCRIPTION},
+        #include "ViewerPythonFunctionList.h"
 
         // Enum FromString and ToString functions
         #include "external/df_serialize/_common.h"
@@ -1386,14 +1680,138 @@ void PythonInit(PythonInterface* interface)
 
     config.home = pythonHomeBuf;
     Py_InitializeFromConfig(&config);
+
+    // Initialize the persistent dictionary for REPL-style string execution
+    g_persistentDict = PyDict_New();
+    PyDict_SetItemString(g_persistentDict, "__builtins__", PyEval_GetBuiltins());
+
+    // Import Host and GigiArray modules into the persistent dictionary
+    PyObject* hostModule = PyImport_ImportModule("Host");
+    if (hostModule) {
+        PyDict_SetItemString(g_persistentDict, "Host", hostModule);
+        Py_DECREF(hostModule);
+    }
+
+    PyObject* gigiArrayModule = PyImport_ImportModule("GigiArray");
+    if (gigiArrayModule) {
+        PyDict_SetItemString(g_persistentDict, "GigiArray", gigiArrayModule);
+        Py_DECREF(gigiArrayModule);
+    }
 }
 
 void PythonShutdown()
 {
+	// Clean up the persistent dictionary
+	Py_XDECREF(g_persistentDict);
+	g_persistentDict = nullptr;
+
 	Py_Finalize();
 }
 
-bool PythonExecute(const char* fileName, const std::vector<std::wstring>& args)
+void PythonExecuteNetwork(CViewerServer& server)
+{
+    std::string command;
+    server.Tick();
+    while (server.PopMessage(command))
+    {
+        g_interface->Log(LogLevel::Info, "Network Command: \"%s\"", command.c_str());
+
+        std::vector<std::wstring> args;
+        std::string fullCommand = std::string("lastCommandResult = ") + command;
+        PythonExecuteString(fullCommand.c_str(), args);
+
+        server.Send((g_lastCommandResult + "\r\n").c_str());
+    }
+}
+
+bool PythonExecuteString(const char* text, const std::vector<std::wstring>& args)
+{
+    // Clear previous error
+    g_lastCommandErrorForPythonFn = g_lastCommandError;
+    g_lastCommandError.clear();
+
+    // handle command line parameters
+    {
+        g_argvText = args;
+        g_argv.resize(g_argvText.size());
+        for (size_t i = 0; i < g_argv.size(); ++i)
+            g_argv[i] = (wchar_t*)g_argvText[i].c_str();
+
+        PySys_SetArgv(int(g_argv.size()), g_argv.data());
+    }
+
+    g_interface->m_scriptLocation = "./";
+
+    // execute the script using the persistent dictionary for REPL-style execution
+    PyObject* ret = PyRun_String(text, Py_file_input, g_persistentDict, g_persistentDict);
+
+    g_interface->OnExecuteFinished();
+
+    // report errors if there were any
+    if (PyErr_Occurred() != NULL) {
+        PyObject* pyExcType;
+        PyObject* pyExcValue;
+        PyObject* pyExcTraceback;
+        PyErr_Fetch(&pyExcType, &pyExcValue, &pyExcTraceback);
+        PyErr_NormalizeException(&pyExcType, &pyExcValue, &pyExcTraceback);
+
+        PyObject* str_exc_type = PyObject_Repr(pyExcType);
+        PyObject* pyStr = PyUnicode_AsEncodedString(str_exc_type, "utf-8", "Error ~");
+        const char* strExcType = PyBytes_AS_STRING(pyStr);
+
+        PyObject* str_exc_value = PyObject_Repr(pyExcValue);
+        PyObject* pyExcValueStr = PyUnicode_AsEncodedString(str_exc_value, "utf-8", "Error ~");
+        const char* strExcValue = PyBytes_AS_STRING(pyExcValueStr);
+
+        const char* actual_file_name = "";
+        if (PyObject_HasAttrString(pyExcValue, "filename"))
+        {
+            PyObject* file_name = PyObject_GetAttrString(pyExcValue, "filename");
+            PyObject* file_name_str = PyObject_Str(file_name);
+            PyObject* file_name_unicode = PyUnicode_AsEncodedString(file_name_str, "utf-8", "Error");
+            actual_file_name = PyBytes_AsString(file_name_unicode);
+        }
+
+        const char* actual_line_no = "";
+        if (PyObject_HasAttrString(pyExcValue, "lineno"))
+        {
+            PyObject* line_no = PyObject_GetAttrString(pyExcValue, "lineno");
+            PyObject* line_no_str = PyObject_Str(line_no);
+            PyObject* line_no_unicode = PyUnicode_AsEncodedString(line_no_str, "utf-8", "Error");
+            actual_line_no = PyBytes_AsString(line_no_unicode);
+        }
+
+        char errorBuffer[1024];
+        snprintf(errorBuffer, sizeof(errorBuffer), "Python Error: [%s:%s] %s", actual_file_name, actual_line_no, strExcValue);
+        g_lastCommandError = errorBuffer;
+
+        g_interface->Log(LogLevel::Error, "%s", errorBuffer);
+
+        Py_XDECREF(pyExcType);
+        Py_XDECREF(pyExcValue);
+        Py_XDECREF(pyExcTraceback);
+
+        Py_XDECREF(str_exc_type);
+        Py_XDECREF(pyStr);
+
+        Py_XDECREF(str_exc_value);
+        Py_XDECREF(pyExcValueStr);
+
+        g_lastCommandResult = g_lastCommandError;
+
+        return false;
+    }
+
+    Py_XDECREF(ret);
+
+    PyObject* result = PyDict_GetItemString(g_persistentDict, "lastCommandResult");
+    if (result)
+        g_lastCommandResult = PyObjectToJsonString(result);
+
+    return true;
+}
+
+bool PythonExecuteFile(const char* fileName, const std::vector<std::wstring>& args)
 {
     // handle command line parameters
     {
@@ -1425,8 +1843,23 @@ bool PythonExecute(const char* fileName, const std::vector<std::wstring>& args)
     }
 
     // execute the script, setting the command line args too
-    PyObject* global = PyDict_New();
-    PyObject* ret = PyRun_String(fileData.data(), Py_file_input, global, global);
+    PyObject* globals = PyDict_New();
+    PyDict_SetItemString(globals, "__builtins__", PyEval_GetBuiltins());
+
+    // Import Host and GigiArray modules into the globals dictionary for the file execution
+    PyObject* hostModule = PyImport_ImportModule("Host");
+    if (hostModule) {
+        PyDict_SetItemString(globals, "Host", hostModule);
+        Py_DECREF(hostModule);
+    }
+
+    PyObject* gigiArrayModule = PyImport_ImportModule("GigiArray");
+    if (gigiArrayModule) {
+        PyDict_SetItemString(globals, "GigiArray", gigiArrayModule);
+        Py_DECREF(gigiArrayModule);
+    }
+
+    PyObject* ret = PyRun_String(fileData.data(), Py_file_input, globals, globals);
 
     g_interface->OnExecuteFinished();
 
@@ -1476,8 +1909,27 @@ bool PythonExecute(const char* fileName, const std::vector<std::wstring>& args)
         Py_XDECREF(str_exc_value);
         Py_XDECREF(pyExcValueStr);
 
+        g_lastCommandResult = g_lastCommandError;
+
         return false;
     }
 
+    Py_DECREF(globals);
+    Py_DECREF(ret);
+
+    PyObject* result = PyDict_GetItemString(globals, "lastCommandResult");
+    if (result)
+        g_lastCommandResult = PyObjectToJsonString(result);
+
     return true;
+}
+
+const std::string& PythonGetLastResult()
+{
+    return g_lastCommandResult;
+}
+
+const std::string& PythonGetLastError()
+{
+    return g_lastCommandError;
 }

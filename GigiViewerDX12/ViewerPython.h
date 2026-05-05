@@ -10,6 +10,28 @@
 #include <string>
 #include <stdint.h>
 
+struct RenderGraph;
+
+struct RuntimeBufferInfo
+{
+	bool exists = false;
+	std::string format;  // DXGI_FORMAT
+	int formatCount = 1;
+	int structIndex = -1;
+	int stride = 0;
+	int size = 0;
+	int count = 0;
+};
+
+struct RuntimeTextureInfo
+{
+	bool exists = false;
+    std::string format;  // DXGI_FORMAT
+	int size[3] = {0, 0, 0};
+	int numMips = 1;
+	unsigned int sampleCount = 1;
+};
+
 struct GigiArray
 {
 	std::vector<char> data;
@@ -29,6 +51,12 @@ public:
 		float gpums = 0.0f;
 	};
 
+	struct ViewableResourceInfo
+	{
+		std::string type;
+		std::string displayName;
+	};
+
 	virtual bool LoadGG(const char* fileName) = 0;
 	virtual void RequestExit(int exitCode) = 0;
 	virtual void SetHideUI(bool set) = 0;
@@ -39,7 +67,7 @@ public:
 	virtual bool SetVariable(const char* varName, const char* varValue) = 0;
 	virtual bool GetVariable(const char* varName, std::string& value) = 0;
 	virtual void SetDisableGGUserSave(bool set) = 0;
-	virtual void SetWantReadback(const char* viewableResourceName, bool wantsReadback) = 0;
+	virtual void SetWantReadback(const char* viewableResourceName, bool wantsReadback, bool autoClear) = 0;
 	virtual bool Readback(const char* viewableResourceName, int arrayIndex, int mipIndex, GigiArray& data) = 0;
 	virtual bool SaveAsPNG(const char* fileName, const char* viewableResourceName, int arrayIndex, int mipIndex) = 0;
 	virtual bool SaveAsDDS_BC4(const char* fileName, const char* viewableResourceName, bool signedData, int arrayIndex, int mipIndex) = 0;
@@ -98,10 +126,17 @@ public:
 
 	virtual void Log(LogLevel level, const char* msg, ...) = 0;
 	virtual void OnExecuteFinished() = 0;
+	virtual std::string GetLog() = 0;
+	virtual void ClearLog() = 0;
 
 	virtual int GGEnumValue(const char* enumName, const char* enumLabel) = 0;
 	virtual std::string GGEnumLabel(const char* enumName, int value) = 0;
 	virtual int GGEnumCount(const char* enumName) = 0;
+
+	virtual const RenderGraph& GetRenderGraph() = 0;
+	virtual RuntimeBufferInfo GetRuntimeBufferInfo(const char* bufferName) = 0;
+	virtual RuntimeTextureInfo GetRuntimeTextureInfo(const char* textureName) = 0;
+	virtual std::vector<ViewableResourceInfo> GetViewableResourceList() = 0;
 
 	virtual std::string GetGPUString() = 0;
     virtual std::string GetAppCommandLine() = 0;
@@ -137,4 +172,8 @@ public:
 void PythonInit(PythonInterface* i);
 void PythonShutdown();
 
-bool PythonExecute(const char* fileName, const std::vector<std::wstring>& args);
+bool PythonExecuteFile(const char* fileName, const std::vector<std::wstring>& args);
+bool PythonExecuteString(const char* text, const std::vector<std::wstring>& args);
+void PythonExecuteNetwork(class CViewerServer& server);
+const std::string& PythonGetLastResult();
+const std::string& PythonGetLastError();

@@ -154,6 +154,7 @@
     <ClCompile Include="tinyexr\deps\miniz\miniz.c" />
     <ClCompile Include="ViewerPython.cpp" />
     <ClCompile Include="ViewerPython_GigiArray.cpp" />
+    <ClCompile Include="ViewerServer.cpp" />
     <ClCompile Include="WebCam.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -208,6 +209,7 @@
     <ClInclude Include="tinyexr\deps\miniz\miniz.h" />
     <ClInclude Include="tinyobjloader\tiny_obj_loader.h" />
     <ClInclude Include="ViewerPython.h" />
+    <ClInclude Include="ViewerServer.h" />
     <ClInclude Include="WebCam.h" />
   </ItemGroup>
   <ItemGroup>

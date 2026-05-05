@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "gigi": {
+      "command": "./GigiMCP.exe",
+      "args": []
+    }
+  }
+}
