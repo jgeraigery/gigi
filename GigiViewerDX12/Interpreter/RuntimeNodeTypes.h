@@ -303,6 +303,60 @@ struct RuntimeTypes
             std::vector<Context> m_contexts;
         };
         AMD_FidelityFXSDK_Upscaling m_AMD_FidelityFXSDK_Upscaling;
+
+        // ONNX / DirectML runtime state.
+        //
+        // Everything is held as void* so RuntimeNodeTypes.h doesn't have to
+        // pull in the ORT, DML, or d3d12 COM headers (they end up transitively
+        // included in every Interpreter translation unit otherwise). The real
+        // types are named in the comment; ownership is handled in
+        // RenderGraphNode_Action_External.cpp.
+        struct ONNX
+        {
+            // ORT session state.
+            void* m_ortEnv = nullptr;           // Ort::Env*
+            void* m_ortSession = nullptr;       // Ort::Session*
+            void* m_ortMemInfoDML = nullptr;    // Ort::MemoryInfo* (DML-typed)
+            void* m_ortIoBinding = nullptr;     // Ort::IoBinding*
+            size_t m_sessionConfigHash = 0;
+
+            // DirectML device + dedicated D3D12 command queue. The queue is
+            // separate from Gigi's main queue; they synchronize via a shared
+            // fence so DML's ops execute strictly between our pre-transpose
+            // (NHWC->NCHW) and post-transpose (NCHW->NHWC) compute dispatches.
+            void* m_dmlDevice = nullptr;        // IDMLDevice*
+            void* m_dmlCommandQueue = nullptr;  // ID3D12CommandQueue*
+            void* m_dmlFence = nullptr;         // ID3D12Fence*
+            uint64_t m_dmlFenceValue = 0;
+
+            // Internal tensor-backing buffer resources. These are D3D12
+            // committed buffers sized to W*H*C*sizeof(float), which is what
+            // DML's CreateGPUAllocationFromD3DResource expects. Allocated on
+            // first dispatch and reallocated if the texture dimensions change.
+            void* m_inputBuffer = nullptr;      // ID3D12Resource* (buffer, owned)
+            void* m_outputBuffer = nullptr;     // ID3D12Resource* (buffer, owned)
+            int m_inputBufferSize = 0;          // in bytes
+            int m_outputBufferSize = 0;
+            int m_cachedW = 0;
+            int m_cachedH = 0;
+            int m_cachedC = 0;
+            void* m_inputDmlAlloc = nullptr;    // from OrtDmlApi::CreateGPUAllocationFromD3DResource(m_inputBuffer)
+            void* m_outputDmlAlloc = nullptr;
+
+            // Transpose shader root sig + PSO + CB upload buffer.
+            void* m_transposeRootSig = nullptr; // ID3D12RootSignature*
+            void* m_transposePSO = nullptr;     // ID3D12PipelineState*
+
+            // Cached ONNX input/output names and shapes.
+            std::string m_loadedFile;
+            std::string m_inputName;
+            std::string m_outputName;
+            std::vector<int64_t> m_inputShape;
+            std::vector<int64_t> m_outputShape;
+            int64_t m_inputElemCount = 0;
+            int64_t m_outputElemCount = 0;
+        };
+        ONNX m_ONNX;
     };
 };
 

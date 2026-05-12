@@ -2736,6 +2736,12 @@ struct Example :
                     nodeInfo.name = "Super Resolution";
                     break;
                 }
+                case ExternalNodeData::c_index_ONNX:
+                {
+                    nodeInfo.subfolder = "Microsoft";
+                    nodeInfo.name = "ONNX (DirectML)";
+                    break;
+                }
                 default:
                 {
                     GigiAssert(false, "Unhandled ExternalNodeData type");

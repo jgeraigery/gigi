@@ -1,4 +1,4 @@
-DXC v1.9.2602 (Feb 2026)
+DXC v1.10.2605 (May 2026)
 downloaded from https://github.com/microsoft/DirectXShaderCompiler/releases
 only x64 folder kept from lib and bin, the other platforms were deleted.
 

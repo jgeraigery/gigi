@@ -111,6 +111,9 @@
   ExternalNode_AMD_FidelityFXSDK_Upscaling_VersionFromString()
   ExternalNode_AMD_FidelityFXSDK_Upscaling_VersionToString()
 
+  ExternalNode_ONNX_PrecisionFromString()
+  ExternalNode_ONNX_PrecisionToString()
+
   BackendTemplateFileTypeFromString()
   BackendTemplateFileTypeToString()
 
@@ -583,6 +586,13 @@
     Host.ExternalNode_AMD_FidelityFXSDK_Upscaling_Version_v3_1_5 = 2
     Host.ExternalNode_AMD_FidelityFXSDK_Upscaling_Version_LAST = 2
     Host.ExternalNode_AMD_FidelityFXSDK_Upscaling_Version_COUNT = 3
+
+  ExternalNode_ONNX_Precision:
+    Host.ExternalNode_ONNX_Precision_FIRST = 0
+    Host.ExternalNode_ONNX_Precision_FP32 = 0
+    Host.ExternalNode_ONNX_Precision_FP16 = 1
+    Host.ExternalNode_ONNX_Precision_LAST = 1
+    Host.ExternalNode_ONNX_Precision_COUNT = 2
 
   BackendTemplateFileType:
     Host.BackendTemplateFileType_FIRST = 0

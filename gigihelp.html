@@ -498,6 +498,14 @@ table, th, td, tr
 </table>
 <br/>
 
+<b>ExternalNode_ONNX_Precision : Which precision to run the ONNX model at</b><br/><br/>
+<table>
+<tr><th colspan=2>ExternalNode_ONNX_Precision</th></tr>
+<tr><td>FP32</td><td>Full precision. Matches PyTorch exactly. Default.</td></tr>
+<tr><td>FP16</td><td>Half precision. Faster on tensor-core GPUs but may lose a couple of LSBs.</td></tr>
+</table>
+<br/>
+
 <b>BackendTemplateFileType : </b><br/><br/>
 <table>
 <tr><th colspan=2>BackendTemplateFileType</th></tr>
@@ -1680,6 +1688,25 @@ Italicized fields are not serialized, and are just used for runtime storage.<br/
 </table>
 <br/>
 
+<b>ExternalNode_ONNX_FreeDimensionOverride : Override a free dimension by name (e.g. 'batch' -> 1)</b><br/><br/>
+<table>
+<tr><th colspan=3>ExternalNode_ONNX_FreeDimensionOverride</th></tr>
+<tr><td>std::string name</td><td>""</td><td>The free dimension name declared in the ONNX model</td></tr>
+<tr><td>int value</td><td>1</td><td>The concrete value to bind to that dimension</td></tr>
+</table>
+<br/>
+
+<b>ExternalNode_ONNX : Runs an ONNX model via DirectML</b><br/><br/>
+<table>
+<tr><th colspan=3>ExternalNode_ONNX</th></tr>
+<tr><td>std::string fileName</td><td>""</td><td>Path to the .onnx file relative to the .gg file. The file is registered as an asset so it is copied next to the generated code.</td></tr>
+<tr><td>ExternalNode_ONNX_Precision precision</td><td>ExternalNode_ONNX_Precision::FP32</td><td>Precision to run the ONNX model at. FP16 halves memory bandwidth but may cost a couple of LSBs.</td></tr>
+<tr><td>ExternalNode_ONNX_FreeDimensionOverride freeDimensionOverrides[]</td><td></td><td>Override free dimensions declared by the ONNX model (e.g. a dynamic 'batch' dimension).</td></tr>
+<tr><td>NodePinReference input</td><td>{}</td><td>Input tensor. Texture2DArray<float4> (NHWC with channel packing) or Buffer<float> (NCHW).</td></tr>
+<tr><td>NodePinReference output</td><td>{}</td><td>Output tensor. Same shape conventions as input.</td></tr>
+</table>
+<br/>
+
 <b>RenderGraphNode_Base : The base type of all node types</b><br/><br/>
 <table>
 <tr><th colspan=3>RenderGraphNode_Base</th></tr>
@@ -2305,6 +2332,7 @@ See .bat for more info</td></tr>
 <table>
 <tr><th colspan=3>ExternalNodeData</th></tr>
 <tr><td>ExternalNode_AMD_FidelityFXSDK_Upscaling AMD_FidelityFXSDK_Upscaling</td><td>{}</td><td></td></tr>
+<tr><td>ExternalNode_ONNX ONNX</td><td>{}</td><td></td></tr>
 </table>
 <br/>
 

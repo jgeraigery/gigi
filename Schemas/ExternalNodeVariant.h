@@ -88,6 +88,41 @@ STRUCT_BEGIN(ExternalNode_AMD_FidelityFXSDK_Upscaling, "")
     STRUCT_FIELD(ExternalNode_AMD_FidelityFXSDK_Upscaling_GenerateReactiveMask, reactiveMask, {}, "Settings for generating a reactive mask", 0)
 STRUCT_END()
 
+// ---------------------------------------------------------------------------
+// ONNX / DirectML node
+// ---------------------------------------------------------------------------
+// Runs a pre-trained ONNX model on the DirectML execution provider. The model
+// file is referenced externally (shipped alongside the technique as an asset)
+// rather than embedded, which lets a single node be re-pointed at different
+// models without regenerating the graph.
+
+ENUM_BEGIN(ExternalNode_ONNX_Precision, "Which precision to run the ONNX model at")
+    ENUM_ITEM(FP32, "Full precision. Matches PyTorch exactly. Default.")
+    ENUM_ITEM(FP16, "Half precision. Faster on tensor-core GPUs but may lose a couple of LSBs.")
+ENUM_END()
+
+STRUCT_BEGIN(ExternalNode_ONNX_FreeDimensionOverride, "Override a free dimension by name (e.g. 'batch' -> 1)")
+    STRUCT_FIELD(std::string, name, "", "The free dimension name declared in the ONNX model", 0)
+    STRUCT_FIELD(int, value, 1, "The concrete value to bind to that dimension", 0)
+STRUCT_END()
+
+STRUCT_BEGIN(ExternalNode_ONNX, "Runs an ONNX model via DirectML")
+    STRUCT_FIELD(std::string, fileName, "", "Path to the .onnx file relative to the .gg file. The file is registered as an asset so it is copied next to the generated code.", 0)
+
+    STRUCT_FIELD(ExternalNode_ONNX_Precision, precision, ExternalNode_ONNX_Precision::FP32, "Precision to run the ONNX model at. FP16 halves memory bandwidth but may cost a couple of LSBs.", 0)
+
+    STRUCT_DYNAMIC_ARRAY(ExternalNode_ONNX_FreeDimensionOverride, freeDimensionOverrides, "Override free dimensions declared by the ONNX model (e.g. a dynamic 'batch' dimension).", SCHEMA_FLAG_UI_COLLAPSABLE | SCHEMA_FLAG_UI_ARRAY_FATITEMS)
+
+    // Input/output pins. Either a Texture2DArray or a raw Buffer is acceptable;
+    // the runtime reshapes to the layout the model expects (typically NCHW for
+    // vision models). Channel packing matches the existing gigi-ml convention:
+    // a Texture2DArray<float4> is treated as (channels = slices * 4) with the
+    // last channel zero-padded / discarded as needed.
+    STRUCT_FIELD(NodePinReference, input, {}, "Input tensor. Texture2DArray<float4> (NHWC with channel packing) or Buffer<float> (NCHW).", SCHEMA_FLAG_NO_UI)
+    STRUCT_FIELD(NodePinReference, output, {}, "Output tensor. Same shape conventions as input.", SCHEMA_FLAG_NO_UI)
+STRUCT_END()
+
 VARIANT_BEGIN(ExternalNodeData, "Render graph node variant")
     VARIANT_TYPE(ExternalNode_AMD_FidelityFXSDK_Upscaling, AMD_FidelityFXSDK_Upscaling, {}, "")
+    VARIANT_TYPE(ExternalNode_ONNX, ONNX, {}, "")
 VARIANT_END()

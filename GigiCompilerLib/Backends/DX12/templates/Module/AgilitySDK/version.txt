@@ -1,5 +1,5 @@
-1.619.0
-downloaded from https://www.nuget.org/packages/Microsoft.Direct3D.D3D12/1.619.1
+1.619.2
+Downloaded from https://devblogs.microsoft.com/directx/directx12agility/
 I renamed the .nupkg to .zip and unzipped it.
 I copied the contents of build/native/bin/x64 to bin.
 I copied the contents of build/native/include to include.
