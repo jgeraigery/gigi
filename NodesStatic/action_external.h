@@ -42,17 +42,50 @@ inline StaticNodeInfo GetStaticNodeInfo(RenderGraphNode_Action_External& node)
 
             #undef HANDLE_PIN
 
+            // FSR node supports the Interpreter only today.
+            for (int i = 0; i < EnumCount<Backend>(); ++i)
+                ret.backendSupported[i] = ((Backend)i) == Backend::Interpreter;
+            break;
+        }
+        case ExternalNodeData::c_index_ONNX:
+        {
+            ExternalNode_ONNX& nodeData = node.externalNodeData.ONNX;
+
+            #define HANDLE_PIN(Name, Access, ToolTip) \
+                pinInfo.srcPin = #Name; \
+                pinInfo.dstNode = &nodeData.Name.node; \
+                pinInfo.dstPin = &nodeData.Name.pin; \
+                pinInfo.toolTip = ToolTip; \
+                pinInfo.readOnly = ShaderResourceTypeIsReadOnly(Access); \
+                pinInfo.access = Access; \
+                pinInfo.required = !NodePinReferenceIsOptional(nodeData.Name); \
+                ret.pins.push_back(pinInfo);
+
+            HANDLE_PIN(input, ShaderResourceAccessType::SRV,
+                "Input tensor. Accepts Texture2DArray<float4> (NHWC, channels packed "
+                "into float4 slices) or a flat Buffer<float> in the layout the ONNX "
+                "model expects.");
+            HANDLE_PIN(output, ShaderResourceAccessType::UAV,
+                "Output tensor. Same shape conventions as input.");
+
+            #undef HANDLE_PIN
+
+            // ONNX node is supported on the Interpreter (runs via ORT + DML
+            // EP at runtime). DX12 code generation is not yet implemented;
+            // see GigiCompilerLib/Backends/DX12/nodes/node_action_external.inl.
+            for (int i = 0; i < EnumCount<Backend>(); ++i)
+                ret.backendSupported[i] = ((Backend)i) == Backend::Interpreter;
             break;
         }
         default:
         {
             GigiAssert(false, "Unhandled external node type in " __FUNCTION__);
+            // Default: only the Interpreter is assumed supported.
+            for (int i = 0; i < EnumCount<Backend>(); ++i)
+                ret.backendSupported[i] = ((Backend)i) == Backend::Interpreter;
             break;
         }
     }
-
-    for (int i = 0; i < EnumCount<Backend>(); ++i)
-        ret.backendSupported[i] = ((Backend)i) == Backend::Interpreter;
 
     return ret;
 }

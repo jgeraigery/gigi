@@ -13,6 +13,20 @@
 #include "Shared/HashAll.h"
 #include "Shared/ffx_utils.h"
 
+// ONNX Runtime + DirectML EP. Headers come from
+// Microsoft.ML.OnnxRuntime.DirectML NuGet (restored into ./packages/).
+// DirectML.h comes from the Windows SDK, which we already depend on for DX12.
+#include <DirectML.h>
+#include <unordered_set>
+#include "onnxruntime_cxx_api.h"
+#include "dml_provider_factory.h"
+
+// Gigi helpers for the transpose pass.
+#include "DX12Utils/CreateResources.h"
+#include "DX12Utils/CompileShaders.h"
+#include "DX12Utils/DescriptorTableCache.h"
+#include "NHWCNCHWTransposeHLSL.h"
+
 static void SetLogFunction(ffxApiMessage& messageFunc, GigiInterpreterPreviewWindowDX12* interpreter)
 {
     static auto LogMessage = [](uint32_t type, const wchar_t* message)
@@ -76,6 +90,49 @@ void RuntimeTypes::RenderGraphNode_Action_External::Release(GigiInterpreterPrevi
             }
         }
         m_AMD_FidelityFXSDK_Upscaling.m_contexts.clear();
+    }
+
+    // m_ONNX. Teardown order: DML allocations (hold refs on buffers) -> IO
+    // binding -> session -> buffers -> PSO / root sig -> mem info -> DML
+    // queue / fence -> DML device -> env. Reverse of lazy-init order, with
+    // COM Release()/delete matching each acquisition.
+    {
+        const OrtDmlApi* dmlApi = nullptr;
+        if (m_ONNX.m_inputDmlAlloc || m_ONNX.m_outputDmlAlloc)
+        {
+            Ort::GetApi().GetExecutionProviderApi("DML", ORT_API_VERSION, reinterpret_cast<const void**>(&dmlApi));
+        }
+        if (m_ONNX.m_inputDmlAlloc)  { if (dmlApi) dmlApi->FreeGPUAllocation(m_ONNX.m_inputDmlAlloc);  m_ONNX.m_inputDmlAlloc = nullptr; }
+        if (m_ONNX.m_outputDmlAlloc) { if (dmlApi) dmlApi->FreeGPUAllocation(m_ONNX.m_outputDmlAlloc); m_ONNX.m_outputDmlAlloc = nullptr; }
+
+        if (m_ONNX.m_ortIoBinding)    { delete reinterpret_cast<Ort::IoBinding*>(m_ONNX.m_ortIoBinding); m_ONNX.m_ortIoBinding = nullptr; }
+        if (m_ONNX.m_ortMemInfoDML)   { delete reinterpret_cast<Ort::MemoryInfo*>(m_ONNX.m_ortMemInfoDML); m_ONNX.m_ortMemInfoDML = nullptr; }
+        if (m_ONNX.m_ortSession)      { delete reinterpret_cast<Ort::Session*>(m_ONNX.m_ortSession); m_ONNX.m_ortSession = nullptr; }
+
+        if (m_ONNX.m_inputBuffer)     { reinterpret_cast<IUnknown*>(m_ONNX.m_inputBuffer)->Release(); m_ONNX.m_inputBuffer = nullptr; }
+        if (m_ONNX.m_outputBuffer)    { reinterpret_cast<IUnknown*>(m_ONNX.m_outputBuffer)->Release(); m_ONNX.m_outputBuffer = nullptr; }
+        m_ONNX.m_inputBufferSize = 0;
+        m_ONNX.m_outputBufferSize = 0;
+        m_ONNX.m_cachedW = m_ONNX.m_cachedH = m_ONNX.m_cachedC = 0;
+
+        if (m_ONNX.m_transposePSO)      { reinterpret_cast<IUnknown*>(m_ONNX.m_transposePSO)->Release(); m_ONNX.m_transposePSO = nullptr; }
+        if (m_ONNX.m_transposeRootSig)  { reinterpret_cast<IUnknown*>(m_ONNX.m_transposeRootSig)->Release(); m_ONNX.m_transposeRootSig = nullptr; }
+
+        if (m_ONNX.m_dmlFence)          { reinterpret_cast<IUnknown*>(m_ONNX.m_dmlFence)->Release(); m_ONNX.m_dmlFence = nullptr; }
+        m_ONNX.m_dmlFenceValue = 0;
+        if (m_ONNX.m_dmlCommandQueue)   { reinterpret_cast<IUnknown*>(m_ONNX.m_dmlCommandQueue)->Release(); m_ONNX.m_dmlCommandQueue = nullptr; }
+        if (m_ONNX.m_dmlDevice)         { reinterpret_cast<IUnknown*>(m_ONNX.m_dmlDevice)->Release(); m_ONNX.m_dmlDevice = nullptr; }
+
+        if (m_ONNX.m_ortEnv)            { delete reinterpret_cast<Ort::Env*>(m_ONNX.m_ortEnv); m_ONNX.m_ortEnv = nullptr; }
+
+        m_ONNX.m_sessionConfigHash = 0;
+        m_ONNX.m_loadedFile.clear();
+        m_ONNX.m_inputName.clear();
+        m_ONNX.m_outputName.clear();
+        m_ONNX.m_inputShape.clear();
+        m_ONNX.m_outputShape.clear();
+        m_ONNX.m_inputElemCount = 0;
+        m_ONNX.m_outputElemCount = 0;
     }
 }
 
@@ -529,3 +586,642 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeAction(const RenderGraphNode_Action
     }
     }
 }
+
+// ---------------------------------------------------------------------------
+// ONNX / DirectML node
+// ---------------------------------------------------------------------------
+//
+// Runs a pre-trained ONNX model via ONNX Runtime's DirectML execution
+// provider, fully on the GPU. No CPU round-trip for the tensors.
+//
+// Plumbing:
+//   - The node owns two internal ID3D12 buffer resources (input + output),
+//     sized to 1*C*H*W*sizeof(float) where C = Texture2DArray slices * 4.
+//     DML's CreateGPUAllocationFromD3DResource only accepts buffer resources.
+//   - A compute shader (NHWCNCHWTransposeHLSL.h) shuttles between Gigi's
+//     Texture2DArray<float4> (NHWC with float4 slice packing) and the
+//     linear NCHW buffer layout DML expects.
+//   - DML runs on its own dedicated D3D12 command queue; we synchronize the
+//     pre-transpose write and the post-transpose read with a shared fence.
+//
+// Per-Execute sequence:
+//   1. Record NHWC->NCHW transpose onto Gigi's main command list (reads
+//      input Texture2DArray, writes input buffer).
+//   2. Close Gigi's main command list, ExecuteCommandLists on main queue,
+//      Signal(fence, N). Reset the list so downstream recording can resume.
+//   3. DML queue Wait(fence, N). session.Run(runOpts, ioBinding) submits
+//      DML ops to its queue and CPU-blocks until they complete.
+//   4. DML queue Signal(fence, N+1). Main queue Wait(fence, N+1) before any
+//      subsequent submission reads the output buffer.
+//   5. Record NCHW->NHWC transpose onto Gigi's main command list (reads
+//      output buffer, writes output Texture2DArray).
+//
+// session.Run CPU-blocks internally so step 4's main-queue Wait is redundant
+// for correctness but kept for explicitness and to let us skip the CPU wait
+// once ORT gains an async Run variant.
+
+namespace
+{
+    // Texture2DArray<float4> carries this many real channels per array slice.
+    // Used everywhere we translate between texture slice counts and NCHW
+    // channel counts.
+    static constexpr int kChannelsPerFloat4Slice = 4;
+
+    size_t HashOnnxSessionConfig(const ExternalNode_ONNX& nodeData)
+    {
+        size_t h = std::hash<std::string>()(nodeData.fileName);
+        auto mix = [](size_t& acc, size_t v) { acc ^= v + 0x9e3779b9 + (acc << 6) + (acc >> 2); };
+        mix(h, std::hash<int>()((int)nodeData.precision));
+        for (const auto& dim : nodeData.freeDimensionOverrides)
+        {
+            mix(h, std::hash<std::string>()(dim.name));
+            mix(h, std::hash<int>()(dim.value));
+        }
+        return h;
+    }
+
+    // Build the root signature used by the NHWC<->NCHW transpose shader.
+    // Uses NHWCNCHWTranspose_DescriptorSlot offsets so the root sig and the
+    // per-dispatch descriptor-table builder stay synchronized.
+    bool CreateTransposeRootSignature(ID3D12Device* device, ID3D12RootSignature** outSig, LogFn logFn)
+    {
+        D3D12_DESCRIPTOR_RANGE ranges[NHWCNCHW_SLOT_COUNT] = {};
+
+        ranges[NHWCNCHW_SLOT_INTEX_SRV].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        ranges[NHWCNCHW_SLOT_INTEX_SRV].NumDescriptors = 1;
+        ranges[NHWCNCHW_SLOT_INTEX_SRV].BaseShaderRegister = 0; // t0
+        ranges[NHWCNCHW_SLOT_INTEX_SRV].RegisterSpace = 0;
+        ranges[NHWCNCHW_SLOT_INTEX_SRV].OffsetInDescriptorsFromTableStart = NHWCNCHW_SLOT_INTEX_SRV;
+
+        ranges[NHWCNCHW_SLOT_OUTBUF_UAV].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+        ranges[NHWCNCHW_SLOT_OUTBUF_UAV].NumDescriptors = 1;
+        ranges[NHWCNCHW_SLOT_OUTBUF_UAV].BaseShaderRegister = 0; // u0
+        ranges[NHWCNCHW_SLOT_OUTBUF_UAV].RegisterSpace = 0;
+        ranges[NHWCNCHW_SLOT_OUTBUF_UAV].OffsetInDescriptorsFromTableStart = NHWCNCHW_SLOT_OUTBUF_UAV;
+
+        ranges[NHWCNCHW_SLOT_INBUF_SRV].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        ranges[NHWCNCHW_SLOT_INBUF_SRV].NumDescriptors = 1;
+        ranges[NHWCNCHW_SLOT_INBUF_SRV].BaseShaderRegister = 1; // t1
+        ranges[NHWCNCHW_SLOT_INBUF_SRV].RegisterSpace = 0;
+        ranges[NHWCNCHW_SLOT_INBUF_SRV].OffsetInDescriptorsFromTableStart = NHWCNCHW_SLOT_INBUF_SRV;
+
+        ranges[NHWCNCHW_SLOT_OUTTEX_UAV].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+        ranges[NHWCNCHW_SLOT_OUTTEX_UAV].NumDescriptors = 1;
+        ranges[NHWCNCHW_SLOT_OUTTEX_UAV].BaseShaderRegister = 1; // u1
+        ranges[NHWCNCHW_SLOT_OUTTEX_UAV].RegisterSpace = 0;
+        ranges[NHWCNCHW_SLOT_OUTTEX_UAV].OffsetInDescriptorsFromTableStart = NHWCNCHW_SLOT_OUTTEX_UAV;
+
+        ranges[NHWCNCHW_SLOT_CB_CBV].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+        ranges[NHWCNCHW_SLOT_CB_CBV].NumDescriptors = 1;
+        ranges[NHWCNCHW_SLOT_CB_CBV].BaseShaderRegister = 0; // b0
+        ranges[NHWCNCHW_SLOT_CB_CBV].RegisterSpace = 0;
+        ranges[NHWCNCHW_SLOT_CB_CBV].OffsetInDescriptorsFromTableStart = NHWCNCHW_SLOT_CB_CBV;
+
+        D3D12_ROOT_PARAMETER param = {};
+        param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        param.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+        param.DescriptorTable.NumDescriptorRanges = _countof(ranges);
+        param.DescriptorTable.pDescriptorRanges = ranges;
+
+        D3D12_ROOT_SIGNATURE_DESC desc = {};
+        desc.NumParameters = 1;
+        desc.pParameters = &param;
+        desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+
+        ID3DBlob* sig = nullptr;
+        ID3DBlob* err = nullptr;
+        HRESULT hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &sig, &err);
+        if (FAILED(hr))
+        {
+            logFn(LogLevel::Error, "ONNX node: D3D12SerializeRootSignature failed (hr=0x%08X): %s",
+                hr, err ? (const char*)err->GetBufferPointer() : "(no error blob)");
+            if (sig) sig->Release();
+            if (err) err->Release();
+            return false;
+        }
+        hr = device->CreateRootSignature(0, sig->GetBufferPointer(), sig->GetBufferSize(), IID_PPV_ARGS(outSig));
+        if (sig) sig->Release();
+        if (err) err->Release();
+        if (FAILED(hr))
+        {
+            logFn(LogLevel::Error, "ONNX node: CreateRootSignature failed (hr=0x%08X).", hr);
+            return false;
+        }
+        return true;
+    }
+
+    // Write the inline HLSL to a temp file and compile a PSO from it.
+    bool CompileTransposePSO(const GigiInterpreterPreviewWindowDX12& interpreter, ID3D12Device* device,
+                             ID3D12RootSignature* rootSig, ID3D12PipelineState** outPSO)
+    {
+        std::string hlslFile = (std::filesystem::path(interpreter.GetTempDirectory()) / "__GIGI_ONNX__" / "NHWCNCHWTranspose.hlsl").string();
+        std::filesystem::create_directories(std::filesystem::path(hlslFile).remove_filename());
+
+        FILE* f = nullptr;
+        fopen_s(&f, hlslFile.c_str(), "wb");
+        if (!f)
+        {
+            interpreter.GetLogFn()(LogLevel::Error, "ONNX node: could not open transpose HLSL temp file \"%s\" for write.", hlslFile.c_str());
+            return false;
+        }
+        fwrite(s_NHWCNCHWTransposeHLSL, 1, strlen(s_NHWCNCHWTransposeHLSL), f);
+        fclose(f);
+
+        ShaderCompilationInfo info;
+        info.fileName = hlslFile;
+        info.entryPoint = "csmain";
+        info.shaderModel = "cs_6_1";
+        info.debugName = "ONNX_NHWCNCHWTranspose";
+        info.flags |= ShaderCompilationFlags::WarningsAsErrors;
+
+        MakeComputePSO_dxc(device, info, rootSig, outPSO, interpreter.GetLogFn());
+        if (!*outPSO)
+        {
+            interpreter.GetLogFn()(LogLevel::Error, "ONNX node: MakeComputePSO_dxc returned null for transpose shader. HLSL path: %s", hlslFile.c_str());
+            return false;
+        }
+        return true;
+    }
+}
+
+bool GigiInterpreterPreviewWindowDX12::OnNodeAction_External_ONNX(const RenderGraphNode_Action_External& node, RuntimeTypes::RenderGraphNode_Action_External& runtimeData_, NodeAction nodeAction)
+{
+    if (nodeAction == NodeAction::Init)
+        return true;
+
+    if (!runtimeData_.m_conditionIsTrue)
+        return true;
+
+    const ExternalNode_ONNX& nodeData = node.externalNodeData.ONNX;
+    RuntimeTypes::RenderGraphNode_Action_External::ONNX& state = runtimeData_.m_ONNX;
+
+    if (nodeData.fileName.empty())
+    {
+        m_logFn(LogLevel::Error, "ONNX node \"%s\": fileName is empty.", node.name.c_str());
+        return false;
+    }
+
+    // ---- Resolve input/output Gigi resources ----
+    auto GetTexture = [this](int resourceNodeIndex) -> std::pair<const RenderGraphNode_Resource_Texture*, RuntimeTypes::RenderGraphNode_Resource_Texture*>
+    {
+        if (resourceNodeIndex < 0 || resourceNodeIndex >= (int)m_renderGraph.nodes.size())
+            return { nullptr, nullptr };
+        const RenderGraphNode& rn = m_renderGraph.nodes[resourceNodeIndex];
+        if (rn._index != RenderGraphNode::c_index_resourceTexture)
+            return { nullptr, nullptr };
+        const RenderGraphNode_Resource_Texture* texNode = &rn.resourceTexture;
+        bool exists = false;
+        RuntimeTypes::RenderGraphNode_Resource_Texture& rt = GetRuntimeNodeData_RenderGraphNode_Resource_Texture(texNode->name.c_str(), exists);
+        if (!exists)
+            return { texNode, nullptr };
+        return { texNode, &rt };
+    };
+
+    auto [inputNode, inputRT] = GetTexture(nodeData.input.resourceNodeIndex);
+    auto [outputNode, outputRT] = GetTexture(nodeData.output.resourceNodeIndex);
+
+    if (!inputNode || !outputNode)
+    {
+        m_logFn(LogLevel::Error, "ONNX node \"%s\": input and output must both be Texture2DArray resources.", node.name.c_str());
+        return false;
+    }
+    if (!inputRT || !inputRT->m_resource || !outputRT || !outputRT->m_resource)
+    {
+        return true; // resources may be allocated later; skip quietly
+    }
+
+    // Publish input to inspector.
+    {
+        std::string label = node.name + std::string(".input: ") + inputNode->name + std::string(" (SRV)");
+        runtimeData_.HandleViewableTexture(*this, TextureDimensionTypeToViewableResourceType(inputNode->dimension),
+            label.c_str(), inputRT->m_resource, inputRT->m_format, inputRT->m_size, inputRT->m_numMips, false, false);
+    }
+
+    // ---- Resolve concrete NCHW shapes from Texture2DArray dims ----
+    auto ResolveShape = [&](const std::vector<int64_t>& modelShape, const RuntimeTypes::RenderGraphNode_Resource_Texture& rt, const char* which,
+                            std::vector<int64_t>& outShape, int64_t& outElems) -> bool
+    {
+        if (modelShape.size() != 4)
+        {
+            m_logFn(LogLevel::Error, "ONNX node \"%s\": %s tensor must be 4-D NCHW (got %zu dims).", node.name.c_str(), which, modelShape.size());
+            return false;
+        }
+        const int64_t W = rt.m_size[0];
+        const int64_t H = rt.m_size[1];
+        const int64_t C = (int64_t)rt.m_size[2] * kChannelsPerFloat4Slice;
+        const int64_t want[4] = { 1, C, H, W };
+        outShape.assign(modelShape.begin(), modelShape.end());
+        outElems = 1;
+        for (int i = 0; i < 4; ++i)
+        {
+            if (outShape[i] < 0) outShape[i] = want[i];
+            else if (outShape[i] != want[i])
+            {
+                m_logFn(LogLevel::Error,
+                    "ONNX node \"%s\": %s shape dim %d is fixed at %lld but texture implies %lld.",
+                    node.name.c_str(), which, i, (long long)outShape[i], (long long)want[i]);
+                return false;
+            }
+            outElems *= outShape[i];
+        }
+        return true;
+    };
+
+    // ---- Lazy-init ORT env + DML device + DML queue + DML fence + session ----
+    const size_t wantConfigHash = HashOnnxSessionConfig(nodeData);
+    const bool modelChanged = state.m_ortSession == nullptr || state.m_sessionConfigHash != wantConfigHash;
+
+    if (modelChanged)
+    {
+        // Tear down session-scoped state (keep env/device/queue/fence to reuse).
+        if (state.m_ortIoBinding)     { delete reinterpret_cast<Ort::IoBinding*>(state.m_ortIoBinding); state.m_ortIoBinding = nullptr; }
+        if (state.m_ortMemInfoDML)    { delete reinterpret_cast<Ort::MemoryInfo*>(state.m_ortMemInfoDML); state.m_ortMemInfoDML = nullptr; }
+        if (state.m_ortSession)       { delete reinterpret_cast<Ort::Session*>(state.m_ortSession); state.m_ortSession = nullptr; }
+
+        try
+        {
+            if (!state.m_ortEnv)
+                state.m_ortEnv = new Ort::Env(ORT_LOGGING_LEVEL_WARNING, "gigi_onnx_node");
+
+            // DML device.
+            if (!state.m_dmlDevice)
+            {
+                IDMLDevice* dmlDevice = nullptr;
+                HRESULT hr = DMLCreateDevice(m_device, DML_CREATE_DEVICE_FLAG_NONE, IID_PPV_ARGS(&dmlDevice));
+                if (FAILED(hr))
+                {
+                    m_logFn(LogLevel::Error, "ONNX node \"%s\": DMLCreateDevice failed (hr=0x%08X).", node.name.c_str(), hr);
+                    return false;
+                }
+                state.m_dmlDevice = dmlDevice;
+            }
+
+            // DML runs on Gigi's main command queue (same pattern as
+            // Microsoft's DxDispatch sample): ORT submits DML command lists
+            // to this queue, and by submitting AFTER our pre-transpose
+            // command list gets ExecuteCommandLists'd, DML's work is
+            // naturally ordered after ours. No cross-queue fence needed.
+            (void)state.m_dmlCommandQueue; // kept on struct for API compat; not used in v2 flow
+
+            Ort::SessionOptions so;
+            so.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+            so.DisableMemPattern();
+            so.SetExecutionMode(ORT_SEQUENTIAL);
+            for (const auto& dim : nodeData.freeDimensionOverrides)
+            {
+                OrtStatus* s = Ort::GetApi().AddFreeDimensionOverrideByName(so, dim.name.c_str(), (int64_t)dim.value);
+                if (s)
+                {
+                    std::string msg = Ort::GetApi().GetErrorMessage(s);
+                    Ort::GetApi().ReleaseStatus(s);
+                    m_logFn(LogLevel::Error, "ONNX node \"%s\": AddFreeDimensionOverrideByName(%s) failed: %s", node.name.c_str(), dim.name.c_str(), msg.c_str());
+                    return false;
+                }
+            }
+
+            const OrtDmlApi* dmlApi = nullptr;
+            Ort::GetApi().GetExecutionProviderApi("DML", ORT_API_VERSION, reinterpret_cast<const void**>(&dmlApi));
+            if (!dmlApi)
+            {
+                m_logFn(LogLevel::Error, "ONNX node \"%s\": ORT DML API not available.", node.name.c_str());
+                return false;
+            }
+
+            OrtStatus* st = dmlApi->SessionOptionsAppendExecutionProvider_DML1(so,
+                reinterpret_cast<IDMLDevice*>(state.m_dmlDevice),
+                m_commandQueue);
+            if (st)
+            {
+                std::string msg = Ort::GetApi().GetErrorMessage(st);
+                Ort::GetApi().ReleaseStatus(st);
+                m_logFn(LogLevel::Error, "ONNX node \"%s\": DML EP append failed: %s", node.name.c_str(), msg.c_str());
+                return false;
+            }
+
+            std::filesystem::path onnxPath = std::filesystem::path(m_renderGraph.baseDirectory) / nodeData.fileName;
+            std::wstring onnxPathW = onnxPath.wstring();
+            Ort::Env& env = *reinterpret_cast<Ort::Env*>(state.m_ortEnv);
+            state.m_ortSession = new Ort::Session(env, onnxPathW.c_str(), so);
+            state.m_loadedFile = onnxPath.string();
+
+            Ort::Session& session = *reinterpret_cast<Ort::Session*>(state.m_ortSession);
+            if (session.GetInputCount() != 1 || session.GetOutputCount() != 1)
+            {
+                m_logFn(LogLevel::Error, "ONNX node \"%s\": model must have exactly 1 input and 1 output (got %zu in, %zu out).",
+                    node.name.c_str(), session.GetInputCount(), session.GetOutputCount());
+                return false;
+            }
+
+            Ort::AllocatorWithDefaultOptions alloc;
+            auto inNameAlloc = session.GetInputNameAllocated(0, alloc);
+            state.m_inputName = inNameAlloc.get();
+            auto outNameAlloc = session.GetOutputNameAllocated(0, alloc);
+            state.m_outputName = outNameAlloc.get();
+            state.m_inputShape = session.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
+            state.m_outputShape = session.GetOutputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
+
+            // DML-typed memory info (matches the EP's allocator registration name).
+            state.m_ortMemInfoDML = new Ort::MemoryInfo("DML", OrtDeviceAllocator, 0, OrtMemTypeDefault);
+
+            state.m_sessionConfigHash = wantConfigHash;
+
+            m_logFn(LogLevel::Info, "ONNX node \"%s\": loaded %s (input \"%s\", output \"%s\").",
+                node.name.c_str(), state.m_loadedFile.c_str(),
+                state.m_inputName.c_str(), state.m_outputName.c_str());
+        }
+        catch (const Ort::Exception& e)
+        {
+            m_logFn(LogLevel::Error, "ONNX node \"%s\": ORT exception during init: %s", node.name.c_str(), e.what());
+            return false;
+        }
+    }
+
+    std::vector<int64_t> inShape, outShape;
+    int64_t inElems = 0, outElems = 0;
+    if (!ResolveShape(state.m_inputShape, *inputRT, "input", inShape, inElems)) return false;
+    if (!ResolveShape(state.m_outputShape, *outputRT, "output", outShape, outElems)) return false;
+
+    const int W = inputRT->m_size[0];
+    const int H = inputRT->m_size[1];
+    const int Cin = inputRT->m_size[2] * kChannelsPerFloat4Slice;
+    // Output dims; required to match input for now (identity-shape models only).
+    // We don't require output W,H,C to equal input's; use outputRT's own dims
+    // when constructing the transpose-out dispatch.
+
+    // ---- Lazy-create transpose root sig + PSO (once) ----
+    if (!state.m_transposeRootSig)
+    {
+        ID3D12RootSignature* sig = nullptr;
+        if (!CreateTransposeRootSignature(m_device, &sig, m_logFn))
+            return false;
+        state.m_transposeRootSig = sig;
+    }
+    if (!state.m_transposePSO)
+    {
+        ID3D12PipelineState* pso = nullptr;
+        if (!CompileTransposePSO(*this, m_device, reinterpret_cast<ID3D12RootSignature*>(state.m_transposeRootSig), &pso))
+            return false;
+        state.m_transposePSO = pso;
+    }
+
+    // ---- Allocate / reallocate internal tensor buffers when shape changes ----
+    const int inputBufBytes = (int)(inElems * sizeof(float));
+    const int outputBufBytes = (int)(outElems * sizeof(float));
+    const bool buffersOutOfDate =
+        state.m_inputBuffer == nullptr || state.m_inputBufferSize != inputBufBytes ||
+        state.m_outputBuffer == nullptr || state.m_outputBufferSize != outputBufBytes;
+
+    if (buffersOutOfDate)
+    {
+        const OrtDmlApi* dmlApi = nullptr;
+        Ort::GetApi().GetExecutionProviderApi("DML", ORT_API_VERSION, reinterpret_cast<const void**>(&dmlApi));
+        if (state.m_inputDmlAlloc)   { if (dmlApi) dmlApi->FreeGPUAllocation(state.m_inputDmlAlloc);   state.m_inputDmlAlloc = nullptr; }
+        if (state.m_outputDmlAlloc)  { if (dmlApi) dmlApi->FreeGPUAllocation(state.m_outputDmlAlloc);  state.m_outputDmlAlloc = nullptr; }
+        if (state.m_ortIoBinding)    { delete reinterpret_cast<Ort::IoBinding*>(state.m_ortIoBinding); state.m_ortIoBinding = nullptr; }
+        if (state.m_inputBuffer)     { reinterpret_cast<IUnknown*>(state.m_inputBuffer)->Release(); state.m_inputBuffer = nullptr; }
+        if (state.m_outputBuffer)    { reinterpret_cast<IUnknown*>(state.m_outputBuffer)->Release(); state.m_outputBuffer = nullptr; }
+
+        // UAV buffers, ALLOW_UNORDERED_ACCESS so the transpose shader can write.
+        state.m_inputBuffer = CreateBuffer(m_device, (unsigned int)inputBufBytes,
+            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON,
+            D3D12_HEAP_TYPE_DEFAULT, "ONNX input tensor buffer");
+        state.m_outputBuffer = CreateBuffer(m_device, (unsigned int)outputBufBytes,
+            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON,
+            D3D12_HEAP_TYPE_DEFAULT, "ONNX output tensor buffer");
+        if (!state.m_inputBuffer || !state.m_outputBuffer)
+        {
+            m_logFn(LogLevel::Error, "ONNX node \"%s\": failed to create internal tensor buffers.", node.name.c_str());
+            return false;
+        }
+        state.m_inputBufferSize = inputBufBytes;
+        state.m_outputBufferSize = outputBufBytes;
+        state.m_cachedW = W; state.m_cachedH = H; state.m_cachedC = Cin;
+
+        // Wrap the buffers as DML GPU allocations.
+        if (!dmlApi)
+        {
+            m_logFn(LogLevel::Error, "ONNX node \"%s\": ORT DML API not available (post-buf alloc).", node.name.c_str());
+            return false;
+        }
+        OrtStatus* s1 = dmlApi->CreateGPUAllocationFromD3DResource(reinterpret_cast<ID3D12Resource*>(state.m_inputBuffer), &state.m_inputDmlAlloc);
+        OrtStatus* s2 = dmlApi->CreateGPUAllocationFromD3DResource(reinterpret_cast<ID3D12Resource*>(state.m_outputBuffer), &state.m_outputDmlAlloc);
+        if (s1 || s2)
+        {
+            if (s1) { m_logFn(LogLevel::Error, "ONNX node \"%s\": CreateGPUAllocationFromD3DResource(input buf) failed: %s", node.name.c_str(), Ort::GetApi().GetErrorMessage(s1)); Ort::GetApi().ReleaseStatus(s1); }
+            if (s2) { m_logFn(LogLevel::Error, "ONNX node \"%s\": CreateGPUAllocationFromD3DResource(output buf) failed: %s", node.name.c_str(), Ort::GetApi().GetErrorMessage(s2)); Ort::GetApi().ReleaseStatus(s2); }
+            return false;
+        }
+
+        // Build IoBinding.
+        Ort::Session& session = *reinterpret_cast<Ort::Session*>(state.m_ortSession);
+        Ort::MemoryInfo& memInfoDML = *reinterpret_cast<Ort::MemoryInfo*>(state.m_ortMemInfoDML);
+        auto* binding = new Ort::IoBinding(session);
+        try
+        {
+            Ort::Value inVal = Ort::Value::CreateTensor(memInfoDML, state.m_inputDmlAlloc, (size_t)inputBufBytes, inShape.data(), inShape.size(), ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT);
+            Ort::Value outVal = Ort::Value::CreateTensor(memInfoDML, state.m_outputDmlAlloc, (size_t)outputBufBytes, outShape.data(), outShape.size(), ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT);
+            binding->BindInput(state.m_inputName.c_str(), inVal);
+            binding->BindOutput(state.m_outputName.c_str(), outVal);
+        }
+        catch (const Ort::Exception& e)
+        {
+            delete binding;
+            m_logFn(LogLevel::Error, "ONNX node \"%s\": IoBinding setup failed: %s", node.name.c_str(), e.what());
+            return false;
+        }
+        state.m_ortIoBinding = binding;
+    }
+
+    // ---- Build an upload-constant-buffer with the CBStruct for this dispatch ----
+    auto RecordTransposeDispatch = [&](bool textureToBuffer) -> bool
+    {
+        NHWCNCHWTranspose_CBStruct cb = {};
+        cb.W = textureToBuffer ? W : (int)outputRT->m_size[0];
+        cb.H = textureToBuffer ? H : (int)outputRT->m_size[1];
+        cb.C = textureToBuffer ? Cin : (int)(outputRT->m_size[2] * kChannelsPerFloat4Slice);
+        cb.mode = textureToBuffer ? NHWCNCHW_TRANSPOSE_TEXTURE_TO_BUFFER : NHWCNCHW_TRANSPOSE_BUFFER_TO_TEXTURE;
+
+        // 256-byte aligned CB upload.
+        const unsigned int cbSizeAligned = (unsigned int)ALIGN(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT, sizeof(cb));
+        UploadBufferTracker::Buffer* cbBuf = m_uploadBufferTracker.GetBuffer(m_device, cbSizeAligned, true);
+        {
+            void* mapped = nullptr;
+            HRESULT hr = cbBuf->buffer->Map(0, nullptr, &mapped);
+            if (FAILED(hr))
+            {
+                m_logFn(LogLevel::Error, "ONNX node \"%s\": CB map failed (hr=0x%08X).", node.name.c_str(), hr);
+                return false;
+            }
+            memset(mapped, 0, cbSizeAligned);
+            memcpy(mapped, &cb, sizeof(cb));
+            cbBuf->buffer->Unmap(0, nullptr);
+        }
+
+        ID3D12Resource* inputBuf = reinterpret_cast<ID3D12Resource*>(state.m_inputBuffer);
+        ID3D12Resource* outputBuf = reinterpret_cast<ID3D12Resource*>(state.m_outputBuffer);
+
+        // Descriptors addressed by NHWCNCHWTranspose_DescriptorSlot. Unused
+        // slots (for the mode we're NOT running) get a nullptr resource,
+        // which DescriptorTableCache turns into a null view.
+        std::vector<DescriptorTableCache::ResourceDescriptor> descs(NHWCNCHW_SLOT_COUNT);
+
+        // t0 SRV: input Texture2DArray<float4>. Used only in texture->buffer mode.
+        auto& slotInTex = descs[NHWCNCHW_SLOT_INTEX_SRV];
+        slotInTex.m_resource = textureToBuffer ? inputRT->m_resource : nullptr;
+        slotInTex.m_format = inputRT->m_format;
+        slotInTex.m_access = DescriptorTableCache::AccessType::SRV;
+        slotInTex.m_resourceType = DescriptorTableCache::ResourceType::Texture2DArray;
+        slotInTex.m_count = inputRT->m_size[2];
+
+        // u0 UAV: RWStructuredBuffer<float> that holds the NCHW tensor we'll
+        // hand to DML. Used only in texture->buffer mode.
+        auto& slotOutBuf = descs[NHWCNCHW_SLOT_OUTBUF_UAV];
+        slotOutBuf.m_resource = textureToBuffer ? inputBuf : nullptr;
+        slotOutBuf.m_format = DXGI_FORMAT_UNKNOWN;
+        slotOutBuf.m_access = DescriptorTableCache::AccessType::UAV;
+        slotOutBuf.m_resourceType = DescriptorTableCache::ResourceType::Buffer;
+        slotOutBuf.m_stride = sizeof(float);
+        slotOutBuf.m_count = (unsigned int)inElems;
+        slotOutBuf.m_raw = false;
+
+        // t1 SRV: StructuredBuffer<float> containing DML's NCHW output. Used
+        // only in buffer->texture mode.
+        auto& slotInBuf = descs[NHWCNCHW_SLOT_INBUF_SRV];
+        slotInBuf.m_resource = textureToBuffer ? nullptr : outputBuf;
+        slotInBuf.m_format = DXGI_FORMAT_UNKNOWN;
+        slotInBuf.m_access = DescriptorTableCache::AccessType::SRV;
+        slotInBuf.m_resourceType = DescriptorTableCache::ResourceType::Buffer;
+        slotInBuf.m_stride = sizeof(float);
+        slotInBuf.m_count = (unsigned int)outElems;
+        slotInBuf.m_raw = false;
+
+        // u1 UAV: output RWTexture2DArray<float4>. Used only in buffer->texture mode.
+        auto& slotOutTex = descs[NHWCNCHW_SLOT_OUTTEX_UAV];
+        slotOutTex.m_resource = textureToBuffer ? nullptr : outputRT->m_resource;
+        slotOutTex.m_format = outputRT->m_format;
+        slotOutTex.m_access = DescriptorTableCache::AccessType::UAV;
+        slotOutTex.m_resourceType = DescriptorTableCache::ResourceType::Texture2DArray;
+        slotOutTex.m_count = outputRT->m_size[2];
+
+        // b0 CBV. DescriptorTableCache reads CBV SizeInBytes from m_stride —
+        // setting m_stride to zero is what silently produced an all-zero CB
+        // and made every dispatch a no-op during initial development.
+        auto& slotCB = descs[NHWCNCHW_SLOT_CB_CBV];
+        slotCB.m_resource = cbBuf->buffer;
+        slotCB.m_format = DXGI_FORMAT_UNKNOWN;
+        slotCB.m_access = DescriptorTableCache::AccessType::CBV;
+        slotCB.m_resourceType = DescriptorTableCache::ResourceType::Buffer;
+        slotCB.m_stride = cbSizeAligned;
+        slotCB.m_count = 1;
+
+        // Resource transitions.
+        if (textureToBuffer)
+        {
+            m_transitions.Transition(TRANSITION_DEBUG_INFO(inputRT->m_resource, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE));
+            m_transitions.Transition(TRANSITION_DEBUG_INFO(inputBuf, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+        }
+        else
+        {
+            m_transitions.Transition(TRANSITION_DEBUG_INFO(outputBuf, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE));
+            m_transitions.Transition(TRANSITION_DEBUG_INFO(outputRT->m_resource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+        }
+        m_transitions.Flush(m_commandList);
+
+        D3D12_GPU_DESCRIPTOR_HANDLE table;
+        std::string err;
+        if (!m_descriptorTableCache.GetDescriptorTable(m_device, m_SRVHeapAllocationTracker, descs.data(), (int)descs.size(), table, err, HEAP_DEBUG_TEXT()))
+        {
+            m_logFn(LogLevel::Error, "ONNX node \"%s\": descriptor table alloc failed: %s", node.name.c_str(), err.c_str());
+            return false;
+        }
+
+        m_commandList->SetComputeRootSignature(reinterpret_cast<ID3D12RootSignature*>(state.m_transposeRootSig));
+        m_commandList->SetPipelineState(reinterpret_cast<ID3D12PipelineState*>(state.m_transposePSO));
+        m_commandList->SetComputeRootDescriptorTable(0, table);
+
+        // One thread per tensor element; ceil-divide by the shader's
+        // numthreads to get threadgroup counts.
+        auto CeilDiv = [](int a, int b) { return (a + b - 1) / b; };
+        const unsigned int gx = (unsigned int)CeilDiv(cb.W, NHWCNCHW_NUMTHREADS_X);
+        const unsigned int gy = (unsigned int)CeilDiv(cb.H, NHWCNCHW_NUMTHREADS_Y);
+        const unsigned int gz = (unsigned int)CeilDiv(cb.C, NHWCNCHW_NUMTHREADS_Z);
+        m_commandList->Dispatch(gx, gy, gz);
+        return true;
+    };
+
+    // ---- 1. Record NHWC->NCHW transpose onto Gigi's main command list ----
+    m_logFn(LogLevel::Info, "ONNX node \"%s\": recording pre-transpose (NHWC->NCHW) W=%d H=%d C=%d.", node.name.c_str(), W, H, Cin);
+    if (!RecordTransposeDispatch(/*textureToBuffer=*/true)) return false;
+    m_logFn(LogLevel::Info, "ONNX node \"%s\": pre-transpose recorded.", node.name.c_str());
+
+    // After the transpose writes to the input buffer, DML will read it.
+    // We need the input buffer to be in a queue-agnostic state (COMMON) and
+    // we need the write to be observed by the other queue — achieved via the
+    // fence below.
+    m_transitions.Transition(TRANSITION_DEBUG_INFO(reinterpret_cast<ID3D12Resource*>(state.m_inputBuffer), D3D12_RESOURCE_STATE_COMMON));
+    m_transitions.Flush(m_commandList);
+
+    // ---- 2. Close / submit on main queue so the pre-transpose finishes
+    //    before DML reads the input buffer. Reset with a fresh allocator for
+    //    resumed recording. Matches Microsoft DxDispatch's Device::ExecuteCommandList.
+    HRESULT hr = m_commandList->Close();
+    if (FAILED(hr))
+    {
+        m_logFn(LogLevel::Error, "ONNX node \"%s\": commandList Close failed (hr=0x%08X).", node.name.c_str(), hr);
+        return false;
+    }
+    ID3D12CommandList* lists[] = { m_commandList };
+    m_commandQueue->ExecuteCommandLists(1, lists);
+
+    {
+        // Fresh allocator for the resumed recording (the interpreter doesn't
+        // expose the allocator its Execute() call was given).
+        ID3D12CommandAllocator* tempAlloc = nullptr;
+        HRESULT hr2 = m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&tempAlloc));
+        if (FAILED(hr2))
+        {
+            m_logFn(LogLevel::Error, "ONNX node \"%s\": temp allocator create failed (hr=0x%08X).", node.name.c_str(), hr2);
+            return false;
+        }
+        hr2 = m_commandList->Reset(tempAlloc, nullptr);
+        if (FAILED(hr2))
+        {
+            tempAlloc->Release();
+            m_logFn(LogLevel::Error, "ONNX node \"%s\": commandList Reset failed (hr=0x%08X).", node.name.c_str(), hr2);
+            return false;
+        }
+        m_delayedRelease.Add(tempAlloc);
+        SetDescriptorHeaps();
+    }
+
+    // ---- 3. Run the model. DML submits its ops to m_commandQueue (same
+    //    queue we passed into SessionOptionsAppendExecutionProvider_DML1),
+    //    which serializes DML's work after our just-submitted pre-transpose. ----
+    try
+    {
+        Ort::Session& session = *reinterpret_cast<Ort::Session*>(state.m_ortSession);
+        Ort::IoBinding& binding = *reinterpret_cast<Ort::IoBinding*>(state.m_ortIoBinding);
+        Ort::RunOptions runOpts;
+        session.Run(runOpts, binding);
+    }
+    catch (const Ort::Exception& e)
+    {
+        m_logFn(LogLevel::Error, "ONNX node \"%s\": Run failed: %s", node.name.c_str(), e.what());
+        return false;
+    }
+
+    // ---- 5. Record NCHW->NHWC transpose ----
+    m_logFn(LogLevel::Info, "ONNX node \"%s\": recording post-transpose (NCHW->NHWC).", node.name.c_str());
+    if (!RecordTransposeDispatch(/*textureToBuffer=*/false)) return false;
+    m_logFn(LogLevel::Info, "ONNX node \"%s\": post-transpose recorded successfully.", node.name.c_str());
+
+    // Publish output to inspector.
+    {
+        std::string label = node.name + std::string(".output: ") + outputNode->name + std::string(" (UAV - After)");
+        runtimeData_.HandleViewableTexture(*this, TextureDimensionTypeToViewableResourceType(outputNode->dimension),
+            label.c_str(), outputRT->m_resource, outputRT->m_format, outputRT->m_size, outputRT->m_numMips, false, true);
+    }
+
+    return true;
+}
+

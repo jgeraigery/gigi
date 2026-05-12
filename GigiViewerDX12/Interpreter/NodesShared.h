@@ -23,12 +23,12 @@ inline bool D3D12_LINEAR_ALGEBRA_DATATYPE_Size(D3D12_LINEAR_ALGEBRA_DATATYPE typ
 		case D3D12_LINEAR_ALGEBRA_DATATYPE_UINT32: size = 4; return true;
 		case D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16: size = 2; return true;
 		case D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32: size = 4; return true;
-		case D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8_T4_PACKED: size = 4; return true;
-		case D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8_T4_PACKED: size = 4; return true;
+		//case D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8_T4_PACKED: size = 4; return true;
+		//case D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8_T4_PACKED: size = 4; return true;
 		case D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8: size = 1; return true;
 		case D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8: size = 1; return true;
-		case D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT_E4M3: size = 1; return true;
-		case D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT_E5M2: size = 1; return true;
+		//case D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT_E4M3: size = 1; return true;
+		//case D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT_E5M2: size = 1; return true;
 		default: return false;
 	}
 
@@ -45,12 +45,12 @@ inline bool CooperativeVectorDataTypeToD3D12_LINEAR_ALGEBRA_DATATYPE(Cooperative
 		case CooperativeVectorDataType::_uint32: output = D3D12_LINEAR_ALGEBRA_DATATYPE_UINT32; return true;
 		case CooperativeVectorDataType::_float16: output = D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16; return true;
 		case CooperativeVectorDataType::_float32: output = D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32; return true;
-		case CooperativeVectorDataType::_sint8x4: output = D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8_T4_PACKED; return true;
-		case CooperativeVectorDataType::_uint8x4: output = D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8_T4_PACKED; return true;
+		//case CooperativeVectorDataType::_sint8x4: output = D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8_T4_PACKED; return true;
+		//case CooperativeVectorDataType::_uint8x4: output = D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8_T4_PACKED; return true;
 		case CooperativeVectorDataType::_uint8: output = D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8; return true;
 		case CooperativeVectorDataType::_sint8: output = D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8; return true;
-		case CooperativeVectorDataType::_float8_e4m3: output = D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT_E4M3; return true;
-		case CooperativeVectorDataType::_float8_e5m2: output = D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT_E5M2; return true;
+		//case CooperativeVectorDataType::_float8_e4m3: output = D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT_E4M3; return true;
+		//case CooperativeVectorDataType::_float8_e5m2: output = D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT_E5M2; return true;
 		default: return false;
 	}
 	return false;

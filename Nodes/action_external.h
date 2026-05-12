@@ -58,6 +58,32 @@ namespace FrontEndNodes
 
                 break;
             }
+            case ExternalNodeData::c_index_ONNX:
+            {
+                StaticNodeInfo staticNodeInfo = GetStaticNodeInfo(node);
+
+                struct TempPinInfo
+                {
+                    int nodeIndex;
+                    int pinIndex;
+                };
+
+                #define HANDLE_PIN(name) \
+                    { node.externalNodeData.ONNX.name.nodeIndex, node.externalNodeData.ONNX.name.nodePinIndex },
+
+                static const TempPinInfo tempPinInfo[] = {
+                    HANDLE_PIN(input)
+                    HANDLE_PIN(output)
+                };
+
+                #undef HANDLE_PIN
+
+                ret.nodeIndex = tempPinInfo[pinIndex].nodeIndex;
+                ret.pinIndex = tempPinInfo[pinIndex].pinIndex;
+                ret.access = staticNodeInfo.pins[pinIndex].access;
+                ret.required = staticNodeInfo.pins[pinIndex].required;
+                break;
+            }
             default:
             {
                 GigiAssert(false, "Unhandled external node type for node %s", node.name.c_str());

@@ -210,6 +210,7 @@ FUNCTION_BEGIN(SetImportedBufferCount, "Set the count of an imported buffer")
 FUNCTION_END()
 
 FUNCTION_BEGIN(GetImportedBufferBounds, "Get [minx, miny, minz, maxx, maxy, maxz] of an imported buffer that has a position semantic.")
+    PARAMETER(std::string, bufferName, "The name of the buffer, in the render graph.")
 FUNCTION_END()
 
 FUNCTION_BEGIN(SetImportedBufferCSVHeaderRow, "Set whether or not the csv file has a header row")

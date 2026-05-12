@@ -180,14 +180,14 @@ public:
             return false;
 
 		// Note: this can fail, and that's just fine.
-		HRESULT hr = m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS_EXPERIMENTAL, &m_dx12_options_experimental, sizeof(m_dx12_options_experimental));
+		//HRESULT hr = m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS_EXPERIMENTAL, &m_dx12_options_experimental, sizeof(m_dx12_options_experimental));
 
 		// Create the DXR device
 		if (m_dx12_options5.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
 			m_device->QueryInterface(IID_PPV_ARGS(&m_dxrDevice));
 
 		// Create the preview device
-		hr = m_device->QueryInterface(IID_PPV_ARGS(&m_previewDevice));
+		HRESULT hr = m_device->QueryInterface(IID_PPV_ARGS(&m_previewDevice));
   
 		m_envDefines.push_back(ShaderDefine("ENV_DOUBLE_SUPPORT", m_dx12_options.DoublePrecisionFloatShaderOps ? "1" : "0"));
         m_envDefines.push_back(ShaderDefine("ENV_VENDOR_NVIDIA", IsVendorNVidia() ? "1" : "0"));
@@ -796,10 +796,12 @@ public:
         return m_dx12_options21;
     }
 
+    /*
 	const D3D12_FEATURE_DATA_D3D12_OPTIONS_EXPERIMENTAL& GetOptionsExperimental() const
 	{
 		return m_dx12_options_experimental;
 	}
+    */
 
 	UploadBufferTracker& getUploadBufferTracker()
 	{
@@ -893,7 +895,7 @@ public: // access for CompileShader()
     D3D12_FEATURE_DATA_D3D12_OPTIONS10 m_dx12_options10 = {};
     D3D12_FEATURE_DATA_D3D12_OPTIONS11 m_dx12_options11 = {};
     D3D12_FEATURE_DATA_D3D12_OPTIONS21 m_dx12_options21 = {};
-    D3D12_FEATURE_DATA_D3D12_OPTIONS_EXPERIMENTAL m_dx12_options_experimental = {};
+    //D3D12_FEATURE_DATA_D3D12_OPTIONS_EXPERIMENTAL m_dx12_options_experimental = {};
 
     std::vector<ShaderDefine> m_envDefines;
 
@@ -936,6 +938,7 @@ private:
         D3D12_RESOURCE_STATES>& importantResourceStates);
 
     bool OnNodeAction_External_AMD_FidelityFXSDK_Upscaling(const RenderGraphNode_Action_External& node, RuntimeTypes::RenderGraphNode_Action_External& runtimeData, NodeAction nodeAction);
+    bool OnNodeAction_External_ONNX(const RenderGraphNode_Action_External& node, RuntimeTypes::RenderGraphNode_Action_External& runtimeData, NodeAction nodeAction);
 
     // @return success
     bool BuildDescriptorRanges(const Shader* shader, std::vector<D3D12_DESCRIPTOR_RANGE>& ranges);

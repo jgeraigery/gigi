@@ -90,7 +90,7 @@ bool g_nvInitialized = false;
 
 #define BREAK_ON_GIGI_ASSERTS() false
 
-static const UINT D3D12SDKVersion_Preview = 719;
+static const UINT D3D12SDKVersion_Preview = 720;
 static const UINT D3D12SDKVersion_Retail = 619;
 
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = D3D12SDKVersion_Retail; }
@@ -101,7 +101,7 @@ extern bool ParseVisualStudioErrorLine(const char* inputLine, std::string& fileN
 static const UUID ExperimentalFeaturesEnabled[] =
 {
     D3D12ExperimentalShaderModels,
-    D3D12CooperativeVectorExperiment,
+    //D3D12CooperativeVectorExperiment,
     D3D12StateObjectsExperiment,
 };
 
@@ -4544,6 +4544,7 @@ void ShowImGuiWindows()
                 ImGui::Text("AtomicInt64OnDescriptorHeapResourceSupported: %s", options.AtomicInt64OnDescriptorHeapResourceSupported ? "True" : "False");
             }
 
+            /*
             // Options Experimental
             ImGui::SeparatorText("Options Experimental");
             {
@@ -4559,6 +4560,7 @@ void ShowImGuiWindows()
 
                 ImGui::Text("Cooperative Vector Tier: %s", CVTier);
             }
+            */
 
             // TODO: do the rest at some point!
         }
@@ -10534,6 +10536,20 @@ bool CreateDeviceD3D(HWND hWnd)
             g_mainRenderTargetDescriptor[i] = rtvHandle;
             rtvHandle.ptr += rtvDescriptorSize;
         }
+    }
+
+    // See if linear algebra is supported
+    {
+        D3D12_FEATURE_DATA_LINEAR_ALGEBRA_SUPPORT linearAlgebraSupport = {};
+        HRESULT hr = g_pd3dDevice->CheckFeatureSupport(
+            D3D12_FEATURE_LINEAR_ALGEBRA_SUPPORT,
+            &linearAlgebraSupport,
+            sizeof(linearAlgebraSupport));
+
+        int supported = 0;
+        if (SUCCEEDED(hr) && linearAlgebraSupport.LinearAlgebraTier >= D3D12_LINEAR_ALGEBRA_TIER_1_0)
+            supported = 1;
+        Log(LogLevel::Info, "DX12 Linear Algebra = %d", supported);
     }
 
     // Don't require MSAA 4x support to run the viewer. If there isn't support, the resources will gracefully fail to be created and the viewer will say so.

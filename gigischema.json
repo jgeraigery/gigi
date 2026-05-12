@@ -4481,6 +4481,66 @@
                         }
                       }
                     }
+                  },
+                  "ONNX": {
+                    "description": "",
+                    "type": "object",
+                    "properties": {
+                      "fileName": {
+                        "description": "Path to the .onnx file relative to the .gg file. The file is registered as an asset so it is copied next to the generated code.",
+                        "type": "string"
+                      },
+                      "precision": {
+                        "description": "Precision to run the ONNX model at. FP16 halves memory bandwidth but may cost a couple of LSBs.",
+                        "type": "string",
+                        "enum": ["FP32", "FP16"]
+                      },
+                      "freeDimensionOverrides": {
+                        "description": "Override free dimensions declared by the ONNX model (e.g. a dynamic 'batch' dimension).",
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "description": "The free dimension name declared in the ONNX model",
+                              "type": "string"
+                            },
+                            "value": {
+                              "description": "The concrete value to bind to that dimension",
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      },
+                      "input": {
+                        "description": "Input tensor. Texture2DArray<float4> (NHWC with channel packing) or Buffer<float> (NCHW).",
+                        "type": "object",
+                        "properties": {
+                          "node": {
+                            "description": "The name of the node",
+                            "type": "string"
+                          },
+                          "pin": {
+                            "description": "The name of the pin",
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "output": {
+                        "description": "Output tensor. Same shape conventions as input.",
+                        "type": "object",
+                        "properties": {
+                          "node": {
+                            "description": "The name of the node",
+                            "type": "string"
+                          },
+                          "pin": {
+                            "description": "The name of the pin",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }

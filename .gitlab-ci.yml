@@ -25,6 +25,7 @@ win64_build_release:
       - GigiEdit.ico      
       - GigiCompiler.exe
       - GigiCompiler.pdb
+      - onnxruntime.dll
       - GigiMCP.exe
       - GigiMCP.pdb
       - .mcp.json
