@@ -896,6 +896,46 @@ struct Example :
                 ImGui::EndMenu();
             }
 
+            if (ImGui::BeginMenu("Edit"))
+            {
+                if (ImGuiMenuItem("Unclutter Nodes"))
+                {
+                    // Unclutter nodes by arranging them in a grid layout
+                    const float startX = 50.0f;
+                    const float startY = 50.0f;
+                    const float spacingX = 50.0f;
+                    const float spacingY = 50.0f;
+                    const int nodesPerRow = 4;
+
+                    // First pass: get maximum node size to determine column width
+                    float maxNodeWidth = 200.0f;
+                    float maxNodeHeight = 100.0f;
+                    for (int nodeIndex = 0; nodeIndex < (int)g_renderGraph.nodes.size(); ++nodeIndex)
+                    {
+                        ImVec2 size = ed::GetNodeSize(nodeIndex + 1);
+                        maxNodeWidth = std::max(maxNodeWidth, size.x);
+                        maxNodeHeight = std::max(maxNodeHeight, size.y);
+                    }
+
+                    // Second pass: arrange nodes in grid
+                    for (int nodeIndex = 0; nodeIndex < (int)g_renderGraph.nodes.size(); ++nodeIndex)
+                    {
+                        int row = nodeIndex / nodesPerRow;
+                        int col = nodeIndex % nodesPerRow;
+
+                        float x = startX + col * (maxNodeWidth + spacingX);
+                        float y = startY + row * (maxNodeHeight + spacingY);
+
+                        SetNodeEditorPos(g_renderGraph.nodes[nodeIndex], { x, y });
+                        ed::SetNodePosition(nodeIndex + 1, ImVec2(x, y));
+                    }
+
+                    g_renderGraphDirty = true;
+                }
+
+                ImGui::EndMenu();
+            }
+
             if (ImGui::BeginMenu("View"))
             {
                 ImGuiMenuItem("Graph Properties", 0, "", &g_showWindows.GraphProperties);

@@ -337,9 +337,6 @@ struct RuntimeTypes
             void* m_outputBuffer = nullptr;     // ID3D12Resource* (buffer, owned)
             int m_inputBufferSize = 0;          // in bytes
             int m_outputBufferSize = 0;
-            int m_cachedW = 0;
-            int m_cachedH = 0;
-            int m_cachedC = 0;
             void* m_inputDmlAlloc = nullptr;    // from OrtDmlApi::CreateGPUAllocationFromD3DResource(m_inputBuffer)
             void* m_outputDmlAlloc = nullptr;
 
