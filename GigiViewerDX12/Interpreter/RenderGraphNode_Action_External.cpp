@@ -113,7 +113,6 @@ void RuntimeTypes::RenderGraphNode_Action_External::Release(GigiInterpreterPrevi
         if (m_ONNX.m_outputBuffer)    { reinterpret_cast<IUnknown*>(m_ONNX.m_outputBuffer)->Release(); m_ONNX.m_outputBuffer = nullptr; }
         m_ONNX.m_inputBufferSize = 0;
         m_ONNX.m_outputBufferSize = 0;
-        m_ONNX.m_cachedW = m_ONNX.m_cachedH = m_ONNX.m_cachedC = 0;
 
         if (m_ONNX.m_transposePSO)      { reinterpret_cast<IUnknown*>(m_ONNX.m_transposePSO)->Release(); m_ONNX.m_transposePSO = nullptr; }
         if (m_ONNX.m_transposeRootSig)  { reinterpret_cast<IUnknown*>(m_ONNX.m_transposeRootSig)->Release(); m_ONNX.m_transposeRootSig = nullptr; }
@@ -622,11 +621,6 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeAction(const RenderGraphNode_Action
 
 namespace
 {
-    // Texture2DArray<float4> carries this many real channels per array slice.
-    // Used everywhere we translate between texture slice counts and NCHW
-    // channel counts.
-    static constexpr int kChannelsPerFloat4Slice = 4;
-
     size_t HashOnnxSessionConfig(const ExternalNode_ONNX& nodeData)
     {
         size_t h = std::hash<std::string>()(nodeData.fileName);
@@ -782,7 +776,7 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeAction_External_ONNX(const RenderGr
 
     if (!inputNode || !outputNode)
     {
-        m_logFn(LogLevel::Error, "ONNX node \"%s\": input and output must both be Texture2DArray resources.", node.name.c_str());
+        m_logFn(LogLevel::Error, "ONNX node \"%s\": input and output must both be Texture2D or Texture2DArray resources.", node.name.c_str());
         return false;
     }
     if (!inputRT || !inputRT->m_resource || !outputRT || !outputRT->m_resource)
@@ -803,12 +797,15 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeAction_External_ONNX(const RenderGr
     {
         if (modelShape.size() != 4)
         {
-            m_logFn(LogLevel::Error, "ONNX node \"%s\": %s tensor must be 4-D NCHW (got %zu dims).", node.name.c_str(), which, modelShape.size());
+            m_logFn(LogLevel::Error, "ONNX node \"%s\": \"%s\" tensor must be 4-D NCHW (got %zu dims).", node.name.c_str(), which, modelShape.size());
             return false;
         }
+
+        DXGI_FORMAT_Info formatInfo = Get_DXGI_FORMAT_Info(rt.m_format);
+
         const int64_t W = rt.m_size[0];
         const int64_t H = rt.m_size[1];
-        const int64_t C = (int64_t)rt.m_size[2] * kChannelsPerFloat4Slice;
+        const int64_t C = (int64_t)rt.m_size[2] * formatInfo.channelCount;
         const int64_t want[4] = { 1, C, H, W };
         outShape.assign(modelShape.begin(), modelShape.end());
         outElems = 1;
@@ -818,8 +815,8 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeAction_External_ONNX(const RenderGr
             else if (outShape[i] != want[i])
             {
                 m_logFn(LogLevel::Error,
-                    "ONNX node \"%s\": %s shape dim %d is fixed at %lld but texture implies %lld.",
-                    node.name.c_str(), which, i, (long long)outShape[i], (long long)want[i]);
+                    "ONNX node \"%s\": %s shape is (%lld, %lld, %lld, %lld) but wants (%lld, %lld, %lld, %lld)",
+                    node.name.c_str(), which, outShape[0], outShape[1], outShape[2], outShape[3], want[0], want[1], want[2], want[3]);
                 return false;
             }
             outElems *= outShape[i];
@@ -941,13 +938,6 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeAction_External_ONNX(const RenderGr
     if (!ResolveShape(state.m_inputShape, *inputRT, "input", inShape, inElems)) return false;
     if (!ResolveShape(state.m_outputShape, *outputRT, "output", outShape, outElems)) return false;
 
-    const int W = inputRT->m_size[0];
-    const int H = inputRT->m_size[1];
-    const int Cin = inputRT->m_size[2] * kChannelsPerFloat4Slice;
-    // Output dims; required to match input for now (identity-shape models only).
-    // We don't require output W,H,C to equal input's; use outputRT's own dims
-    // when constructing the transpose-out dispatch.
-
     // ---- Lazy-create transpose root sig + PSO (once) ----
     if (!state.m_transposeRootSig)
     {
@@ -995,7 +985,6 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeAction_External_ONNX(const RenderGr
         }
         state.m_inputBufferSize = inputBufBytes;
         state.m_outputBufferSize = outputBufBytes;
-        state.m_cachedW = W; state.m_cachedH = H; state.m_cachedC = Cin;
 
         // Wrap the buffers as DML GPU allocations.
         if (!dmlApi)
@@ -1035,11 +1024,19 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeAction_External_ONNX(const RenderGr
     // ---- Build an upload-constant-buffer with the CBStruct for this dispatch ----
     auto RecordTransposeDispatch = [&](bool textureToBuffer) -> bool
     {
+        RuntimeTypes::RenderGraphNode_Resource_Texture* rt = textureToBuffer ? inputRT : outputRT;
+        DXGI_FORMAT_Info formatInfo = Get_DXGI_FORMAT_Info(rt->m_format);
+
         NHWCNCHWTranspose_CBStruct cb = {};
-        cb.W = textureToBuffer ? W : (int)outputRT->m_size[0];
-        cb.H = textureToBuffer ? H : (int)outputRT->m_size[1];
-        cb.C = textureToBuffer ? Cin : (int)(outputRT->m_size[2] * kChannelsPerFloat4Slice);
+        cb.W = (int)rt->m_size[0];
+        cb.H = (int)rt->m_size[1];
+        cb.C = (int)(rt->m_size[2] * formatInfo.channelCount);
         cb.mode = textureToBuffer ? NHWCNCHW_TRANSPOSE_TEXTURE_TO_BUFFER : NHWCNCHW_TRANSPOSE_BUFFER_TO_TEXTURE;
+
+        //if (textureToBuffer)
+            //m_logFn(LogLevel::Info, "ONNX node \"%s\": recording pre-transpose (NHWC->NCHW) W=%d H=%d C=%d.", node.name.c_str(), cb.W, cb.H, cb.C);
+        //else
+            //m_logFn(LogLevel::Info, "ONNX node \"%s\": recording post-transpose (NCHW->NHWC).", node.name.c_str());
 
         // 256-byte aligned CB upload.
         const unsigned int cbSizeAligned = (unsigned int)ALIGN(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT, sizeof(cb));
@@ -1150,9 +1147,7 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeAction_External_ONNX(const RenderGr
     };
 
     // ---- 1. Record NHWC->NCHW transpose onto Gigi's main command list ----
-    m_logFn(LogLevel::Info, "ONNX node \"%s\": recording pre-transpose (NHWC->NCHW) W=%d H=%d C=%d.", node.name.c_str(), W, H, Cin);
     if (!RecordTransposeDispatch(/*textureToBuffer=*/true)) return false;
-    m_logFn(LogLevel::Info, "ONNX node \"%s\": pre-transpose recorded.", node.name.c_str());
 
     // After the transpose writes to the input buffer, DML will read it.
     // We need the input buffer to be in a queue-agnostic state (COMMON) and
@@ -1211,9 +1206,7 @@ bool GigiInterpreterPreviewWindowDX12::OnNodeAction_External_ONNX(const RenderGr
     }
 
     // ---- 5. Record NCHW->NHWC transpose ----
-    m_logFn(LogLevel::Info, "ONNX node \"%s\": recording post-transpose (NCHW->NHWC).", node.name.c_str());
     if (!RecordTransposeDispatch(/*textureToBuffer=*/false)) return false;
-    m_logFn(LogLevel::Info, "ONNX node \"%s\": post-transpose recorded successfully.", node.name.c_str());
 
     // Publish output to inspector.
     {
