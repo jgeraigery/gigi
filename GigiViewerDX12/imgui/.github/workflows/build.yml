@@ -207,7 +207,7 @@ jobs:
         run: '"%MSBUILD_PATH%\MSBuild.exe" examples/example_win32_directx12/example_win32_directx12.vcxproj /p:Platform=x64 /p:Configuration=Release'
 
   Linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v3
 
@@ -470,7 +470,7 @@ jobs:
         xcodebuild -project examples/example_apple_metal/example_apple_metal.xcodeproj -target example_apple_metal_ios CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
   Emscripten:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v3
 
@@ -497,7 +497,7 @@ jobs:
         make -C examples/example_emscripten_wgpu
 
   Android:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v3
 
